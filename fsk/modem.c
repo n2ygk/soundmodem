@@ -338,6 +338,9 @@ struct demodstate {
         int dcd_sum0, dcd_sum1, dcd_sum2;
         unsigned int dcd_time, dcd;
 	u_int32_t mean, meansq;
+	int32_t dcoffsp;
+	unsigned int dcoffscnt;
+	int16_t dcoffs;
 
 	unsigned int eqbits;
 	int16_t eqs[EQLENGTH], eqf[EQLENGTH];
@@ -431,6 +434,20 @@ static void demodrx(struct demodstate *s, unsigned nsamples)
 		curs = filter(s, samples, s->pll);
 		mids = filter(s, samples, s->pll+s->pllinc/2);
 		nexts = filter(s, samples, s->pll+s->pllinc);
+		/* dc offset prediction */
+		s->dcoffsp += curs;
+		s->dcoffscnt++;
+		if (s->dcoffscnt >= 4096) {
+			s->dcoffs = -(s->dcoffsp >> 12);
+			logprintf(257, "fskrx: DC offset %d\n", -s->dcoffs);
+			s->dcoffscnt = 0;
+			s->dcoffsp = 0;
+		}
+		/* dc offset compensation */
+		curs += s->dcoffs;
+		mids += s->dcoffs;
+		nexts += s->dcoffs;
+		/* sample clock recovery */
 		gardner = ((nexts > 0 ? 1 : -1) - (curs > 0 ? 1 : -1)) * mids;
 #if 0
 		eq = equalizer(s, mids, nexts);

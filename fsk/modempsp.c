@@ -37,6 +37,11 @@
 
 /* --------------------------------------------------------------------- */
 
+extern double df9ic_rxfilter(double t);
+extern double df9ic_txfilter(double t);
+
+/* --------------------------------------------------------------------- */
+
 #define RCOSALPHA   (3.0/8)
 
 #define FILTERRELAX 1.4
@@ -123,8 +128,9 @@ struct venode {
 
 struct demodstate {
         struct modemchannel *chan;
-	unsigned bps, firlen;
-	unsigned pllinc, pllcorr;
+	unsigned int filtermode;
+	unsigned int bps, firlen;
+	unsigned int pllinc, pllcorr;
 	int pll;
 	u_int16_t stime;
 
@@ -156,6 +162,8 @@ static int16_t filter(struct demodstate *s, int16_t *samples, int ph)
 
 static const struct modemparams demodparams[] = {
         { "bps", "Bits/s", "Bits per second", "9600", MODEMPAR_NUMERIC, { n: { 4800, 38400, 100, 1200 } } },
+	{ "filter", "Filter Curve", "Filter Curve", "df9ic/g3ruh", MODEMPAR_COMBO, 
+	  { c: { { "df9ic/g3ruh", "rootraisedcosine", "raisedcosine", "hamming" } } } },
         { NULL }
         
 };
@@ -163,6 +171,7 @@ static const struct modemparams demodparams[] = {
 static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, const char *params[])
 {
         struct demodstate *s;
+	unsigned int i;
 
         if (!(s = calloc(1, sizeof(struct demodstate))))
                 logprintf(MLOG_FATAL, "out of memory\n");
@@ -175,6 +184,14 @@ static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, co
                         s->bps= 38400;
         } else
                 s->bps = 9600;
+	s->filtermode = 0;
+	if (params[1]) {
+		for (i = 1; i < 4; i++)
+			if (!strcmp(params[1], demodparams[1].u.c.combostr[i])) {
+				s->filtermode = i;
+				break;
+			}
+	}
 	*samplerate = s->bps + s->bps / 2;
 	return s;
 }
@@ -387,19 +404,37 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 		logprintf(MLOG_WARNING, "demodfsk: input filter length too long\n");
 		s->firlen = MAXFIRLEN;
 	}
-#if 0
-	tmul = FILTERRELAX * ((double)s->bps) / FILTEROVER / ((double)samplerate);
-	for (i = 0; i < FILTEROVER*s->firlen; i++)
-		coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = 
-			sinc((i - (signed)s->firlen*FILTEROVER/2)*tmul)
-			* hamming((double)i / (double)(FILTEROVER*s->firlen-1));
-#else
 	tmul = ((double)s->bps) / FILTEROVER / ((double)samplerate);
-	for (i = 0; i < FILTEROVER*s->firlen; i++) {
-		t = (signed)(i - s->firlen*FILTEROVER/2) * tmul;
-		coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = f3 = raised_cosine_time(t, RCOSALPHA);
+	switch (s->filtermode) {
+	case 1:  /* root raised cosine */
+		for (i = 0; i < FILTEROVER*s->firlen; i++) {
+			t = (signed)(i - s->firlen*FILTEROVER/2) * tmul;
+			coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = root_raised_cosine_time(t, RCOSALPHA);
+		}
+		break;
+
+	case 2:  /* raised cosine */
+		for (i = 0; i < FILTEROVER*s->firlen; i++) {
+			t = (signed)(i - s->firlen*FILTEROVER/2) * tmul;
+			coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = raised_cosine_time(t, RCOSALPHA);
+		}
+		break;
+
+	case 3:  /* hamming */
+		tmul *= FILTERRELAX;
+		for (i = 0; i < FILTEROVER*s->firlen; i++)
+			coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = 
+				sinc((i - (signed)s->firlen*FILTEROVER/2)*tmul)
+				* hamming((double)i / (double)(FILTEROVER*s->firlen-1));
+		break;
+
+	default:  /* DF9IC */
+		for (i = 0; i < FILTEROVER*s->firlen; i++) {
+			t = (signed)(i - s->firlen*FILTEROVER/2) * tmul;
+			coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = df9ic_rxfilter(t);
+		}
+		break;
 	}
-#endif
 	max1 = 0;
 	for (i = 0; i < FILTEROVER; i++) {
 		max2 = 0;

@@ -35,6 +35,7 @@
 #include <stdio.h>
 
 #include "raisedcosine.h"
+#include "mat.h"
 
 /* --------------------------------------------------------------------- */
 
@@ -98,6 +99,13 @@ static inline int16_t fir(const int32_t *p1, const int16_t *p2, int len)
 #define WHICHFILTER(x) (((x)>>12)&0xFU)   /* must correspond to FILTEROVER */
 #define WHICHSAMPLE(x) ((x)>>16)
 
+#define EQFLENGTH  8  /* last is DC-offset */
+#define TRAINBITS  40
+#define RHSLENGTH  ((TRAINBITS+2-EQFLENGTH)/2)
+
+
+
+
 #define EQLENGTH       5
 #define EQGAIN       100
 
@@ -110,10 +118,13 @@ struct demodstate {
 	u_int16_t stime;
 	
 	unsigned int div, divcnt;
-	unsigned int shreg, descram;
+	unsigned int shreg, descram, shregeq, descrameq;
         int dcd_sum0, dcd_sum1, dcd_sum2;
         unsigned int dcd_time, dcd;
 	u_int32_t mean, meansq;
+
+	int32_t eqfilt[EQFLENGTH];
+	int16_t eqsamp[EQFLENGTH & ~1];
 
 	unsigned int eqbits;
 	int16_t eqs[EQLENGTH], eqf[EQLENGTH];
@@ -186,10 +197,80 @@ static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, co
 	return s;
 }
 
+static void compute_eq(struct demodstate *s, u_int32_t time)
+{
+	int16_t *samples;
+	u_int32_t etime = time + TRAINBITS * s->pllinc;
+	unsigned int nsamples = ((etime - time) >> 16) + s->firlen;
+	unsigned int i, j;
+	int16_t es[2*TRAINBITS];
+        float f[EQFLENGTH];
+        float C[RHSLENGTH * EQFLENGTH];
+        float CT[RHSLENGTH * EQFLENGTH];
+        float CTC[EQFLENGTH * EQFLENGTH];
+        float CTr[EQFLENGTH];
+        float Cf[RHSLENGTH];
+        float r[RHSLENGTH];
+        float e, e1;
+
+	logprintf(257, "fskeq: txstart 0x%08x\n", time);
+	samples = alloca(nsamples * sizeof(samples[0]));
+	audioread(s->chan, samples, nsamples, time >> 16);
+	for (i = 0; i < 2*TRAINBITS; i++)
+		es[i] = filter(s, samples, (time & 0xffff) + i * s->pllinc / 2);
+	if (logcheck(258)) {
+		char buf[16*2*TRAINBITS];
+		char *cp = buf;
+		for (i = 0; i < 2*TRAINBITS; i++)
+			cp += snprintf(cp, buf + sizeof(buf) - cp, " %d", es[i]);
+		logprintf(258, "fskeq: es = [%s];\n", buf+1);
+	}
+        for (i = 0; i < RHSLENGTH; i++) {
+                for (j = 0; j < EQFLENGTH-1; j++)
+			C[i*EQFLENGTH+j] = es[2*i+j];
+		C[i*EQFLENGTH+EQFLENGTH-1] = 1;  /* DC component */
+		r[i] = (es[2*i+(((EQFLENGTH-2)/2) & ~1)] > 0) ? 16384 : -16384;
+        }
+        frtranspose(CT, C, RHSLENGTH, EQFLENGTH);
+        frmul(CTC, CT, C, EQFLENGTH, RHSLENGTH, EQFLENGTH);
+        frmul(CTr, CT, r, EQFLENGTH, RHSLENGTH, 1);
+        frchol(CTC, CTr, f, EQFLENGTH);
+        frmul(Cf, C, f, RHSLENGTH, EQFLENGTH, 1);
+        for (i = 0, e = 0; i < RHSLENGTH; i++) {
+                e1 = Cf[i] - r[i];
+                e += e1 * e1;
+        }
+	e *= (1.0 / 16384 / 16384 / EQFLENGTH);
+	if (logcheck(258)) {
+		char buf[16*EQFLENGTH];
+		char *cp = buf;
+		for (i = 0; i < EQFLENGTH; i++)
+			cp += snprintf(cp, buf + sizeof(buf) - cp, " %f", f[i]);
+		logprintf(258, "fskeq: e = %f; f = [%s];\n", e, buf+1);
+	}
+	if (e > 0.2)
+		return;
+	for (i = 0; i < EQFLENGTH; i++)
+		s->eqfilt[i] = 32768 * f[i];
+}
+
+static int16_t filter_eq(struct demodstate *s, int16_t samp0, int16_t samp1)
+{
+	int32_t sum = s->eqfilt[EQFLENGTH-1];
+	unsigned int i;
+
+	memmove(&s->eqsamp[0], &s->eqsamp[2], sizeof(s->eqsamp) - 2 * sizeof(s->eqsamp[0]));
+	s->eqsamp[(EQFLENGTH-1) & ~1] = samp0;
+	s->eqsamp[(EQFLENGTH-1) | 1] = samp1;
+	for (i = 0; i < EQFLENGTH-1; i++)
+		sum += s->eqsamp[i] * s->eqfilt[i];
+	return sum >> 15;
+}
+
 static void demodrx(struct demodstate *s, unsigned nsamples)
 {
 	int16_t *samples;
- 	int16_t curs, nexts, mids, xs, eq;
+ 	int16_t curs, nexts, mids, xs, eqs;
 	int32_t gardner;
 	unsigned int d, descx;
 	unsigned char ch[3];
@@ -209,8 +290,10 @@ static void demodrx(struct demodstate *s, unsigned nsamples)
 		nexts = filter(s, samples, s->pll+s->pllinc);
 		gardner = ((nexts > 0 ? 1 : -1) - (curs > 0 ? 1 : -1)) * mids;
 #if 0
-		eq = equalizer(s, mids, nexts);
+		eqs = equalizer(s, mids, nexts);
 #endif
+		eqs = filter_eq(s, curs, mids);
+
 		s->pll += s->pllinc;
 #if 0
 		corr = (gardner * s->pllinc) >> 20;
@@ -230,15 +313,21 @@ static void demodrx(struct demodstate *s, unsigned nsamples)
 #endif
 
 		/* accumulate values for DCD */
-		s->mean += abs(curs);
-		s->meansq += (((int32_t)curs) * ((int32_t)curs)) >> DCD_TIME_SHIFT;
+		s->mean += abs(eqs);
+		s->meansq += (((int32_t)eqs) * ((int32_t)eqs)) >> DCD_TIME_SHIFT;
 		/* process sample */
 		s->descram <<= 1;
-		s->descram |= (curs >> 15) & 1;
+		s->descram |= (eqs >> 15) & 1;
 		descx = ~(s->descram ^ (s->descram >> 1));
 		descx ^= (descx >> DESCRAM17_TAPSH3) ^ (descx >> (DESCRAM17_TAPSH3-DESCRAM17_TAPSH2));
 		s->shreg >>= 1;
 		s->shreg |= (descx & 1) << 24;
+		s->descrameq <<= 1;
+		s->descrameq |= (curs >> 15) & 1;
+		descx = ~(s->descram ^ (s->descram >> 1));
+		descx ^= (descx >> DESCRAM17_TAPSH3) ^ (descx >> (DESCRAM17_TAPSH3-DESCRAM17_TAPSH2));
+		s->shregeq <<= 1;
+		s->shregeq |= descx & 1;
 		if (s->shreg & 1) {
 			ch[0] = s->shreg >> 1;
 			ch[1] = s->shreg >> 9;
@@ -253,6 +342,11 @@ static void demodrx(struct demodstate *s, unsigned nsamples)
 				logprintf(257, "fskrx: %s\n", buf2);
 			}
 			s->shreg = 0x1000000;
+		}
+		if ((((s->shregeq  & 0xffffff00) == 0x7e7e7e00) || ((s->shregeq  & 0xffffff00) == 0x00007e00)) &&
+		    (s->shregeq  & 0xff) != 0x7e) {
+			/* start of transmission detected */
+			compute_eq(s, (s->stime << 16) + s->pll - (TRAINBITS + 8 - 1) * s->pllinc);
 		}
 		/* DCD */
 		s->dcd_time++;
@@ -376,6 +470,7 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 	memset(s->eqf, 0, sizeof(s->eqf));
 	s->shreg = 0x1000000;
 	*bitrate = s->bps;
+	s->eqfilt[((EQFLENGTH-2)/2) & ~1] = 32768;
 }
 
 /* --------------------------------------------------------------------- */
