@@ -121,7 +121,7 @@ template<typename T> static void matprintf(ostream& os, const char *name,
 /* ---------------------------------------------------------------------- */
 
 static double comptx(ostream& os, double *filt, const double *pulse, unsigned int filtlen, unsigned int pulselen, 
-		   unsigned int over, unsigned int odiv, double shift, unsigned int oct)
+		     unsigned int over, unsigned int odiv, double shift, unsigned int oct)
 {
         unsigned int rlen = 2 * filtlen + pulselen;
         double C[rlen * filtlen];
@@ -150,13 +150,16 @@ static double comptx(ostream& os, double *filt, const double *pulse, unsigned in
         }
         for (i = 0; i < rlen; i++)
                 r[i] = raised_cosine_time((i - 0.5 * (rlen-1)) / (double)over + shift, rcosalpha);
-        matprintf(os, "C", rlen, filtlen, filtlen, 1, C);
-        matprintf(os, "r", rlen, 1, 1, 1, r);
+	if (oct) {
+		matprintf(os, "C", rlen, filtlen, filtlen, 1, C);
+		matprintf(os, "r", rlen, 1, 1, 1, r);
+	}
         mtranspose(CT, C, rlen, filtlen);
         mmul(CTC, CT, C, filtlen, rlen, filtlen);
         mmul(CTr, CT, r, filtlen, rlen, 1);
         mchol(CTC, CTr, filt, filtlen);
-        matprintf(os, "filt", filtlen, 1, 1, 1, filt);
+	if (oct)
+		matprintf(os, "filt", filtlen, 1, 1, 1, filt);
         mmul(Cf, C, filt, rlen, filtlen, 1);
         for (i = 0, e = 0; i < rlen; i++) {
                 e1 = Cf[i] - r[i];
@@ -206,10 +209,10 @@ static void printfcoeff(ostream& os, unsigned int fftsz, unsigned int over, unsi
 		for (unsigned int i = 0; i < fftsz; i++)
 			os << rpulse[i] << "\n";
 	} else {
-		os << "#define FSKIC_OVER " << over << "\n";
-		os << "\nstatic float rxpulse[" << 4 * over << "] = {";
+		os << "#define FSKIC_RXOVER " << over << "\n";
+		os << "\nstatic float fskic_rxpulse[" << 4 * over << "] = {";
 		for (unsigned int i = 0;;) {
-			if (!(i & 7))
+			if (!(i & 3))
 				os << "\n\t";
 			os << " " << rpulse[i];
 			i++;
@@ -250,7 +253,7 @@ static void printfcoeff(ostream& os, unsigned int fftsz, unsigned int over, unsi
 			os << tpulse[i] << "\n";
 	}
 	/* compute tx compensation filter */
-	double filt[6 * over];
+	double filt[8 * over];
 	double shift = 0;
 	ostringstream oss;
 	double err = comptx(oss, filt, rpulse, sizeof(filt) / sizeof(filt[0]), 4 * over, over, 2, shift, oct);
@@ -268,10 +271,20 @@ static void printfcoeff(ostream& os, unsigned int fftsz, unsigned int over, unsi
 		os << "# name: err\n"
 		   << "# type: scalar\n"
 		   << err << "\n";
+	} else {
+		os << "#define FSKIC_TXOVER " << over / 2 << "\n";
+		os << "\nstatic float fskic_txpulse[" << sizeof(filt) / sizeof(filt[0]) - 2 * over << "] = {";
+		for (unsigned int i = over;;) {
+			if (!(i & 3))
+				os << "\n\t";
+			os << " " << filt[i];
+			i++;
+			if (i >= sizeof(filt) / sizeof(filt[0]) - 2 * over)
+				break;
+			os << ",";
+		}
+		os << "\n};\n\n";
 	}
-
-
-
 }
 
 /* ---------------------------------------------------------------------- */

@@ -2,7 +2,7 @@ INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/matlib -I$(top_srcdir)/libm
 
 
 noinst_LIBRARIES = libfsk.a
-libfsk_a_SOURCES = modem.c modempsp.c psp.h
+libfsk_a_SOURCES = modem.c fskic.h modempsp.c psp.h modemeq.c
 
 genpsptbl_SOURCES = genpsptbl.c
 genpsptbl_LDADD = ../matlib/libmat.a
@@ -17,6 +17,9 @@ else
 noinst_PROGRAMS = genpsptbl gendf9icfilt
 
 $(srcdir)/psp.h:	genpsptbl$(EXEEXT)
-			./genpsptbl > $@
+			./genpsptbl$(EXEEXT) > $@
+
+$(srcdir)/fskic.h:	gendf9icfilt$(EXEEXT)
+			./gendf9icfilt$(EXEEXT) > $@
 
 endif

@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -122,7 +122,7 @@ XML_CONFIG = @XML_CONFIG@
 INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc -I.
 
 noinst_LIBRARIES = libfsk.a
-libfsk_a_SOURCES = modem.c modempsp.c psp.h
+libfsk_a_SOURCES = modem.c fskic.h modempsp.c psp.h modemeq.c
 
 genpsptbl_SOURCES = genpsptbl.c
 genpsptbl_LDADD = ../matlib/libmat.a
@@ -142,7 +142,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libfsk_a_LIBADD = 
-libfsk_a_OBJECTS =  modem.$(OBJEXT) modempsp.$(OBJEXT)
+libfsk_a_OBJECTS =  modem.$(OBJEXT) modempsp.$(OBJEXT) modemeq.$(OBJEXT)
 @CROSSCOMP_FALSE@noinst_PROGRAMS =  genpsptbl$(EXEEXT) \
 @CROSSCOMP_FALSE@gendf9icfilt$(EXEEXT)
 PROGRAMS =  $(noinst_PROGRAMS)
@@ -169,7 +169,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/gendf9icfilt.P .deps/genpsptbl.P .deps/modem.P \
-.deps/modempsp.P
+.deps/modemeq.P .deps/modempsp.P
 SOURCES = $(libfsk_a_SOURCES) $(genpsptbl_SOURCES) $(gendf9icfilt_SOURCES)
 OBJECTS = $(libfsk_a_OBJECTS) $(genpsptbl_OBJECTS) $(gendf9icfilt_OBJECTS)
 
@@ -419,7 +419,10 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
 @CROSSCOMP_FALSE@$(srcdir)/psp.h:	genpsptbl$(EXEEXT)
-@CROSSCOMP_FALSE@			./genpsptbl > $@
+@CROSSCOMP_FALSE@			./genpsptbl$(EXEEXT) > $@
+
+@CROSSCOMP_FALSE@$(srcdir)/fskic.h:	gendf9icfilt$(EXEEXT)
+@CROSSCOMP_FALSE@			./gendf9icfilt$(EXEEXT) > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

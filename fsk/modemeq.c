@@ -275,9 +275,9 @@ static void modmodulate(void *state, unsigned int txdelay)
 	modsendbits(s, ch, 16);
 }
 
-struct modulator fskmodulator = {
+struct modulator fskeqmodulator = {
         NULL,
-        "fsk",
+        "fskeq",
         modparams,
         modconfig,
         modinit,
@@ -597,9 +597,9 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 
 /* --------------------------------------------------------------------- */
 
-struct demodulator fskdemodulator = {
+struct demodulator fskeqdemodulator = {
 	NULL,
-	"fsk",
+	"fskeq",
 	demodparams,
 	demodconfig,
 	demodinit,
