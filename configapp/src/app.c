@@ -351,6 +351,10 @@ static void cfg_select(const char *cfgname, const char *chname)
 		ioparams = ioparams_filein;
 	else if (!strcmp(buf, ioparam_type[0].u.c.combostr[2]))
 		ioparams = ioparams_sim;
+#ifdef HAVE_ALSA
+	else if (!strcmp(buf, ioparam_type[0].u.c.combostr[3]))
+		ioparams = ioparams_alsasoundcard;
+#endif /* HAVE_ALSA */
         else {
 		ioparams = ioparams_soundcard;
 		strncpy(buf, ioparam_type[0].u.c.combostr[0], sizeof(buf));

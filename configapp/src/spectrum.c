@@ -426,9 +426,6 @@ void spectrum_setdata(Spectrum *spec, short *samples)
 	fft_rif(fdata, SPECTRUM_NUMSAMPLES, 1);
 	for (i = 0; i < SPECTRUM_NUMSAMPLES; i++) {
 		f = log10(fsqr(fdata[2*i]) + fsqr(fdata[2*i+1]));
-
-		f += 4;  /* "amplify by 40dB */
-
 		f *= -(10.0 * SPECTRUM_HEIGHT / DBSPAN);
 		if (f < 0)
 			f = 0;

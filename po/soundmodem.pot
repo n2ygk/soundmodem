@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-09 19:30+0100\n"
+"POT-Creation-Date: 2004-03-09 20:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,23 +20,23 @@ msgstr ""
 msgid "Mode"
 msgstr ""
 
-#: configapp/src/app.c:383
+#: configapp/src/app.c:387
 msgid "IO"
 msgstr ""
 
-#: configapp/src/app.c:398
+#: configapp/src/app.c:402
 msgid "Channel Access"
 msgstr ""
 
-#: configapp/src/app.c:534
+#: configapp/src/app.c:538
 msgid "Modulator"
 msgstr ""
 
-#: configapp/src/app.c:558
+#: configapp/src/app.c:562
 msgid "Demodulator"
 msgstr ""
 
-#: configapp/src/app.c:583
+#: configapp/src/app.c:587
 msgid "Packet IO"
 msgstr ""
 
