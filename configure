@@ -1693,6 +1693,8 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 
+
+
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \${MAKE}" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \${MAKE}... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,./+-,__p_,'`
