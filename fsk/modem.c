@@ -3,8 +3,8 @@
 /*
  *      modem.c  --  Linux Userland Soundmodem FSK modulator.
  *
- *      Copyright (C) 1999-2000
- *        Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *      Copyright (C) 1999-2000, 2003
+ *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@
 
 #include <stdio.h>
 
+#include "raisedcosine.h"
+
 /* --------------------------------------------------------------------- */
 
 #define DESCRAM17_TAPSH1  0
@@ -49,7 +51,7 @@
 #define NUMFILTER    32U
 #define FILTERIDX(x) (((x) >> 11U) & 31U)
 
-#define RCOSALPHA 0.4
+#define RCOSALPHA   (3.0/8)
 
 #define FILTERRELAX 1.4
 
@@ -59,22 +61,6 @@ struct modstate {
 	unsigned shreg, txbits, scram;
 	int16_t filter[NUMFILTER][FILTERLEN];
 };
-
-/* --------------------------------------------------------------------- */
-
-static inline double sinc(double x)
-{
-	double arg = x * M_PI;
-
- 	if (fabs(arg) < 1e-10)
-		return 1;
-        return sin(arg) / arg;
-}
-
-static inline double hamming(double x)
-{
-        return 0.54-0.46*cos(2*M_PI*x);
-}
 
 /* --------------------------------------------------------------------- */
 
@@ -160,13 +146,7 @@ static void modinit(void *state, unsigned int samplerate)
 	for (i = 0; i < NUMFILTER * FILTERLEN; i++) {
 		time = i - (NUMFILTER * FILTERLEN - 1.0) / 2.0;
 		time *= (1.0 / NUMFILTER);
-		alphatime = time * RCOSALPHA;
-		f1 = 1 - 4 * alphatime * alphatime;
-		if (fabs(f1) < 1e-10)
-			f2 = M_PI * (1.0 / 8.0) * sin(M_PI * alphatime) / alphatime;
-		else
-			f2 = cos(M_PI * alphatime) / f1;
-		c[i] = sinc(time) * f2;
+		c[i] = raised_cosine_time(time, RCOSALPHA);
 	}
 #endif
 	f1 = 0;
@@ -488,13 +468,7 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 	tmul = ((double)s->bps) / FILTEROVER / ((double)samplerate);
 	for (i = 0; i < FILTEROVER*s->firlen; i++) {
 		t = (signed)(i - s->firlen*FILTEROVER/2) * tmul;
-		at = t * RCOSALPHA;
-		f1 = 1 - 4 * at * at;
-		if (fabs(f1) < 1e-10)
-			f2 = M_PI * (1.0 / 8.0) * sin(M_PI * at) / at;
-		else
-			f2 = cos(M_PI * at) / f1;
-		coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = f3 = sinc(t) * f2;
+		coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER] = f3 = raised_cosine_time(t, RCOSALPHA);
 	}
 #endif
 	max1 = 0;
