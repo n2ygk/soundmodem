@@ -1,0 +1,66 @@
+<!-- -*- sgml -*- -->
+ <chapter id="structure">
+  <title>
+   Structure
+  </title>
+
+  <para>
+   DocBook documents are SGML documents.  The SGML declaration at the
+   top identifies it as a DocBook document, and it should look
+   something like this:
+  </para>
+
+  <programlisting>
+&lt;!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN"[
+&hellip;
+]&gt;
+&lt;book&gt;
+&hellip;
+&lt;/book&gt;
+  </programlisting>
+
+  <para>
+   The <sgmltag>book</sgmltag> here specifies the type of the
+   top-level element of the document.  This declaration also says that
+   the document conforms to version 3.1 of the document type
+   declaration (DTD).  The <sgmltag>book</sgmltag> element is also
+   shown (although without its content)---notice that it is opened
+   with <quote><literal>&lt;book&gt;</literal></quote> and closed with
+   <quote><literal>&lt;/book&gt;</literal></quote>, and everything in
+   between is the content of that element.
+  </para>
+
+  <para>
+   Other files can be included by the top-level file by the use of
+   entities.  To include a file you first declare an entity and then
+   use it:
+  </para>
+
+  <programlisting>
+&lt;!DOCTYPE &hellip;[
+&lt;!ENTITY includedfile SYSTEM "includedfile.sgml">
+]&gt;
+&hellip;
+&amp;includedfile;
+&hellip;
+  </programlisting>
+
+  <para>
+   Because SGML tags (<literal>&lt;&hellip;&gt;</literal>) and
+   entities (<literal>&amp;&hellip;;</literal>) are interpreted
+   specially, there are escapes provided to enable you to use these
+   marker characters in your DocBook files.
+   <quote><literal>&amp;lt;</literal></quote> gives
+   <quote>&lt;</quote>; <quote><literal>&amp;gt;</literal></quote>
+   gives <quote>&gt;</quote>; and
+   <quote><literal>&amp;amp;</literal></quote> gives
+   <quote>&amp;</quote>.  There are many other predefined entities
+   too.
+  </para>
+ </chapter>
+
+<!-- Local Variables: -->
+<!-- sgml-indent-step: 1 -->
+<!-- sgml-indent-data: 1 -->
+<!-- sgml-parent-document: "selfdocbook.sgml" -->
+<!-- End: -->

@@ -1,0 +1,87 @@
+<!-- -*- sgml -*- -->
+ <chapter id="tools">
+  <title>
+   Tools
+  </title>
+
+  <para>
+   The &sdb; is held together by magic <command>perl</command> glue,
+   which is activated, when the book is built, by some rules in the
+   <link linkend="Makefile">Makefile</link> in <xref
+   linkend="source">.  So, in order to build the &sdb; you will need
+   <command>make</command> and <command>sed</command> (and also
+   <command>fold</command>).  Note that <command>sed</command> and
+   <command>fold</command> won't be necessary for all SGML projects,
+   but using a <filename>Makefile</filename> is usually a good idea.
+  </para>
+
+  <para>
+   To have a functioning SGML environment, you will need to have
+   various programs installed.  On a Red Hat Linux system, the
+   <literal>sgml-common</literal>, <literal>jade</literal>,
+   <literal>jadetex</literal>, <literal>stylesheets</literal>, and
+   <literal>docbook</literal> packages should be installed.
+  </para>
+
+  <para>
+   I use an <command>emacs</command> package called
+   <literal>psgml</literal> for editing SGML documents.  The
+   keybindings I find most useful are:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <keycap>Tab</keycap> indents the current element to a level
+     appropriate to its nesting depth.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <keycombo action=seq>
+      <keycombo action=simul>
+       <keycap>
+	Control
+       </keycap>
+       <keycap>
+	C
+       </keycap>
+      </keycombo>
+      <keycombo action=simul>
+       <keycap>
+	Control
+       </keycap>
+       <keycap>
+	T
+       </keycap>
+      </keycombo>
+     </keycombo> lists the valid tags for the current element.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <keycombo action=seq>
+      <keycombo action=simul>
+       <keycap>
+	Control
+       </keycap>
+       <keycap>
+	C
+       </keycap>
+      </keycombo>
+      <keycap>
+       /
+      </keycap>
+     </keycombo> closes the current element.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </chapter>
+
+<!-- Local Variables: -->
+<!-- sgml-indent-step: 1 -->
+<!-- sgml-indent-data: 1 -->
+<!-- sgml-parent-document: "selfdocbook.sgml" -->
+<!-- End: -->

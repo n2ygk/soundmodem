@@ -1,0 +1,124 @@
+<!-- -*- sgml -*- -->
+ <chapter id="tips">
+  <title>
+   Tips and examples
+  </title>
+
+  <para>
+   This document is an example of a <sgmltag>book</sgmltag>, and a
+   <sgmltag>book</sgmltag> generally contains
+   <sgmltag>chapter</sgmltag>s, which may contain
+   <sgmltag>section</sgmltag>s.  A paragraph of text can be put in a
+   <sgmltag>para</sgmltag> tag.  There are lots of examples of that in
+   this book (see <xref linkend="source">).
+  </para>
+
+  <para>
+   When you want text to appear with its layout intact (spaces and
+   newlines kept where they are), you can use the
+   <sgmltag>literallayout</sgmltag> tag.  Note that
+   <keycap>Tab</keycap> characters are <emphasis>not</emphasis>
+   expanded.  If you also would like a different font for the listed
+   text, you might want to use the <sgmltag>programlisting</sgmltag>
+   tag.
+  </para>
+
+  <para>
+   The following sections are for example only, and may not actually
+   mean anything.
+  </para>
+
+  <section id="images">
+   <title>
+    Images
+   </title>
+
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="simple.eps" format="eps" align="center">
+    </imageobject>
+    <imageobject>
+     <imagedata fileref="simple.jpeg" format="jpeg" align="center">
+    </imageobject>
+   </mediaobject>
+
+   <para>
+    This shows how to handle images for both print and web display;
+    each format is included in one <sgmltag>mediaobject</sgmltag> so
+    the stylesheet, when faced with a limited subset of formats for
+    the current output media, can select the best fit.
+   </para>
+  </section>
+
+  <section id="listing">
+   <title>
+    Program listings
+   </title>
+
+   <para>
+    There are some things to watch out for when doing program
+    listings.  Let's say that we want to put the following fragment of
+    code into DocBook:
+   </para>
+
+   <programlisting><![CDATA[
+#include <stdio.h>
+int main ()
+{
+        int count = 3;
+        while (count]]>&mdash;<![CDATA[)
+        printf ("Count is now %d\n", count);
+}
+    ]]>
+    </programlisting>
+
+   <para>
+    To do this you need to enclose it in a
+    <sgmltag>programlisting</sgmltag> tag, and also make it into
+    <sgmltag>CDATA</sgmltag> (i.e. literal text) so that
+    <literal>&lt;stdio.h&gt;</literal> isn't interpreted as an SGML
+    tag.  The tags you need for this are:
+   </para>
+
+   <programlisting>
+&lt;programlisting&gt;&lt;!&lsqb;CDATA&lsqb;
+&hellip;
+&rsqb;&rsqb;&gt;&lt;/programlisting&gt;
+   </programlisting>
+
+   <para>
+    The next thing to bear in mind is that <keycap>Tab</keycap>
+    characters will not be expanded to spaces, so you will need to do
+    all the indenting with spaces.
+   </para>
+
+   <warning>
+    <para>
+     There seems to be a bug in <application>jade</application> at the
+     moment that causes incorrect TeX output for
+     <quote><literal>&mdash;</literal></quote> (i.e. two dashes).  For
+     the work-around that I'm using, see the source for this document.
+    </para>
+   </warning>
+  </section>
+
+  <section id="no-more">
+   <title>
+    Please send me examples
+   </title>
+
+   <para>
+    There are no more examples in this section yet, because I haven't
+    written any.  If you would like to see a particular element of
+    DocBook demonstrated here, feel free to send me an example,
+    preferably demonstrated inside a <sgmltag>section</sgmltag> SGML
+    element.
+   </para>
+  </section>
+ </chapter>
+
+<!-- Local Variables: -->
+<!-- sgml-indent-step: 1 -->
+<!-- sgml-indent-data: 1 -->
+<!-- sgml-parent-document: "selfdocbook.sgml" -->
+<!-- End: -->

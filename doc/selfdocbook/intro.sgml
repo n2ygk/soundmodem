@@ -1,0 +1,70 @@
+<!-- -*- sgml -*- -->
+ <chapter id="index"> <!-- so generated HTML starts here -->
+  <title>
+   The Selfdocbook itself
+  </title>
+
+  <para>
+   The &sdb; is a self-documenting introduction to DocBook DocBook
+   book.  It includes its own DocBook SGML source in the <link
+   linkend="source">appendix</link>, and so can be used to learn
+   DocBook by example.
+  </para>
+
+  <para>
+   You can get a copy of the &sdb; in various ways; presumably you
+   already know one of them since you are reading the &sdb; right now.
+   Here are the choices:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     View it using a web browser, by pointing it to the <ulink
+     url="http://people.redhat.com/twaugh/docbook/selfdocbook/selfdocbook.html"><literal>selfdocbook</literal>
+     &sdb; web page</ulink>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Grab the <ulink
+     url="http://people.redhat.com/twaugh/docbook/selfdocbook.ps">PostScript
+     version</ulink>, ready to print out.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Fetch the <ulink
+     url="http://people.redhat.com/twaugh/docbook/selfdocbook.tar.gz">DocBook
+     SGML source</ulink> and build it.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   You can use the &sdb; to learn DocBook by example: if you see
+   something that you want to know how to do, you can simply flip to
+   <xref linkend="source"> to find out how it is done.
+  </para>
+
+  <para>
+   I learned DocBook from the excellent book <citetitle>DocBook:
+   The Definitive Guide</citetitle> by O'Reilly Associates,
+   also <ulink url="http://docbook.org/tdg/html/docbook.html">available
+   online</ulink>.  It is probably a good idea to have a glance
+   through that in order to get more of an overview than this book
+   provides.
+  </para>
+
+  <para>
+   This &sdb; was built on &builddate;.
+  </para>
+ </chapter>
+
+<!-- Local Variables: -->
+<!-- sgml-indent-step: 1 -->
+<!-- sgml-indent-data: 1 -->
+<!-- sgml-parent-document: "selfdocbook.sgml" -->
+<!-- End: -->

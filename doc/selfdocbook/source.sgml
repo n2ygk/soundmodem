@@ -1,0 +1,120 @@
+<!-- -*- sgml -*- -->
+ <appendix id="source">
+  <title>
+   DocBook SGML source
+  </title>
+ 
+  <section id="build">
+   <title>
+    How to build the &sdb;
+   </title>
+
+   <para>
+    Given a functioning SGML environment, all of the necessary files
+    are shown in full in this appendix.  All you have to do in order
+    to build the &sdb; is:
+   </para>
+
+   <orderedlist>
+    <listitem>
+     <para>
+      Make sure you that have installed the necessary SGML tools.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Put all the files in the same directory and type
+      <userinput>make</userinput>.  The default target builds both
+      PostScript and HTML output.
+     </para>
+    </listitem>
+   </orderedlist>
+  </section>
+
+  <section>
+   <title>
+    <filename>selfdocbook.sgml</filename>
+   </title>
+
+   <programlisting>
+&selfdocbooksgml;
+   </programlisting>
+  </section>
+
+  <section>
+   <title>
+    <filename>intro.sgml</filename>
+   </title>
+
+   <programlisting>
+&introsgml
+   </programlisting>
+  </section>
+
+  <section>
+   <title>
+    <filename>tools.sgml</filename>
+   </title>
+
+   <programlisting>
+&toolssgml
+   </programlisting>
+  </section>
+
+  <section>
+   <title>
+    <filename>structure.sgml</filename>
+   </title>
+
+   <programlisting>
+&structuresgml
+   </programlisting>
+  </section>
+
+   <section>
+   <title>
+    <filename>tips.sgml</filename>
+   </title>
+
+   <programlisting>
+&tipssgml
+   </programlisting>
+  </section>
+
+   <section>
+   <title>
+    <filename>source.sgml</filename>
+   </title>
+
+   <programlisting>
+&sourcesgml;
+   </programlisting>
+  </section>
+
+  <section>
+   <title>
+    <filename>fdl.sgml</filename>
+   </title>
+
+   <programlisting>
+&fdlsgml;
+   </programlisting>
+  </section>
+
+  <section id="Makefile">
+   <title>
+    <filename>Makefile</filename>
+   </title>
+
+   <programlisting>
+&makefile;
+   </programlisting>
+  </section>
+ </appendix>
+
+<!-- Local Variables: -->
+<!-- sgml-indent-step: 1 -->
+<!-- sgml-indent-data: 1 -->
+<!-- sgml-parent-document: "selfdocbook.sgml" -->
+<!-- End: -->

@@ -1,0 +1,188 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2000-07-26 00:25+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+
+#: configapp/src/app.c:152
+msgid "Mode"
+msgstr ""
+
+#: configapp/src/app.c:362
+msgid "IO"
+msgstr ""
+
+#: configapp/src/app.c:443
+msgid "Modulator"
+msgstr ""
+
+#: configapp/src/app.c:468
+msgid "Demodulator"
+msgstr ""
+
+#: configapp/src/app.c:494
+msgid "Packet IO"
+msgstr ""
+
+#: configapp/src/interface.c:64 configapp/src/interface.c:373
+msgid "SoundModem Configurator"
+msgstr ""
+
+#: configapp/src/interface.c:89
+msgid "File"
+msgstr ""
+
+#: configapp/src/interface.c:103
+msgid "New"
+msgstr ""
+
+#: configapp/src/interface.c:117 configapp/src/interface.c:145
+msgid "Configuration"
+msgstr ""
+
+#: configapp/src/interface.c:124 configapp/src/interface.c:152
+msgid "Channel"
+msgstr ""
+
+#: configapp/src/interface.c:131
+msgid "Delete"
+msgstr ""
+
+#: configapp/src/interface.c:167
+msgid "Quit"
+msgstr ""
+
+#: configapp/src/interface.c:174
+msgid "Diagnostics"
+msgstr ""
+
+#: configapp/src/interface.c:188 configapp/src/interface.c:692
+#: configapp/src/interface.c:733
+msgid "Scope"
+msgstr ""
+
+#: configapp/src/interface.c:195 configapp/src/interface.c:644
+msgid "Spectrum"
+msgstr ""
+
+#: configapp/src/interface.c:202
+msgid "Modem"
+msgstr ""
+
+#: configapp/src/interface.c:209
+msgid "Help"
+msgstr ""
+
+#: configapp/src/interface.c:224
+msgid "About"
+msgstr ""
+
+#: configapp/src/interface.c:333
+msgid "Select File"
+msgstr ""
+
+#: configapp/src/interface.c:365
+msgid "About SoundModem Configurator"
+msgstr ""
+
+#: configapp/src/interface.c:390
+msgid "Copyright 2000"
+msgstr ""
+
+#: configapp/src/interface.c:397
+msgid "Thomas Sailer"
+msgstr ""
+
+#: configapp/src/interface.c:416
+msgid "Ok"
+msgstr ""
+
+#: configapp/src/interface.c:445
+msgid "New Configuration"
+msgstr ""
+
+#: configapp/src/interface.c:460
+msgid "Configuration Name"
+msgstr ""
+
+#: configapp/src/interface.c:487
+msgid "Cancel"
+msgstr ""
+
+#: configapp/src/interface.c:498 configapp/src/interface.c:559
+msgid "OK"
+msgstr ""
+
+#: configapp/src/interface.c:529 configapp/src/interface.c:538
+msgid "Error"
+msgstr ""
+
+#: configapp/src/interface.c:590
+msgid "Spectrum Display"
+msgstr ""
+
+#: configapp/src/interface.c:609
+msgid "Pointer"
+msgstr ""
+
+#: configapp/src/interface.c:626 configapp/src/interface.c:717
+#: configapp/src/interface.c:867
+msgid "DCD"
+msgstr ""
+
+#: configapp/src/interface.c:635 configapp/src/interface.c:725
+#: configapp/src/interface.c:875
+msgid "PTT"
+msgstr ""
+
+#: configapp/src/interface.c:710
+msgid "Freeze when not DCD"
+msgstr ""
+
+#: configapp/src/interface.c:791
+msgid "Receive Packets/Bits"
+msgstr ""
+
+#: configapp/src/interface.c:809
+msgid "Clear Count"
+msgstr ""
+
+#: configapp/src/interface.c:816
+msgid "Zeros"
+msgstr ""
+
+#: configapp/src/interface.c:833
+msgid "Ones"
+msgstr ""
+
+#: configapp/src/interface.c:850
+msgid "Total"
+msgstr ""
+
+#: configapp/src/interface.c:890
+msgid "Received Packets"
+msgstr ""
+
+#: configapp/src/interface.c:913
+msgid "Received Bits"
+msgstr ""
+
+#: configapp/src/support.c:118
+#, c-format
+msgid "Couldn't find pixmap file: %s"
+msgstr ""
+
+#: configapp/src/support.c:127
+#, c-format
+msgid "Error loading pixmap file: %s"
+msgstr ""
