@@ -114,7 +114,10 @@ void pttsetptt(struct pttio *state, int pttx)
 #else
 		unsigned int y;
 		ioctl(state->fd, TIOCMGET, &y);
-		y |= TIOCM_RTS;
+		if (state->ptt)
+		    y |= TIOCM_RTS;
+		else
+		    y &= ~TIOCM_RTS;
 		ioctl(state->fd, TIOCMSET, &y);
 #endif
 	} else if (state->mode == parport) {
@@ -137,7 +140,10 @@ void pttsetdcd(struct pttio *state, int dcd)
 #else
 		unsigned int y;
 		ioctl(state->fd, TIOCMGET, &y);
-		y |= TIOCM_DTR;
+		if (state->dcd)
+		    y |= TIOCM_DTR;
+		else
+		    y &= ~TIOCM_DTR;
 		ioctl(state->fd, TIOCMSET, &y);
 #endif
 	} else if (state->mode == parport) {
