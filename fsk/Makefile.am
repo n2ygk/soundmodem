@@ -2,7 +2,7 @@ INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/matlib -I$(top_srcdir)/libm
 
 
 noinst_LIBRARIES = libfsk.a
-libfsk_a_SOURCES = modem.c fskic.h modempsp.c psp.h modemeq.c
+libfsk_a_SOURCES = fskic.c fskic.h modem.c modempsp.c psp.h modemeq.c
 
 genpsptbl_SOURCES = genpsptbl.c
 genpsptbl_LDADD = ../matlib/libmat.a

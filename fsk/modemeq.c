@@ -1,7 +1,7 @@
 /*****************************************************************************/
 
 /*
- *      modem.c  --  Linux Userland Soundmodem FSK modulator.
+ *      modemeq.c  --  Linux Userland Soundmodem FSK demodulator with equalizer.
  *
  *      Copyright (C) 1999-2000, 2003
  *        Thomas Sailer (t.sailer@alumni.ethz.ch)
@@ -36,33 +36,10 @@
 
 #include "raisedcosine.h"
 
-#include "fskic.h"
-
 /* --------------------------------------------------------------------- */
 
-static double df9ic_rxfilter(double t)
-{
-	unsigned int i;
-	double sum = 0;
-
-	t *= FSKIC_RXOVER;
-	t -= 0.5 * sizeof(fskic_rxpulse) / sizeof(fskic_rxpulse[0]);
-	for (i = 0; i < sizeof(fskic_rxpulse) / sizeof(fskic_rxpulse[0]); i++)
-		sum += fskic_rxpulse[i] * sinc(i - t);
-	return sum;
-}
-
-static double df9ic_txfilter(double t)
-{
-	unsigned int i;
-	double sum = 0;
-
-	t *= FSKIC_TXOVER;
-	t -= 0.5 * sizeof(fskic_txpulse) / sizeof(fskic_txpulse[0]);
-	for (i = 0; i < sizeof(fskic_txpulse) / sizeof(fskic_txpulse[0]); i++)
-		sum += fskic_txpulse[i] * sinc(i - t);
-	return sum;
-}
+extern double df9ic_rxfilter(double t);
+extern double df9ic_txfilter(double t);
 
 /* --------------------------------------------------------------------- */
 
@@ -70,220 +47,11 @@ static double df9ic_txfilter(double t)
 #define DESCRAM17_TAPSH2  5
 #define DESCRAM17_TAPSH3  17
 
-#define SCRAM17_TAP1  (1<<DESCRAM17_TAPSH3)
-#define SCRAM17_TAPN  ((1<<DESCRAM17_TAPSH1)|(1<<DESCRAM17_TAPSH2))
-
 /* --------------------------------------------------------------------- */
-
-#define FILTERLEN     8U
-#define NUMFILTER    32U
-#define FILTERIDX(x) (((x) >> 11U) & 31U)
 
 #define RCOSALPHA   (3.0/8)
 
 #define FILTERRELAX 1.4
-
-struct modstate {
-        struct modemchannel *chan;
-	unsigned int filtermode;
-	unsigned int phase, phaseinc, bps;
-	unsigned int shreg, txbits, scram;
-	int16_t filter[NUMFILTER][FILTERLEN];
-};
-
-/* --------------------------------------------------------------------- */
-
-#if defined(__i386__) && 0
-
-static inline int mfilter(unsigned txbits, const int16_t *coeff, int len)
-{
-	int sum, temp1;
-
-	__asm__("\n1:\n\t"
-		"shrl $1,%1\n\t"
-		"sbbl %4,%4\n\t"
-		"subl %4,%0\n\t"
-		"xorl (%2),%4\n\t"
-		"addl $2,%2\n\t"
-		"addl %4,%0\n\t"
-		"decl %3\n\t"
-		"jnz 1b\n\t"
-		: "=r" (sum), "=r" (txbits), "=r" (coeff), "=r" (len), "=r" (temp1)
-		: "0" (0), "1" (txbits), "2" (coeff), "3" (len));
-	return sum;
-}
-
-#else /* __i386__ */
-
-static inline int32_t mfilter(unsigned txbits, const int16_t *coeff, int len)
-{
-	int32_t sum = 0;
-
-	for (; len > 0; len--, coeff++, txbits >>= 1)
-		if (txbits & 1)
-			sum += *coeff;
-		else
-			sum -= *coeff;
-	return sum;
-}
-
-#endif /* __i386__ */
-
-/* --------------------------------------------------------------------- */
-
-static const struct modemparams modparams[] = {
-        { "bps", "Bits/s", "Bits per second", "9600", MODEMPAR_NUMERIC, { n: { 4800, 38400, 100, 1200 } } },
-	{ "filter", "Filter Curve", "Filter Curve", "filter", MODEMPAR_COMBO, 
-	  { c: { { "df9ic", "rootraisedcosine", "raisedcosine", "hamming" } } } },
-        { NULL }
-        
-};
-
-static void *modconfig(struct modemchannel *chan, unsigned int *samplerate, const char *params[])
-{
-        struct modstate *s;
-	unsigned int i;
-        
-        if (!(s = calloc(1, sizeof(struct modstate))))
-                logprintf(MLOG_FATAL, "out of memory\n");
-        s->chan = chan;
-        if (params[0]) {
-                s->bps = strtoul(params[0], NULL, 0);
-                if (s->bps < 4800)
-                        s->bps = 4800;
-                if (s->bps > 38400)
-                        s->bps= 38400;
-        } else
-                s->bps = 9600;
-	s->filtermode = 0;
-	if (params[1]) {
-		for (i = 1; i < 4; i++)
-			if (!strcmp(params[1], modparams[1].u.c.combostr[i])) {
-				s->filtermode = i;
-				break;
-			}
-	}
-	*samplerate = s->bps + s->bps / 2;
-	return s;
-}
-
-static void modinit(void *state, unsigned int samplerate)
-{
-        struct modstate *s = (struct modstate *)state;
-	int i, j;
-	float f1, f2, time, alphatime;
-	float c[NUMFILTER * FILTERLEN];
-
-	s->phaseinc = (s->bps << 16) / samplerate;
-	switch (s->filtermode) {
-	case 1:  /* root raised cosine */
-		for (i = 0; i < NUMFILTER * FILTERLEN; i++) {
-			time = i - (NUMFILTER * FILTERLEN - 1.0) / 2.0;
-			time *= (1.0 / NUMFILTER);
-			c[i] = root_raised_cosine_time(time, RCOSALPHA);
-		}
-		break;
-
-	case 2:  /* raised cosine */
-		for (i = 0; i < NUMFILTER * FILTERLEN; i++) {
-			time = i - (NUMFILTER * FILTERLEN - 1.0) / 2.0;
-			time *= (1.0 / NUMFILTER);
-			c[i] = raised_cosine_time(time, RCOSALPHA);
-		}
-		break;
-
-	case 3:  /* hamming */
-		for (i = 0; i < NUMFILTER * FILTERLEN; i++) {
-			f1 = i - (NUMFILTER * FILTERLEN - 1.0) / 2.0;
-			f1 *= (FILTERRELAX / NUMFILTER);
-			f2 = i * (1.0 / (NUMFILTER * FILTERLEN - 1.0));
-			c[i] = sinc(f1) * hamming(f2);
-		}
-		break;
-
-	default:  /* DF9IC */
-		for (i = 0; i < NUMFILTER * FILTERLEN; i++) {
-			time = i - (NUMFILTER * FILTERLEN - 1.0) / 2.0;
-			time *= (1.0 / NUMFILTER);
-			c[i] = df9ic_txfilter(time);
-		}
-		break;
-	}
-	f1 = 0;
-	for (i = 0; i < NUMFILTER; i++) {
-		for (f2 = 0, j = i; j < NUMFILTER * FILTERLEN; j += NUMFILTER)
-			f2 += fabs(c[j]);
-		if (f2 > f1)
-			f1 = f2;
-	}
-	f1 = 32767.0 / f1;
-	for (i = 0; i < NUMFILTER; i++)
-		for (j = 0; j < FILTERLEN; j++)
-			s->filter[i][j] = f1 * c[j * NUMFILTER + i];
-}
-
-static void modsendbits(struct modstate *s, unsigned char *data, unsigned int nrbits)
-{
-        int16_t sbuf[512];
-        int16_t *sptr = sbuf, *eptr = sbuf + sizeof(sbuf)/sizeof(sbuf[0]);
-	unsigned int bitcnt, bits;
-
-	bits = *data++;
-	bitcnt = 0;
-	while (bitcnt < nrbits) {
-		s->phase += s->phaseinc;
-		if (s->phase >= 0x10000) {
-			s->phase &= 0xffff;
-			bitcnt++;
-			s->scram = (s->scram << 1) | ((s->scram ^ bits ^ 1) & 1);
-			bits >>= 1;
-			if (s->scram & (SCRAM17_TAP1 << 1))
-				s->scram ^= SCRAM17_TAPN << 1;
-			s->txbits = (s->txbits << 1) | ((s->scram >> DESCRAM17_TAPSH3) & 1);
-			if (!(bitcnt & 7))
-				bits = *data++;
-		}
-		*sptr++ = mfilter(s->txbits, s->filter[FILTERIDX(s->phase)], FILTERLEN);
-		if (sptr >= eptr) {
-			audiowrite(s->chan, sbuf, sptr - sbuf);
-			sptr = sbuf;
-		}
-	}
-        audiowrite(s->chan, sbuf, sptr - sbuf);
-}
-
-static void modmodulate(void *state, unsigned int txdelay)
-{
-        struct modstate *s = (struct modstate *)state;
-        unsigned char ch[8];
-        unsigned int i, j;
-
-        i = txdelay * s->bps / 1000;
-	if (i < 24)
-		i = 24;
-	memset(ch, 0x7e, sizeof(ch));
-	while (i > 0) {
-		j = i;
-		if (j > 8*sizeof(ch))
-			j = 8*sizeof(ch);
-		modsendbits(s, ch, j);
-		i -= j;
-	}
-        while (pktget(s->chan, ch, sizeof(ch)))
-                modsendbits(s, ch, 8*sizeof(ch));
-	ch[0] = ch[1] = 0x7e;
-	modsendbits(s, ch, 16);
-}
-
-struct modulator fskeqmodulator = {
-        NULL,
-        "fskeq",
-        modparams,
-        modconfig,
-        modinit,
-        modmodulate,
-	free
-};
 
 /* --------------------------------------------------------------------- */
 
@@ -384,8 +152,8 @@ static int16_t equalizer(struct demodstate *s, int16_t s1, int16_t s2)
 
 static const struct modemparams demodparams[] = {
         { "bps", "Bits/s", "Bits per second", "9600", MODEMPAR_NUMERIC, { n: { 4800, 38400, 100, 1200 } } },
-	{ "filter", "Filter Curve", "Filter Curve", "filter", MODEMPAR_COMBO, 
-	  { c: { { "df9ic", "rootraisedcosine", "raisedcosine", "hamming" } } } },
+	{ "filter", "Filter Curve", "Filter Curve", "df9ic/g3ruh", MODEMPAR_COMBO, 
+	  { c: { { "df9ic/g3ruh", "rootraisedcosine", "raisedcosine", "hamming" } } } },
         { NULL }
         
 };
@@ -569,7 +337,7 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 		if (max2 > max1)
 			max1 = max2;
 	}
-	max2 = ((float)0x7fffffff / (float)0x7fff) / max1;
+	max2 = ((float)0x3fffffff / (float)0x7fff) / max1;
 	for (i = 0; i < FILTEROVER; i++) {
 		f1 = 0;
 		for (j = 0; j < s->firlen; j++) {
@@ -578,12 +346,27 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 		}
 		pulseen[i] = f1;
 	}
+#if 1
+	if (logcheck(258)) {
+		char buf[4096];
+		char *cp = buf;
+		for (i = 0; i < FILTEROVER*s->firlen; i++)
+			cp += snprintf(cp, buf + sizeof(buf) - cp, " %f", coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER]);
+		logprintf(258, "fsk: rxp  = [%s];\n", buf+1);
+		for (i = 0; i < FILTEROVER; i++) {
+			cp = buf;
+			for (j = 0; j < s->firlen; j++)
+				cp += snprintf(cp, buf + sizeof(buf) - cp, " %d", s->filter[i][j]);
+			logprintf(258, "fsk: rxp%u = [%s];\n", i, buf+1);
+		}
+	}
+#endif
 	if (logcheck(257)) {
 		char buf[512];
 		char *cp = buf;
 		for (i = 0; i < FILTEROVER; i++)
 			cp += sprintf(cp, ", %6.2gdB", 10*M_LOG10E*log(pulseen[i]) - 10*M_LOG10E*log(32768.0 * (1<<16)));
-		logprintf(257, "fsk: txpulse energies: %s\n", buf+2);
+		logprintf(257, "fsk: rxpulse energies: %s\n", buf+2);
 	}
 	s->pllinc = (0x10000 * samplerate + s->bps/2) / s->bps;
 	s->pll = 0;

@@ -1,9 +1,9 @@
 /*****************************************************************************/
 
 /*
- *      raisedcosine.h  --  Raised Cosine Functions.
+ *      hamming.c  --  Hamming Window.
  *
- *      Copyright (C) 2002
+ *      Copyright (C) 1999-2000, 2003
  *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -31,25 +31,14 @@
 #include "config.h"
 #endif
 
-#ifndef _RAISEDCOSINE_H
-#define _RAISEDCOSINE_H
+#include <math.h>
+#include <float.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#include "raisedcosine.h"
 
 /* --------------------------------------------------------------------- */
 
-extern double sinc(double x);
-extern double hamming(double x);
-extern double raised_cosine_time(double time, double alpha);
-extern double raised_cosine_freq(double freq, double alpha);
-extern double root_raised_cosine_time(double time, double alpha);
-extern double root_raised_cosine_freq(double freq, double alpha);
-
-/* --------------------------------------------------------------------- */
-#ifdef  __cplusplus
+double hamming(double x)
+{
+        return 0.54-0.46*cos(2*M_PI*x);
 }
-#endif
-
-#endif /* _RAISEDCOSINE_H */

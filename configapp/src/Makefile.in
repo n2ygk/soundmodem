@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -144,7 +144,7 @@ soundmodemconfig_SOURCES = \
 
 
 soundmodemconfig_LDADD = ../../soundcard/liblog.a ../../soundcard/libaudioio.a ../../soundcard/libpttio.a \
-			../../matlib/libmat.a ../../libmisc/libmisc.a $(MODEMLIBS) ../../soundcard/libcommon.a \
+			$(MODEMLIBS) ../../matlib/libmat.a ../../libmisc/libmisc.a ../../soundcard/libcommon.a \
 			@LIBTHREAD@ @GTK_LIBS@ @XMLLIBS@ @AUDIOFILE_LIBS@ $(RCOBJ)
 
 soundmodemconfig_LDFLAGS = $(MWINDOWS)
@@ -166,17 +166,17 @@ support.$(OBJEXT) interface.$(OBJEXT) spectrum.$(OBJEXT) \
 scope.$(OBJEXT)
 @WIN32_TRUE@soundmodemconfig_DEPENDENCIES =  ../../soundcard/liblog.a \
 @WIN32_TRUE@../../soundcard/libaudioio.a ../../soundcard/libpttio.a \
-@WIN32_TRUE@../../matlib/libmat.a ../../libmisc/libmisc.a \
 @WIN32_TRUE@../../afsk/libafsk.a ../../fsk/libfsk.a \
 @WIN32_TRUE@../../pammodem/libpam.a ../../pskmodem/libpsk.a \
 @WIN32_TRUE@../../newqpsk/libnewqpsk.a ../../p3dmodem/libp3d.a \
+@WIN32_TRUE@../../matlib/libmat.a ../../libmisc/libmisc.a \
 @WIN32_TRUE@../../soundcard/libcommon.a configapp.res
 @WIN32_FALSE@soundmodemconfig_DEPENDENCIES =  ../../soundcard/liblog.a \
 @WIN32_FALSE@../../soundcard/libaudioio.a ../../soundcard/libpttio.a \
-@WIN32_FALSE@../../matlib/libmat.a ../../libmisc/libmisc.a \
 @WIN32_FALSE@../../afsk/libafsk.a ../../fsk/libfsk.a \
 @WIN32_FALSE@../../pammodem/libpam.a ../../pskmodem/libpsk.a \
 @WIN32_FALSE@../../newqpsk/libnewqpsk.a ../../p3dmodem/libp3d.a \
+@WIN32_FALSE@../../matlib/libmat.a ../../libmisc/libmisc.a \
 @WIN32_FALSE@../../soundcard/libcommon.a
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)

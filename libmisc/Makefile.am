@@ -4,5 +4,5 @@ noinst_LIBRARIES = libmisc.a
 
 noinst_HEADERS = raisedcosine.h
 
-libmisc_a_SOURCES = sinc.c rctime.c rcfreq.c rrctime.c rrcfreq.c
+libmisc_a_SOURCES = sinc.c hamming.c rctime.c rcfreq.c rrctime.c rrcfreq.c
 libmisc_a_LIBADD = @LIBOBJS@

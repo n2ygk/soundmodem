@@ -36,33 +36,10 @@
 
 #include "raisedcosine.h"
 
-#include "fskic.h"
-
 /* --------------------------------------------------------------------- */
 
-static double df9ic_rxfilter(double t)
-{
-	unsigned int i;
-	double sum = 0;
-
-	t *= FSKIC_RXOVER;
-	t -= 0.5 * sizeof(fskic_rxpulse) / sizeof(fskic_rxpulse[0]);
-	for (i = 0; i < sizeof(fskic_rxpulse) / sizeof(fskic_rxpulse[0]); i++)
-		sum += fskic_rxpulse[i] * sinc(i - t);
-	return sum;
-}
-
-static double df9ic_txfilter(double t)
-{
-	unsigned int i;
-	double sum = 0;
-
-	t *= FSKIC_TXOVER;
-	t -= 0.5 * sizeof(fskic_txpulse) / sizeof(fskic_txpulse[0]);
-	for (i = 0; i < sizeof(fskic_txpulse) / sizeof(fskic_txpulse[0]); i++)
-		sum += fskic_txpulse[i] * sinc(i - t);
-	return sum;
-}
+extern double df9ic_rxfilter(double t);
+extern double df9ic_txfilter(double t);
 
 /* --------------------------------------------------------------------- */
 
@@ -133,8 +110,8 @@ static inline int32_t mfilter(unsigned txbits, const int16_t *coeff, int len)
 
 static const struct modemparams modparams[] = {
         { "bps", "Bits/s", "Bits per second", "9600", MODEMPAR_NUMERIC, { n: { 4800, 38400, 100, 1200 } } },
-	{ "filter", "Filter Curve", "Filter Curve", "filter", MODEMPAR_COMBO, 
-	  { c: { { "df9ic", "rootraisedcosine", "raisedcosine", "hamming" } } } },
+	{ "filter", "Filter Curve", "Filter Curve", "df9ic/g3ruh", MODEMPAR_COMBO, 
+	  { c: { { "df9ic/g3ruh", "rootraisedcosine", "raisedcosine", "hamming" } } } },
         { NULL }
         
 };
@@ -220,6 +197,21 @@ static void modinit(void *state, unsigned int samplerate)
 	for (i = 0; i < NUMFILTER; i++)
 		for (j = 0; j < FILTERLEN; j++)
 			s->filter[i][j] = f1 * c[j * NUMFILTER + i];
+#if 1
+	if (logcheck(258)) {
+		char buf[4096];
+		char *cp = buf;
+		for (i = 0; i < NUMFILTER * FILTERLEN; i++)
+			cp += snprintf(cp, buf + sizeof(buf) - cp, " %f", f1 * c[i]);
+		logprintf(258, "fsk: txp  = [%s];\n", buf+1);
+		for (i = 0; i < NUMFILTER; i++) {
+			cp = buf;
+			for (j = 0; j < FILTERLEN; j++)
+				cp += snprintf(cp, buf + sizeof(buf) - cp, " %d", s->filter[i][j]);
+			logprintf(258, "fsk: txp%u = [%s];\n", i, buf+1);
+		}
+	}
+#endif
 }
 
 static void modsendbits(struct modstate *s, unsigned char *data, unsigned int nrbits)
@@ -384,8 +376,8 @@ static int16_t equalizer(struct demodstate *s, int16_t s1, int16_t s2)
 
 static const struct modemparams demodparams[] = {
         { "bps", "Bits/s", "Bits per second", "9600", MODEMPAR_NUMERIC, { n: { 4800, 38400, 100, 1200 } } },
-	{ "filter", "Filter Curve", "Filter Curve", "filter", MODEMPAR_COMBO, 
-	  { c: { { "df9ic", "rootraisedcosine", "raisedcosine", "hamming" } } } },
+	{ "filter", "Filter Curve", "Filter Curve", "df9ic/g3ruh", MODEMPAR_COMBO, 
+	  { c: { { "df9ic/g3ruh", "rootraisedcosine", "raisedcosine", "hamming" } } } },
         { NULL }
         
 };
@@ -569,7 +561,7 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 		if (max2 > max1)
 			max1 = max2;
 	}
-	max2 = ((float)0x7fffffff / (float)0x7fff) / max1;
+	max2 = ((float)0x3fffffff / (float)0x7fff) / max1;
 	for (i = 0; i < FILTEROVER; i++) {
 		f1 = 0;
 		for (j = 0; j < s->firlen; j++) {
@@ -578,12 +570,27 @@ static void demodinit(void *state, unsigned int samplerate, unsigned int *bitrat
 		}
 		pulseen[i] = f1;
 	}
+#if 1
+	if (logcheck(258)) {
+		char buf[4096];
+		char *cp = buf;
+		for (i = 0; i < FILTEROVER*s->firlen; i++)
+			cp += snprintf(cp, buf + sizeof(buf) - cp, " %f", coeff[((unsigned)i) % FILTEROVER][((unsigned)i) / FILTEROVER]);
+		logprintf(258, "fsk: rxp  = [%s];\n", buf+1);
+		for (i = 0; i < FILTEROVER; i++) {
+			cp = buf;
+			for (j = 0; j < s->firlen; j++)
+				cp += snprintf(cp, buf + sizeof(buf) - cp, " %d", s->filter[i][j]);
+			logprintf(258, "fsk: rxp%u = [%s];\n", i, buf+1);
+		}
+	}
+#endif
 	if (logcheck(257)) {
 		char buf[512];
 		char *cp = buf;
 		for (i = 0; i < FILTEROVER; i++)
 			cp += sprintf(cp, ", %6.2gdB", 10*M_LOG10E*log(pulseen[i]) - 10*M_LOG10E*log(32768.0 * (1<<16)));
-		logprintf(257, "fsk: txpulse energies: %s\n", buf+2);
+		logprintf(257, "fsk: rxpulse energies: %s\n", buf+2);
 	}
 	s->pllinc = (0x10000 * samplerate + s->bps/2) / s->bps;
 	s->pll = 0;

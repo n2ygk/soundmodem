@@ -160,6 +160,7 @@ extern struct demodulator afskdemodulator;
 extern struct modulator fskmodulator;
 extern struct demodulator fskdemodulator;
 extern struct demodulator fskpspdemodulator;
+extern struct demodulator fskeqdemodulator;
 
 extern struct modulator pammodulator;
 extern struct demodulator pamdemodulator;

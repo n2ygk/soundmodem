@@ -33,7 +33,7 @@ soundmodemconfig_SOURCES = \
 	scope.c scope.h
 
 soundmodemconfig_LDADD = ../../soundcard/liblog.a ../../soundcard/libaudioio.a ../../soundcard/libpttio.a \
-			../../matlib/libmat.a ../../libmisc/libmisc.a $(MODEMLIBS) ../../soundcard/libcommon.a \
+			$(MODEMLIBS) ../../matlib/libmat.a ../../libmisc/libmisc.a ../../soundcard/libcommon.a \
 			@LIBTHREAD@ @GTK_LIBS@ @XMLLIBS@ @AUDIOFILE_LIBS@ $(RCOBJ)
 soundmodemconfig_LDFLAGS = $(MWINDOWS)
 

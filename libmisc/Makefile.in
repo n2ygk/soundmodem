@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -125,7 +125,7 @@ noinst_LIBRARIES = libmisc.a
 
 noinst_HEADERS = raisedcosine.h
 
-libmisc_a_SOURCES = sinc.c rctime.c rcfreq.c rrctime.c rrcfreq.c
+libmisc_a_SOURCES = sinc.c hamming.c rctime.c rcfreq.c rrctime.c rrcfreq.c
 libmisc_a_LIBADD = @LIBOBJS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -138,8 +138,8 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libmisc_a_DEPENDENCIES =  @LIBOBJS@
-libmisc_a_OBJECTS =  sinc.$(OBJEXT) rctime.$(OBJEXT) rcfreq.$(OBJEXT) \
-rrctime.$(OBJEXT) rrcfreq.$(OBJEXT)
+libmisc_a_OBJECTS =  sinc.$(OBJEXT) hamming.$(OBJEXT) rctime.$(OBJEXT) \
+rcfreq.$(OBJEXT) rrctime.$(OBJEXT) rrcfreq.$(OBJEXT)
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -154,9 +154,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/getopt.P .deps/getopt1.P .deps/openpty.P \
-.deps/random.P .deps/rcfreq.P .deps/rctime.P .deps/rrcfreq.P \
-.deps/rrctime.P .deps/sinc.P .deps/vsnprintf.P
+DEP_FILES =  .deps/getopt.P .deps/getopt1.P .deps/hamming.P \
+.deps/openpty.P .deps/random.P .deps/rcfreq.P .deps/rctime.P \
+.deps/rrcfreq.P .deps/rrctime.P .deps/sinc.P .deps/vsnprintf.P
 SOURCES = $(libmisc_a_SOURCES)
 OBJECTS = $(libmisc_a_OBJECTS)
 

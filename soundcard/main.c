@@ -3,7 +3,7 @@
 /*
  *      main.c  --  Soundmodem main.
  *
- *      Copyright (C) 1999-2001
+ *      Copyright (C) 1999-2001, 2003
  *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -477,9 +477,10 @@ int main(int argc, char *argv[])
 {
 	afskmodulator.next = &fskmodulator;
 	afskdemodulator.next = &fskdemodulator;
-	fskmodulator.next = &pammodulator;
-	fskdemodulator.next = &fskpspdemodulator;
-	fskpspdemodulator.next = &pamdemodulator;
+        fskmodulator.next = &pammodulator;
+        fskdemodulator.next = &fskpspdemodulator;
+        fskpspdemodulator.next = &fskeqdemodulator;
+        fskeqdemodulator.next = &pamdemodulator;
 	pammodulator.next = &pskmodulator;
 	pamdemodulator.next = &pskdemodulator;
 	pskmodulator.next = &newqpskmodulator;

@@ -47,6 +47,8 @@ extern struct demodulator afskdemodulator;
 extern struct modulator fskmodulator;
 extern struct demodulator fskdemodulator;
 extern struct demodulator fskpspdemodulator;
+extern struct modulator fskeqmodulator;
+extern struct demodulator fskeqdemodulator;
 
 extern struct modulator pammodulator;
 extern struct demodulator pamdemodulator;
@@ -535,7 +537,8 @@ int main (int argc, char *argv[])
         afskdemodulator.next = &fskdemodulator;
         fskmodulator.next = &pammodulator;
         fskdemodulator.next = &fskpspdemodulator;
-        fskpspdemodulator.next = &pamdemodulator;
+        fskpspdemodulator.next = &fskeqdemodulator;
+        fskeqdemodulator.next = &pamdemodulator;
         pammodulator.next = &pskmodulator;
         pamdemodulator.next = &pskdemodulator;
 	pskmodulator.next = &newqpskmodulator;
