@@ -175,32 +175,33 @@ template<typename T> static void fft_rif(complex<T> *data, unsigned int nn, int 
 
 /* ---------------------------------------------------------------------- */
 
-static void printfcoeff(ostream& os)
+static void printfcoeff(ostream& os, unsigned int fftsz, double over)
 {
-	complex<double> fftb[8192];
+	complex<double> fftb[fftsz];
 
-	for (unsigned int i = 1; i < 4096; i++)
-		fftb[i] = rxfilter(i * (16.0 / 4096));
+	over /= fftsz;
+	for (unsigned int i = 1; i < fftsz/2; i++)
+		fftb[i] = rxfilter(i * over);
 	fftb[0] = complex<double>(fftb[1].real(), 0);
-	fftb[4096] = 0;
-	for (unsigned int i = 1; i < 4096; i++)
-		fftb[8192-i] = conj(fftb[i]);
+	fftb[fftsz/2] = 0;
+	for (unsigned int i = 1; i < fftsz/2; i++)
+		fftb[fftsz-i] = conj(fftb[i]);
 
        	os << "# name: f\n"
 		"# type: complex matrix\n"
-		"# rows: " << 8192 << "\n"
+		"# rows: " << fftsz << "\n"
 		"# columns: 1\n";
-	for (unsigned int i = 0; i < 8192; i++)
+	for (unsigned int i = 0; i < fftsz; i++)
 		os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
 
 
 
-	fft_rif(fftb, 8192, -1);
+	fft_rif(fftb, fftsz, -1);
        	os << "# name: rx\n"
 		"# type: complex matrix\n"
-		"# rows: " << 8192 << "\n"
+		"# rows: " << fftsz << "\n"
 		"# columns: 1\n";
-	for (unsigned int i = 0; i < 8192; i++)
+	for (unsigned int i = 0; i < fftsz; i++)
 		os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
 }
 
@@ -209,6 +210,6 @@ static void printfcoeff(ostream& os)
 int main(int argc, char *argv[])
 {
 	printtransferfunc(cout, 4096, 16);
-	printfcoeff(cout);
+	printfcoeff(cout, 2048, 16);
         return 0;
 }
