@@ -45,7 +45,7 @@ case "$1" in
 	RETVAL=$?
         ;;
   status)
-	status sendmail
+	status soundmodem
 	RETVAL=$?
 	;;
   *)
