@@ -296,7 +296,8 @@ template<typename T> void mcholapply(const T *g, const T *b, T *c, unsigned int 
 
 template<typename T> void mchol(const T *a, const T *b, T *c, unsigned int d)
 {
-	T *g = (T *)alloca(d*d*sizeof(g[0]));
+	T *g;
+	g = (T *)alloca(d*d*sizeof(g[0]));
 	mcholfactor(a, g, d);
 	mcholapply(g, b, c, d);
 }
