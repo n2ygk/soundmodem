@@ -22,3 +22,5 @@ filter-i386.h:	genfilt$(EXEEXT)
 		./genfilt > filter-i386.h
 
 endif
+
+EXTRA_DIST = README.newqpsk

@@ -59,6 +59,7 @@ void init_filter(struct filter *f, float rate, float f1, float f2)
 		f->filtQ[i % NumFilters][i / NumFilters] = -x;
 	}
 
+	max = 0.0;
 	for (i = 0; i < NumFilters; i++) {
 		sum = 0.0;
 		for (j = 0; j < AliasFilterLen; j++)

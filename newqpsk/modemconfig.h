@@ -31,8 +31,6 @@
 #define RxTuneTimeout		56
 
 #define RxAverFollow		4
-#define RxMinTune		16
-#define RxMinSync		16
 
 #define RxUpdateHold		16
 #define DCDTuneAverWeight	(1.0/16.0)
@@ -43,8 +41,6 @@
 #define	RxSyncCorrThres		8
 
 #define TxMinIdle		50
-#define TxTuneLen		32
-#define TxSyncLen		32
 #define TxPreData		2
 #define TxPostData		1
 #define TxJamLen		16

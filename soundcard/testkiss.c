@@ -39,7 +39,11 @@
 /* ---------------------------------------------------------------------- */
 
 static struct modemchannel chan = {
-	NULL, &state, NULL, NULL, NULL, NULL, 0, {}, { 0, }
+	NULL, &state, NULL, NULL, NULL, NULL, 0, 
+#if 0
+	/* gcc3 no longer accepts {} as initializer */
+	{}, { 0, }
+#endif
 };
 
 struct state state = {

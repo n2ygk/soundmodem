@@ -848,18 +848,22 @@ void pktinitmkiss(struct modemchannel *chan, const char *params[])
                 logerr(MLOG_FATAL, "ioctl: SIOCSIFENCAP");
 	/* try to set the interface name */
 	if (params[0]) {
-		if (ioctl(master, SIOCGIFNAME, ifr.ifr_name) == -1)
-			logerr(MLOG_FATAL, "ioctl: SIOCGIFNAME");
+                if (ioctl(master, SIOCGIFNAME, &ifr) == -1)
+                        logerr(MLOG_FATAL, "ioctl: SIOCGIFNAME");
                 if (strcmp(params[0], ifr.ifr_name)) {
+                        if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
+                                logerr(MLOG_FATAL, "socket (setifname)");
                         strncpy(ifr.ifr_newname, params[0], sizeof(ifr.ifr_newname));
-                        if (ioctl(master, SIOCSIFNAME, &ifr) == -1) {
+                        ifr.ifr_newname[sizeof(ifr.ifr_newname) - 1] = 0;
+                        if (ioctl(fd, SIOCSIFNAME, &ifr) == -1) {
                                 logerr(1, "ioctl: SIOCSIFNAME");
                                 logprintf(1, "mkiss: cannot set ifname to %s, using %s (old kernel version?)\n",
                                           params[0], ifr.ifr_name);
                         }
+                        close(fd);
                 }
 	}
-	if (ioctl(master, SIOCGIFNAME, ifr.ifr_name) == -1)
+	if (ioctl(master, SIOCGIFNAME, &ifr) == -1)
 		logerr(MLOG_FATAL, "ioctl: SIOCGIFNAME");
 	strncpy(chan->pkt.kiss.ifname, ifr.ifr_name, sizeof(chan->pkt.kiss.ifname));
 	/* start the interface */

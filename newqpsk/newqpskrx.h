@@ -9,6 +9,8 @@ struct rxstate {
 	struct filter filt;
 	unsigned int bps;
 	unsigned int shreg;
+	unsigned int mintune;
+	unsigned int minsync;
 	void (*rxroutine) (void *);
 	float *rxwindowfunc;
 	unsigned int rxphase;

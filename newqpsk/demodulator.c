@@ -47,6 +47,8 @@ static const struct modemparams demodparams[] = {
 	{ "bps", "Bits/s", "Bits per second", "2500", MODEMPAR_NUMERIC, { n: { 1000, 5000, 100, 500 } } },
 	{ "inlv", "Interleave", "Interleave depth", "8", MODEMPAR_NUMERIC, { n: { 0, 16, 1, 4 } } },
 	{ "fec", "FEC", "FEC level", "3", MODEMPAR_NUMERIC, { n: { 0, 3, 1, 1 } } },
+	{ "mintune", "Tune length", "Minimum tune preamble length", "16", MODEMPAR_NUMERIC, { n: { 0, 32, 1, 1 } } },
+	{ "minsync", "Sync length", "Minimum sync preamble length", "16", MODEMPAR_NUMERIC, { n: { 8, 32, 1, 1 } } },
 	{ NULL }
 };
 
@@ -83,6 +85,22 @@ static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, co
 			s->fec.feclevel = 3;
 	} else
 		s->fec.feclevel = 3;
+	if (params[3]) {
+		s->mintune = strtoul(params[3], NULL, 0);
+		if (s->mintune < 0)
+			s->mintune = 0;
+		if (s->mintune > 32)
+			s->mintune = 32;
+	} else
+		s->mintune = 16;
+	if (params[4]) {
+		s->minsync = strtoul(params[4], NULL, 0);
+		if (s->minsync < 8)
+			s->minsync = 8;
+		if (s->minsync > 32)
+			s->minsync = 32;
+	} else
+		s->mintune = 16;
 	*samplerate = (int) (3.0 * SAMPLERATE(s->bps) + 0.5);
 	return s;
 }

@@ -13,6 +13,8 @@ struct txstate {
 	unsigned int bps;
 	unsigned int shreg;
 	unsigned int bufsize;
+	unsigned int tunelen;
+	unsigned int synclen;
 	void (*txroutine) (void *);
 	int statecntr;
 	int tuneonly;

@@ -96,9 +96,9 @@ static struct {
         unsigned int traceupd;
         void *modstate, *demodstate;
 	unsigned int bitrate;
-        pthread_t rxthread, txthread;
         pthread_cond_t txcond;
         pthread_mutex_t txmutex;
+        pthread_t rxthread, txthread;
 	struct pttio pttio;
 	struct audioio *audioio;
 #ifdef TXTERMNOCANCEL
@@ -111,7 +111,11 @@ static struct {
 	{ 0, 0, 0, 0, },
         0,
         NULL, NULL, 0,
-        { }, { }, PTHREAD_COND_INITIALIZER, PTHREAD_MUTEX_INITIALIZER
+	PTHREAD_COND_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+#if 0
+	/* gcc3 no longer accepts {} as initializer */
+        { }, { },
+#endif
 };
 
 /* ---------------------------------------------------------------------- */

@@ -3,8 +3,8 @@
 /*
  *      ptt.c  --  PTT signalling.
  *
- *      Copyright (C) 1999-2000
- *        Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *      Copyright (C) 1999-2000, 2002
+ *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -52,11 +52,17 @@
 #include "ppdev.h"
 #endif
 
+#if defined HAVE_STRING_H
+# include <string.h>
+#else
+# include <strings.h>
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 struct modemparams pttparams[] = {
-	{ "file", "PTT Driver", "Path name of the serial or parallel port driver for outputting PTT", "/dev/ttyS0", MODEMPAR_COMBO, 
-	  { c: { { "/dev/ttyS0", "/dev/ttyS1", "/dev/parport0", "/dev/parport1" } } } },
+	{ "file", "PTT Driver", "Path name of the serial or parallel port driver for outputting PTT", "none", MODEMPAR_COMBO, 
+	  { c: { { "none", "/dev/ttyS0", "/dev/ttyS1", "/dev/parport0", "/dev/parport1" } } } },
 	{ NULL }
 };
 
@@ -69,10 +75,13 @@ int pttinit(struct pttio *state, const char *params[])
 	unsigned char x;
 	unsigned int y = 0;
 
-	if (!path || !path[0])
+	if (!path || !path[0] || !strcasecmp(path, "none")) {
+		state->fd = -1;
 		return 0;
+	}
 	if ((fd = open(path, O_RDWR, 0)) < 0) {
 		logprintf(MLOG_ERROR, "Cannot open PTT device \"%s\"\n", path);
+		state->fd = -1;
 		return -1;
 	}
 	if (!ioctl(fd, TIOCMBIC, &y)) {
@@ -94,14 +103,21 @@ int pttinit(struct pttio *state, const char *params[])
 void pttsetptt(struct pttio *state, int pttx)
 {
 	unsigned char reg;
-	unsigned char y = TIOCM_RTS;
 
 	if (!state || state->fd == -1)
 		return;
 	state->ptt = !!pttx;
-	if (state->mode == serport)
+	if (state->mode == serport) {
+#if 0
+		unsigned int y = TIOCM_RTS;
 		ioctl(state->fd, state->ptt ? TIOCMBIS : TIOCMBIC, &y);
-	else if (state->mode == parport) {
+#else
+		unsigned int y;
+		ioctl(state->fd, TIOCMGET, &y);
+		y |= TIOCM_RTS;
+		ioctl(state->fd, TIOCMSET, &y);
+#endif
+	} else if (state->mode == parport) {
 		reg = state->ptt | (state->dcd << 1);
 		ioctl(state->fd, PPWDATA, &reg);
 	}
@@ -110,14 +126,21 @@ void pttsetptt(struct pttio *state, int pttx)
 void pttsetdcd(struct pttio *state, int dcd)
 {
 	unsigned char reg;
-	unsigned char y = TIOCM_DTR;
 
 	if (!state || state->fd == -1)
 		return;
 	state->dcd = !!dcd;
-	if (state->mode == serport)
+	if (state->mode == serport) {
+#if 0
+		unsigned int y = TIOCM_DTR;
 		ioctl(state->fd, state->dcd ? TIOCMBIS : TIOCMBIC, &y);
-	else if (state->mode == parport) {
+#else
+		unsigned int y;
+		ioctl(state->fd, TIOCMGET, &y);
+		y |= TIOCM_DTR;
+		ioctl(state->fd, TIOCMSET, &y);
+#endif
+	} else if (state->mode == parport) {
 		reg = state->ptt | (state->dcd << 1);
 		ioctl(state->fd, PPWDATA, &reg);
 	}

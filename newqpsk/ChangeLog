@@ -1,3 +1,7 @@
+2001-01-19  Tomi Manninen  <tpm@oh2bns.ampr.org>
+
+	* Implemented runtime configurable tune/sync length adjustment
+
 2000-09-16  Tomi Manninen  <tpm@oh2bns.ampr.org>
 
 	* The modem now does variable sampling rates!

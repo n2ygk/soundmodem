@@ -29,16 +29,37 @@ void init_newqpskrx(void *state)
 
 	/* clear dcd */
 	pktsetdcd(s->chan, 0);
-	/* switch to idle mode */
-	s->rxroutine = rxidle;
-	s->rxwindowfunc = ToneWindowInp;
-	s->carrfreq = 0.0;
-	s->acceptance = 0;
-	for (i = 0; i < TuneCarriers; i++) {
-		s->tunepower[i] = 0.0;
-		s->tunephase[i] = 0.0;
-		s->tunecorr[i].re = 0.0;
-		s->tunecorr[i].im = 0.0;
+	if (s->mintune != 0) {
+		/* switch to idle mode */
+		s->rxroutine = rxidle;
+		s->rxwindowfunc = ToneWindowInp;
+		s->carrfreq = 0.0;
+		s->acceptance = 0;
+		for (i = 0; i < TuneCarriers; i++) {
+			s->tunepower[i] = 0.0;
+			s->tunephase[i] = 0.0;
+			s->tunecorr[i].re = 0.0;
+			s->tunecorr[i].im = 0.0;
+		}
+	} else {
+		/* switch to tune mode */
+		s->rxroutine = rxtune;
+		s->rxwindowfunc = DataWindowInp;
+		s->atsymbol = 1;
+		s->acceptance = 0;
+		for (i = 0; i < TuneCarriers; i++) {
+			s->power_at[i] = s->tunepower[i];
+			s->corr1_at[i].re = s->tunepower[i];
+			s->corr1_at[i].im = 0.0;
+			s->corr2_at[i].re = s->tunepower[i];
+			s->corr2_at[i].im = 0.0;
+
+			s->power_inter[i] = s->tunepower[i];
+			s->corr1_inter[i].re = s->tunepower[i];
+			s->corr1_inter[i].im = 0.0;
+			s->corr2_inter[i].re = s->tunepower[i];
+			s->corr2_inter[i].im = 0.0;
+		}
 	}
 }
 
@@ -190,7 +211,7 @@ static void rxidle(void *state)
 	else if (s->acceptance > 0)
 		s->acceptance--;
 
-	if (s->acceptance < 2 * RxMinTune)
+	if (s->acceptance < 2 * s->mintune)
 		return;
 
 #ifdef RxAvoidPTT
@@ -248,7 +269,8 @@ static void rxtune(void *state)
 	complex *cor1, *cor2, z;
 	float *pwr, x;
 
-	if (s->statecntr-- <= 0) {
+	/* timeout only if mintune not zero */
+	if (s->mintune && s->statecntr-- <= 0) {
 		/* timeout waiting sync - go back to idling */
 		init_newqpskrx(state);
 		return;
@@ -307,8 +329,11 @@ static void rxtune(void *state)
 	else if (s->acceptance > 0)
 		s->acceptance--;
 
-	if (s->acceptance < RxMinSync)
+	if (s->acceptance < s->minsync)
 		return;
+
+	/* again, we have a carrier */
+	pktsetdcd(s->chan, 1);
 
 	cntr = 0;
 	for (i = 0; i < TuneCarriers; i++) {

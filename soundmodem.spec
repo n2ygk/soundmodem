@@ -1,5 +1,5 @@
 # Note that this is NOT a relocatable package
-%define ver      0.5
+%define ver      0.6
 %define rel      1
 %define prefix   /usr
 
@@ -42,7 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 
-%doc AUTHORS COPYING ChangeLog INSTALL NEWS README
+%doc AUTHORS COPYING ChangeLog INSTALL NEWS README newqpsk/README.newqpsk
 %{prefix}/sbin/*
 %{prefix}/bin/*
 %{prefix}/share/man/*/*

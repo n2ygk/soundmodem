@@ -47,6 +47,8 @@ static const struct modemparams modparams[] = {
 	{ "bps", "Bits/s", "Bits per second", "2500", MODEMPAR_NUMERIC, { n: { 1000, 5000, 100, 500 } } },
 	{ "inlv", "Interleave", "Interleave depth", "8", MODEMPAR_NUMERIC, { n: { 0, 16, 1, 4 } } },
 	{ "fec", "FEC", "FEC level", "3", MODEMPAR_NUMERIC, { n: { 0, 3, 1, 1 } } },
+	{ "tunelen", "Tune length", "Tune preamble length", "32", MODEMPAR_NUMERIC, { n: { 0, 64, 1, 1 } } },
+	{ "synclen", "Sync length", "Sync preamble length", "32", MODEMPAR_NUMERIC, { n: { 16, 64, 1, 1 } } },
 	{ NULL }
 };
 
@@ -83,6 +85,22 @@ static void *modconfig(struct modemchannel *chan, unsigned int *samplerate, cons
 			s->fec.feclevel = 3;
 	} else
 		s->fec.feclevel = 3;
+	if (params[3]) {
+		s->tunelen = strtoul(params[3], NULL, 0);
+		if (s->tunelen < 0)
+			s->tunelen = 0;
+		if (s->tunelen > 64)
+			s->tunelen = 64;
+	} else
+		s->tunelen = 32;
+	if (params[4]) {
+		s->synclen = strtoul(params[4], NULL, 0);
+		if (s->synclen < 16)
+			s->synclen = 16;
+		if (s->synclen > 64)
+			s->synclen = 64;
+	} else
+		s->synclen = 32;
 	*samplerate = (int) (3.0 * SAMPLERATE(s->bps) + 0.5);
 	return s;
 }
@@ -108,6 +126,10 @@ static void modmodulate(void *state, unsigned int txdelay)
 	int16_t *samples;
 	complex *cbuf;
 	int n, i;
+
+	/* ugly... txdelay must be non-zero and txtail zero */
+	if (txdelay == 0)
+		return;
 
 	samples = alloca(s->bufsize * sizeof(int16_t));
 	cbuf = alloca(s->bufsize * sizeof(complex));

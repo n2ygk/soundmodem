@@ -33,7 +33,7 @@ void init_newqpsktx(void *state)
 
 	/* switch to tune mode */
 	s->txroutine = txtune;
-	s->statecntr = TxTuneLen;
+	s->statecntr = s->tunelen;
 	s->txwindowfunc = ToneWindowOut;
 
 	/* copy initial tune vectors */
@@ -181,7 +181,7 @@ static void txtune(void *state)
 	if (!s->tuneonly && --s->statecntr <= 0) {
 		/* switch to sync mode */
 		s->txroutine = txsync;
-		s->statecntr = TxSyncLen;
+		s->statecntr = s->synclen;
 		s->txwindowfunc = DataWindowOut;
 	}
 }
