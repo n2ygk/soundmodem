@@ -87,7 +87,7 @@ int pttinit(struct pttio *state, const char *params[])
 	if (!ioctl(fd, TIOCMBIC, &y)) {
 		state->fd = fd;
 		state->mode = serport;
-	} else if (!ioctl(fd, PPRDATA, &x)) {
+	} else if (!ioctl(fd, PPCLAIM, 0) && !ioctl(fd, PPRDATA, &x)) {
 		state->fd = fd;
 		state->mode = parport;
 	} else {
