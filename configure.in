@@ -1,4 +1,4 @@
-AC_INIT(acconfig.h)
+AC_INIT(soundmodem.spec)
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE(soundmodem, 0.8)
@@ -21,6 +21,7 @@ AC_CHECK_PROG(RANLIB, ranlib, ranlib, :)
 AC_CHECK_PROG(DLLTOOL, dlltool, dlltool, dlltool)
 AC_CHECK_PROG(AS, as, as, as, as)
 AC_CHECK_PROG(AR, ar, ar, ar, ar)
+AC_CHECK_PROG(LD, ld, ld, ld, ld)
 AC_CHECK_PROG(WINDRES, windres, windres, i686-pc-cygwin-windres)
 
 AC_CYGWIN
@@ -29,7 +30,7 @@ AC_EXEEXT
 AC_OBJEXT
 
 dnl check for cross compiler path
-if test x$ac_cv_prog_cc_cross = xyes; then
+if test x$cross_compiling = xyes; then
   AC_MSG_CHECKING(for cross compiler path)
   if test -d /usr/local/cross/i686-pc-cygwin; then
     CROSSCOMPPATH=/usr/local/cross/i686-pc-cygwin
@@ -41,7 +42,7 @@ if test x$ac_cv_prog_cc_cross = xyes; then
   AC_MSG_RESULT($CROSSCOMPPATH)
 fi
 
-if test x$ac_cv_cygwin != xyes -a x$ac_cv_mingw32 != xyes; then
+if test x$CYGWIN != xyes -a x$MINGW32 != xyes; then
   AC_CHECK_LIB(m,sqrt)
 fi
 AC_CHECK_LIB(pthread32,pthread_create,LIBTHREAD="$LIBTHREAD -lpthread32",AC_CHECK_LIB(pthread,pthread_create,LIBTHREAD="$LIBTHREAD -lpthread"))
@@ -57,14 +58,14 @@ AC_MSG_CHECKING(for signed bittypes)
 signedbittypes=no
 AC_TRY_COMPILE([#include <sys/types.h>], 
      [ int8_t a; int16_t c; int32_t e; ],
-     AC_DEFINE(HAVE_SIGNED_BITTYPES) signedbittypes=yes)
+     AC_DEFINE(HAVE_SIGNED_BITTYPES,1,[define if bittypes like int16_t are defined]) signedbittypes=yes)
 AC_MSG_RESULT($signedbittypes)
 
 AC_MSG_CHECKING(for unsigned bittypes)
 unsignedbittypes=no
 AC_TRY_COMPILE([#include <sys/types.h>], 
      [ u_int8_t b; u_int16_t d; u_int32_t f; ],
-     AC_DEFINE(HAVE_UNSIGNED_BITTYPES) unsignedbittypes=yes)
+     AC_DEFINE(HAVE_UNSIGNED_BITTYPES,1,[define if bittypes like u_int16_t are defined]) unsignedbittypes=yes)
 AC_MSG_RESULT($unsignedbittypes)
 
 AC_TYPE_SIGNAL
@@ -73,14 +74,14 @@ AC_MSG_CHECKING(for M_PI)
 mpi=no
 AC_TRY_COMPILE([#include <math.h>], 
      [ double f = M_PI; ],
-     mpi=yes,AC_DEFINE(M_PI,3.14159265358979323846))
+     mpi=yes,AC_DEFINE(M_PI,3.14159265358979323846,[define if M_PI is not defined by math.h]))
 AC_MSG_RESULT($mpi)
 
 AC_MSG_CHECKING(for M_LOG10E)
 mlog10e=no
 AC_TRY_COMPILE([#include <math.h>], 
      [ double f = M_LOG10E; ],
-     mlog10e=yes,AC_DEFINE(M_LOG10E,0.43429448190325182765))
+     mlog10e=yes,AC_DEFINE(M_LOG10E,0.43429448190325182765,[define if M_LOG10E is not defined by math.h]))
 AC_MSG_RESULT($mlog10e)
 
 dnl Add the languages which your application supports here.
@@ -89,32 +90,32 @@ AM_GNU_GETTEXT
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
 if test "x${prefix}" = "xNONE"; then
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${ac_default_prefix}/${DATADIRNAME}/locale")
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR,"${ac_default_prefix}/${DATADIRNAME}/locale",[various directories])
 else
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${prefix}/${DATADIRNAME}/locale")
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR,"${prefix}/${DATADIRNAME}/locale",[various directories])
 fi
 
 dnl Set PACKAGE_DATA_DIR in config.h.
 if test "x${datadir}" = 'x${prefix}/share'; then
   if test "x${prefix}" = "xNONE"; then
-    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${ac_default_prefix}/share/${PACKAGE}")
+    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR,"${ac_default_prefix}/share/${PACKAGE}",[various directories])
   else
-    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${prefix}/share/${PACKAGE}")
+    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR,"${prefix}/share/${PACKAGE}",[various directories])
   fi
 else
-  AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${datadir}/${PACKAGE}")
+  AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR,"${datadir}/${PACKAGE}",[various directories])
 fi
 
 dnl Set PACKAGE_SOURCE_DIR in config.h.
 packagesrcdir=`cd $srcdir && pwd`
-AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
+AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR,"${packagesrcdir}",[various directories])
 
-if test x$ac_cv_cygwin = xyes -o x$ac_cv_mingw32 = xyes; then
-  AC_DEFINE(WIN32)
+if test x$CYGWIN = xyes -o x$MINGW32 = xyes; then
+  AC_DEFINE(WIN32,1,[define if compiling under Windows32])
   LIBS="$LIBS -ldsound -lgdi32"
 fi
 
-if test x$ac_cv_prog_cc_cross = xyes; then
+if test x$cross_compiling = xyes; then
   gtk=no
   xlibs="$LIBS"
   LIBS="$LIBS -L$CROSSCOMPPATH/gtk/lib"
@@ -141,7 +142,7 @@ if test "x$GCC" = "xyes"; then
   fi
 fi
 
-if test x$ac_cv_cygwin = xyes -o x$ac_cv_mingw32 = xyes; then
+if test x$CYGWIN = xyes -o x$MINGW32 = xyes; then
   XMLCFLAGS=
   XMLLIBS=
 else
@@ -172,14 +173,14 @@ AC_MSG_CHECKING(for DirectX includes)
 directx=no
 AC_TRY_COMPILE([#include <directx.h>], 
      [ LPDIRECTSOUND dsplay; LPDIRECTSOUNDCAPTURE dsrec; ],
-     AC_DEFINE(HAVE_DIRECTX) directx=yes)
+     AC_DEFINE(HAVE_DIRECTX,1,[define if we have DirectX includes]) directx=yes)
 AC_MSG_RESULT($directx)
 CFLAGS="$xcflags"
 
 AC_MSG_CHECKING(for ifr_newname in struct ifreq)
 ifrnewname=no
 AC_TRY_COMPILE([#include <linux/if.h>],
-     [struct ifreq ifr; ifr.ifr_newname[0]=0; ], AC_DEFINE(HAVE_IFRNEWNAME) ifrnewname=yes)
+     [struct ifreq ifr; ifr.ifr_newname[0]=0; ], AC_DEFINE(HAVE_IFRNEWNAME,1,[define if struct ifreq has the ifr_newname symbol]) ifrnewname=yes)
 AC_MSG_RESULT($ifrnewname)
 
 xlibs=$LIBS
@@ -195,7 +196,7 @@ AC_EGREP_CPP(yes,
      #ifdef N_AX25
        yes
      #endif
-     ], AC_DEFINE(HAVE_MKISS) mkiss=yes)
+     ], AC_DEFINE(HAVE_MKISS,1,[define if struct ifreq has the ifr_newname symbol]) mkiss=yes)
 AC_MSG_RESULT($mkiss)
 
 dnl Use -Wall if we have gcc.
@@ -225,11 +226,11 @@ AC_ARG_ENABLE(vis,
 esac],[usevis=false])
 
 if test x$usemmx = xtrue; then
-    AC_DEFINE(USEMMX)
+    AC_DEFINE(USEMMX,1,[define if MMX is to be used])
 fi
 
 if test x$usevis = xtrue; then
-    AC_DEFINE(USEVIS)
+    AC_DEFINE(USEVIS,1,[define if VIS is to be used])
     dnl CFLAGS="$CFLAGS -mv8plus -mvis -Wa,-xarch=v8plusa"
     CFLAGS="$CFLAGS -Wa,-xarch=v8plusa"
 fi
@@ -238,7 +239,7 @@ AM_CONDITIONAL(USEMMX, test x$usemmx = xtrue)
 AM_CONDITIONAL(USEVIS, test x$usevis = xtrue)
 AM_CONDITIONAL(CROSSCOMP, test x$cross_compiling = xyes)
 AM_CONDITIONAL(DIRECTX, test x$directx = xyes)
-AM_CONDITIONAL(WIN32, test x$ac_cv_cygwin = xyes -o x$ac_cv_mingw32 = xyes)
+AM_CONDITIONAL(WIN32, test x$CYGWIN = xyes -o x$MINGW32 = xyes)
 
 AC_SUBST(HAVE_BITTYPES)
 AC_SUBST(HAVE_DIRECTX)
@@ -255,6 +256,10 @@ AC_SUBST(GTK_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(WIN32)
+AC_SUBST(AR)
+AC_SUBST(AS)
+AC_SUBST(LD)
+AC_SUBST(RANLIB)
 
 AC_OUTPUT([Makefile
 po/Makefile.in

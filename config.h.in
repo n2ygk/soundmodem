@@ -1,45 +1,4 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/* define if M_PI is not defined by math.h */
-#undef M_PI
-
-/* define if M_LOG10E is not defined by math.h */
-#undef M_LOG10E
-
-/* define if bittypes like int16_t are defined */
-#undef HAVE_SIGNED_BITTYPES
-#undef HAVE_UNSIGNED_BITTYPES
-
-/* define if MMX is to be used */
-#undef USEMMX
-
-/* define if VIS is to be used */
-#undef USEVIS
-
-/* define if the MKISS line discipline is supported */
-#undef HAVE_MKISS
-
-/* define if struct ifreq has the ifr_newname symbol */
-#undef HAVE_IFRNEWNAME
-
-/* define if we have DirectX includes */
-#undef HAVE_DIRECTX
-
-/* define if National Language Support is requested */
-#undef ENABLE_NLS
-
-/* define if compiling under Windows32 */
-#undef WIN32
-
-/* NLS stuff */
-#undef HAVE_CATGETS
-#undef HAVE_GETTEXT
-#undef HAVE_LC_MESSAGES
-#undef HAVE_STPCPY
-
-/* various directories */
-#undef PACKAGE_LOCALE_DIR
-#undef PACKAGE_DATA_DIR
-#undef PACKAGE_SOURCE_DIR
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
@@ -69,6 +28,9 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 #undef HAVE_DCGETTEXT
+
+/* define if we have DirectX includes */
+#undef HAVE_DIRECTX
 
 /* Define to 1 if you have the `feof_unlocked' function. */
 #undef HAVE_FEOF_UNLOCKED
@@ -108,6 +70,9 @@
 
 /* Define if you have the iconv() function. */
 #undef HAVE_ICONV
+
+/* define if struct ifreq has the ifr_newname symbol */
+#undef HAVE_IFRNEWNAME
 
 /* Define if <inttypes.h> exists and doesn't clash with <sys/types.h>. */
 #undef HAVE_INTTYPES_H
@@ -164,6 +129,9 @@
 /* Define to 1 if you have the `mempcpy' function. */
 #undef HAVE_MEMPCPY
 
+/* define if struct ifreq has the ifr_newname symbol */
+#undef HAVE_MKISS
+
 /* Define to 1 if you have the `mlockall' function. */
 #undef HAVE_MLOCKALL
 
@@ -199,6 +167,9 @@
 
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
+
+/* define if bittypes like int16_t are defined */
+#undef HAVE_SIGNED_BITTYPES
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
@@ -276,6 +247,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* define if bittypes like u_int16_t are defined */
+#undef HAVE_UNSIGNED_BITTYPES
+
 /* Define if you have the unsigned long long type. */
 #undef HAVE_UNSIGNED_LONG_LONG
 
@@ -300,14 +274,29 @@
 /* Define if integer division by zero raises signal SIGFPE. */
 #undef INTDIV0_RAISES_SIGFPE
 
+/* define if M_LOG10E is not defined by math.h */
+#undef M_LOG10E
+
+/* define if M_PI is not defined by math.h */
+#undef M_PI
+
 /* Name of package */
 #undef PACKAGE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
+/* various directories */
+#undef PACKAGE_DATA_DIR
+
+/* various directories */
+#undef PACKAGE_LOCALE_DIR
+
 /* Define to the full name of this package. */
 #undef PACKAGE_NAME
+
+/* various directories */
+#undef PACKAGE_SOURCE_DIR
 
 /* Define to the full name and version of this package. */
 #undef PACKAGE_STRING
@@ -335,8 +324,17 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* define if MMX is to be used */
+#undef USEMMX
+
+/* define if VIS is to be used */
+#undef USEVIS
+
 /* Version number of package */
 #undef VERSION
+
+/* define if compiling under Windows32 */
+#undef WIN32
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

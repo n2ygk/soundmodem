@@ -100,6 +100,7 @@ INTLBISON = @INTLBISON@
 INTLLIBS = @INTLLIBS@
 INTLOBJS = @INTLOBJS@
 INTL_LIBTOOL_SUFFIX_PREFIX = @INTL_LIBTOOL_SUFFIX_PREFIX@
+LD = @LD@
 LIB = @LIB@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
@@ -143,7 +144,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
 	install-exec-recursive installdirs-recursive install-recursive \
 	uninstall-recursive check-recursive installcheck-recursive
 DIST_COMMON = README ABOUT-NLS AUTHORS COPYING ChangeLog INSTALL \
-	Makefile.am Makefile.in NEWS acconfig.h aclocal.m4 config.guess \
+	Makefile.am Makefile.in NEWS aclocal.m4 config.guess \
 	config.h.in config.sub configure configure.in depcomp \
 	install-sh missing mkinstalldirs
 DIST_SUBDIRS = $(SUBDIRS)
@@ -178,7 +179,7 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
 
-$(srcdir)/config.h.in:  $(top_srcdir)/configure.in $(ACLOCAL_M4) $(top_srcdir)/acconfig.h
+$(srcdir)/config.h.in:  $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	touch $(srcdir)/config.h.in
 
