@@ -464,7 +464,7 @@ static u_int16_t iocurtime(struct audioio *aio)
 	int16_t ibuf[AUDIOIBUFSIZE/8];
 	int16_t *ip;
 	unsigned int p;
-	int i;
+	int i, r;
 
 	pthread_mutex_lock(&audioio->iomutex);
 	for (;;) {
@@ -474,16 +474,21 @@ static u_int16_t iocurtime(struct audioio *aio)
 		pthread_mutex_unlock(&audioio->iomutex);
 		if (!audioio->capture_handle)
 			logprintf(MLOG_FATAL, "audio: read: capture handle NULL");
+		r = snd_pcm_nonblock(audioio->capture_handle, 1);
+		if (r < 0)
+			logprintf(MLOG_FATAL, "audio: snd_pcm_nonblock: %s", snd_strerror(r));
 		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0]));
-		if (i < 0)
-			logprintf(MLOG_FATAL, "audio: snd_pcm_readi: %s", snd_strerror(i));
-		if (!i) {
-			logerr(MLOG_ERROR, "audio: snd_pcm_readi returned 0??");
+		r = snd_pcm_nonblock(audioio->capture_handle, 0);
+		if (r < 0)
+			logprintf(MLOG_FATAL, "audio: snd_pcm_nonblock: %s", snd_strerror(r));
+		if (!i || i == -EAGAIN) {
 			pthread_mutex_lock(&audioio->iomutex);
 			audioio->flags &= ~FLG_READING;
                         pthread_cond_broadcast(&audioio->iocond);
-			continue;
+			break;
 		}
+		if (i < 0)
+			logprintf(MLOG_FATAL, "audio: snd_pcm_readi: %s", snd_strerror(i));
 		p = i;
 		pthread_mutex_lock(&audioio->iomutex);
 		audioio->flags &= ~FLG_READING;
