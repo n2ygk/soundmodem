@@ -528,16 +528,17 @@ static void buildtree(xmlNodePtr xnode)
 int main (int argc, char *argv[])
 {
         static const struct option long_options[] = {
+		{ "expert", no_argument, 0, 'x' },
 		{ 0, 0, 0, 0 }
         };
         int c, err = 0;
-        unsigned int verblevel = 10, tosyslog = 0, simd = 1;
+        unsigned int verblevel = 10, tosyslog = 0, simd = 1, expert = 0;
 
         afskmodulator.next = &fskmodulator;
         afskdemodulator.next = &fskdemodulator;
         fskmodulator.next = &pammodulator;
         fskdemodulator.next = &fskpspdemodulator;
-        fskpspdemodulator.next = &fskeqdemodulator;
+        fskpspdemodulator.next = &pamdemodulator;
         fskeqdemodulator.next = &pamdemodulator;
         pammodulator.next = &pskmodulator;
         pamdemodulator.next = &pskdemodulator;
@@ -603,6 +604,10 @@ int main (int argc, char *argv[])
                         simd = 0;
                         break;
 
+                case 'x':
+                        expert = 1;
+                        break;
+
                 default:
                         err++;
                         break;
@@ -612,6 +617,9 @@ int main (int argc, char *argv[])
                 fprintf(stderr, "usage: [<configfile>]\n");
                 exit(1);
         }
+	if (expert) {
+		fskpspdemodulator.next = &fskeqdemodulator;
+	}
         loginit(verblevel, tosyslog);
         initsimd(simd);
         ioinit_sim();

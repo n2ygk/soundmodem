@@ -47,7 +47,7 @@ fi
 AC_CHECK_LIB(pthread32,pthread_create,LIBTHREAD="$LIBTHREAD -lpthread32",AC_CHECK_LIB(pthread,pthread_create,LIBTHREAD="$LIBTHREAD -lpthread"))
 AC_CHECK_LIB(posix4,sched_setscheduler)
 AC_CHECK_LIB(uuid,GUID_NULL)
-AC_CHECK_FUNCS(getopt_long,,LIBOBJS="$LIBOBJS getopt.o getopt1.o")
+AC_CHECK_FUNCS(getopt_long,,AC_LIBOBJ([getopt]) AC_LIBOBJ([getopt1]))
 AC_CHECK_HEADERS(sys/audioio.h stropts.h sys/conf.h sys/soundcard.h sys/ioctl.h time.h inttypes.h)
 AC_CHECK_HEADERS(pty.h getopt.h syslog.h sched.h linux/if.h linux/ax25.h linux/sockios.h sys/ioccom.h linux/ppdev.h)
 AC_CHECK_FUNCS(snprintf vsnprintf syslog vsyslog openlog closelog)
@@ -148,7 +148,7 @@ else
   xlibs=$LIBS
   LIBS=
   AC_CHECK_LIB(util,openpty)
-  AC_CHECK_FUNCS(openpty,LIBTHREAD="$LIBTHREAD $LIBS",LIBOBJS="$LIBOBJS openpty.o")
+  AC_CHECK_FUNCS(openpty,LIBTHREAD="$LIBTHREAD $LIBS",AC_LIBOBJ([openpty]))
   LIBS=$xlibs
 
   AC_PATH_PROG(XML_CONFIG,xml-config,:)
@@ -184,8 +184,8 @@ AC_MSG_RESULT($ifrnewname)
 
 xlibs=$LIBS
 LIBS=
-AC_CHECK_FUNCS(vsnprintf,,LIBOBJS="$LIBOBJS vsnprintf.o")
-AC_CHECK_FUNCS(random,,LIBOBJS="$LIBOBJS random.o")
+AC_CHECK_FUNCS(vsnprintf,,AC_LIBOBJ([vsnprintf]))
+AC_CHECK_FUNCS(random,,AC_LIBOBJ([random]))
 LIBS=$xlibs
 
 AC_MSG_CHECKING(for MKISS (N_AX25 line discipline))
@@ -245,7 +245,6 @@ AC_SUBST(HAVE_DIRECTX)
 AC_SUBST(HAVE_MKISS)
 AC_SUBST(HAVE_IFRNEWNAME)
 AC_SUBST(M_PI)
-AC_SUBST(LIBOBJS)
 AC_SUBST(LIBTHREAD)
 AC_SUBST(USEMMX)
 AC_SUBST(USEVIS)
