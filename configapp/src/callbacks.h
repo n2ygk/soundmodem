@@ -149,3 +149,7 @@ on_p3dwindow_delete_event              (GtkWidget       *widget,
 void
 on_diagp3dmodem_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+
+void
+on_diagpassall_activate                (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);

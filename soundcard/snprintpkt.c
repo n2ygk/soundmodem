@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "modem.h"
 
@@ -76,12 +77,29 @@ do {                                                  \
 
 #endif /* HAVE_SNPRINTF */
 
-int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned len)
+static int hextoint(const u_int8_t *p, unsigned int l)
 {
-	u_int8_t v1=1 , cmd=0;
+	char buf[16], *e;
+	unsigned int r;
+
+	memcpy(buf, p, l);
+	buf[l] = 0;
+	r = strtoul(buf, &e, 16);
+	if (*e)
+		return -1;
+	return r;
+}
+
+int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned int len)
+{
+	static const u_int8_t dp0ais_str[6] = { 'D' << 1, 'P' << 1, '0' << 1, 'A' << 1, 'I' << 1, 'S' << 1 };
+	static const u_int8_t data1_str[6] = { 'D' << 1, 'A' << 1, 'T' << 1, 'A' << 1, '1' << 1, ' ' << 1 };
+	u_int8_t v1 = 1, cmd = 0, dp0ais = 1, data1 = 1;
 	u_int8_t i, j;
 	char *p = buf;
 	char *endp = buf + sz;
+	const u_int8_t *pkt1;
+	unsigned int len1;
 
 	if (sz < 2)
 		return -1;
@@ -122,6 +140,7 @@ int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned len)
 		ADDF("-%u QSO Nr %u", pkt[6] & 0xf, (pkt[0] << 6) | (pkt[1] >> 2));
 		pkt += 7;
 		len -= 7;
+		dp0ais = 0;
 	} else {
 		/*
 		 * normal header
@@ -133,31 +152,39 @@ int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned len)
 			cmd = (pkt[6] & 0x80);
 		}
 		ADDSTR("fm ");
-		for(i = 7; i < 13; i++) 
+		for(i = 7; i < 13; i++) {
 			if ((pkt[i] &0xfe) != 0x40) {
 				ADDCH(pkt[i] >> 1);
 			}
+			if ((pkt[i] &0xfe) != dp0ais_str[i-7])
+				dp0ais = 0;
+		}
 		ADDF("-%u to ", (pkt[13] >> 1) & 0xf);
-		for(i = 0; i < 6; i++) 
+		for(i = 0; i < 6; i++) {
 			if ((pkt[i] &0xfe) != 0x40) {
 				ADDCH(pkt[i] >> 1);
 			}
+			if ((pkt[i] &0xfe) != data1_str[i])
+				data1 = 0;
+		}
 		ADDF("-%u", (pkt[6] >> 1) & 0xf);
 		pkt += 14;
 		len -= 14;
-		if ((!(pkt[-1] & 1)) && (len >= 7)) {
-			ADDSTR(" via ");
-		}
-		while ((!(pkt[-1] & 1)) && (len >= 7)) {
-			for(i = 0; i < 6; i++) 
-				if ((pkt[i] &0xfe) != 0x40) {
-					ADDCH(pkt[i] >> 1);
-				}
-			ADDF("-%u", (pkt[6] >> 1) & 0xf);
-			pkt += 7;
-			len -= 7;
+		if (!dp0ais) {
 			if ((!(pkt[-1] & 1)) && (len >= 7)) {
-				ADDCH(',');
+				ADDSTR(" via ");
+			}
+			while ((!(pkt[-1] & 1)) && (len >= 7)) {
+				for(i = 0; i < 6; i++) 
+					if ((pkt[i] &0xfe) != 0x40) {
+						ADDCH(pkt[i] >> 1);
+					}
+				ADDF("-%u", (pkt[6] >> 1) & 0xf);
+				pkt += 7;
+				len -= 7;
+				if ((!(pkt[-1] & 1)) && (len >= 7)) {
+					ADDCH(',');
+				}
 			}
 		}
 	}
@@ -227,6 +254,8 @@ int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned len)
 	}
 	ADDF(" pid=%02X\n", *pkt++);
 	len--;
+	pkt1 = pkt;
+	len1 = len;
 	j = 0;
 	while (len) {
 		i = *pkt++;
@@ -247,6 +276,22 @@ int snprintpkt(char *buf, size_t sz, const u_int8_t *pkt, unsigned len)
 	}
 	if (j) {
 		ADDCH('\n');
+	}
+	if (dp0ais && data1 && len1 >= 20) {
+		ADDF("Timestamp:    %u\n"
+		     "Temp Board:   %5.2f°C\n"
+		     "Temp RF PA:   %5.2f°C\n"
+		     "U/Battery:    %5.2fV\n"
+		     "U/5V:         %5.2fV\n"
+		     "U/3.3V:       %5.2fV\n"
+		     "Bit Errors:   %u\n",
+		     hextoint(pkt1, 4),
+		     hextoint(pkt1 + 4, 4) * 0.5,
+		     hextoint(pkt1 + 8, 4) * 0.5,
+		     hextoint(pkt1 + 12, 2) * 0.1,
+		     (hextoint(pkt1 + 14, 2) + 512) * 0.01,
+		     (hextoint(pkt1 + 16, 2) + 256) * 0.01,
+		     hextoint(pkt1 + 18, 2));
 	}
 	*p = 0;
 	return p - buf;

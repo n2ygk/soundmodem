@@ -85,10 +85,12 @@ struct audioio_filein {
 
 struct modemparams ioparams_filein[] = {
 	{ "file", "Input file", "Input File Name", "", MODEMPAR_STRING },
+        { "repeat", "Repeat", "Loop input file forever", "0", MODEMPAR_CHECKBUTTON },
 	{ NULL, }
 };
 
 #define FLG_TERMINATERX  4
+#define FLG_REPEAT       8
 
 /* ---------------------------------------------------------------------- */
 
@@ -148,17 +150,20 @@ static void ioread(struct audioio *aio, int16_t *samples, unsigned int nr, u_int
 		}
 		pthread_mutex_unlock(&audioio->iomutex);
 		nrsamp = AUDIOIBUFSIZE/8;
+		if (audioio->flags & FLG_REPEAT && audioio->frameptr >= audioio->nrframes) {
+			audioio->frameptr = 0;
+			afSeekFrame(audioio->file, AF_DEFAULT_TRACK, 0);
+		}
 		if (audioio->frameptr >= audioio->nrframes) {
-#if 1
-			pthread_exit(NULL);
-#else
+			if (audioio->frameptr >= audioio->nrframes + 2 * AUDIOIBUFSIZE)
+				pthread_exit(NULL);
 			pthread_mutex_lock(&audioio->iomutex);
 			for (p = 0; p < nrsamp; p++) {
 				audioio->ibuf[audioio->ptr] = 0;
 				audioio->ptr = (audioio->ptr + 1) % AUDIOIBUFSIZE;
 				audioio->ptime += 1;
+				audioio->frameptr++;
 			}
-#endif
 		} else {
 			if (audioio->frameptr + nrsamp > audioio->nrframes)
 				nrsamp = audioio->nrframes - audioio->frameptr;
@@ -262,6 +267,8 @@ struct audioio *ioopen_filein(unsigned int *samplerate, unsigned int flags, cons
         pthread_cond_init(&audioio->iocond, NULL);
         pthread_mutex_init(&audioio->iomutex, NULL);
         audioio->flags = audioio->ptr = audioio->ptime = 0;
+	if (params[1] && params[1][0] != '0')
+		audioio->flags |= FLG_REPEAT;
 	if (!audiopath) {
 		logprintf(MLOG_ERROR, "audio: No file name specified\n");
 		free(audioio);

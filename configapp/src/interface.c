@@ -47,6 +47,7 @@ create_mainwindow (void)
   GtkWidget *diagspectrum;
   GtkWidget *diagmodem;
   GtkWidget *diagp3dmodem;
+  GtkWidget *diagpassall;
   GtkWidget *help;
   GtkWidget *help_menu;
   GtkAccelGroup *help_menu_accels;
@@ -214,6 +215,14 @@ create_mainwindow (void)
   gtk_widget_show (diagp3dmodem);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagp3dmodem);
 
+  diagpassall = gtk_check_menu_item_new_with_label (_("PASSALL (do not check CRC)"));
+  gtk_widget_ref (diagpassall);
+  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagpassall", diagpassall,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (diagpassall);
+  gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagpassall);
+  gtk_check_menu_item_set_show_toggle (GTK_CHECK_MENU_ITEM (diagpassall), TRUE);
+
   help = gtk_menu_item_new_with_label (_("Help"));
   gtk_widget_ref (help);
   gtk_object_set_data_full (GTK_OBJECT (mainwindow), "help", help,
@@ -323,6 +332,9 @@ create_mainwindow (void)
                       NULL);
   gtk_signal_connect (GTK_OBJECT (diagp3dmodem), "activate",
                       GTK_SIGNAL_FUNC (on_diagp3dmodem_activate),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (diagpassall), "activate",
+                      GTK_SIGNAL_FUNC (on_diagpassall_activate),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (about), "activate",
                       GTK_SIGNAL_FUNC (on_about_activate),

@@ -74,3 +74,11 @@ on_diagp3dmodem_activate               (GtkMenuItem     *menuitem,
 
 }
 
+
+void
+on_diagpassall_activate                (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+
+}
+

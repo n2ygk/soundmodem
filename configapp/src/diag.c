@@ -88,7 +88,7 @@ static struct {
 	unsigned char rxbuf[1024];
 	/* HDLC receiver */
         struct {
-                unsigned int bitbuf, bitstream, numbits, state;
+                unsigned int bitbuf, bitstream, numbits, state, passall;
                 unsigned char *bufptr;
                 int bufcnt;
                 unsigned char buf[RXBUFFER_SIZE];
@@ -108,7 +108,7 @@ static struct {
 	0, &modchain_x, &demodchain_x, NULL, NULL, 0,
 	0, { 0, 0, 0, 0, }, 
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0, },
-	{ 0, 0, 0, 0, },
+	{ 0, 0, 0, 0, 0, },
         0,
         NULL, NULL, 0,
 	PTHREAD_COND_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
@@ -191,7 +191,7 @@ static void do_rxpacket(void)
         if (diagstate.hrx.bufcnt < 3) 
                 return;
 #if 1
-        if (!check_crc_ccitt(diagstate.hrx.buf, diagstate.hrx.bufcnt)) 
+        if (!diagstate.hrx.passall && !check_crc_ccitt(diagstate.hrx.buf, diagstate.hrx.bufcnt)) 
                 return;
 #endif
         {
@@ -802,6 +802,13 @@ void on_diagp3dmodem_activate(GtkMenuItem *menuitem, gpointer user_data)
 		return;
         diagstate.flags |= DIAGFLG_P3DRECEIVE;
 	gtk_widget_show(p3dwindow);
+}
+
+void on_diagpassall_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+	GtkCheckMenuItem *citem = GTK_CHECK_MENU_ITEM(menuitem);
+	printf("passall: %u\n", citem->active);
+	diagstate.hrx.passall = citem->active;
 }
 
 /* ---------------------------------------------------------------------- */

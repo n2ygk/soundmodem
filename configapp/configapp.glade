@@ -219,6 +219,19 @@
 	      <label>AO-40 P3D Modem</label>
 	      <right_justify>False</right_justify>
 	    </widget>
+
+	    <widget>
+	      <class>GtkCheckMenuItem</class>
+	      <name>diagpassall</name>
+	      <signal>
+		<name>activate</name>
+		<handler>on_diagpassall_activate</handler>
+		<last_modification_time>Thu, 26 Dec 2002 17:08:00 GMT</last_modification_time>
+	      </signal>
+	      <label>PASSALL (do not check CRC)</label>
+	      <active>False</active>
+	      <always_show_toggle>True</always_show_toggle>
+	    </widget>
 	  </widget>
 	</widget>
 
@@ -369,6 +382,7 @@
     <can_default>True</can_default>
     <can_focus>True</can_focus>
     <label>OK</label>
+    <relief>GTK_RELIEF_NORMAL</relief>
   </widget>
 
   <widget>
@@ -378,6 +392,7 @@
     <can_default>True</can_default>
     <can_focus>True</can_focus>
     <label>Cancel</label>
+    <relief>GTK_RELIEF_NORMAL</relief>
   </widget>
 </widget>
 
@@ -436,6 +451,7 @@
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <label>Ok</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
       </widget>
     </widget>
@@ -557,6 +573,7 @@
 	    <signal>clicked</signal>
 	  </accelerator>
 	  <label>Cancel</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
 
 	<widget>
@@ -570,6 +587,7 @@
 	    <signal>clicked</signal>
 	  </accelerator>
 	  <label>OK</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
       </widget>
     </widget>
@@ -680,6 +698,7 @@
 	    <signal>clicked</signal>
 	  </accelerator>
 	  <label>OK</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
       </widget>
     </widget>
@@ -798,6 +817,7 @@
 	  <last_modification_time>Wed, 28 Jun 2000 21:29:18 GMT</last_modification_time>
 	</signal>
 	<label>PTT</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<active>False</active>
 	<child>
 	  <padding>4</padding>
@@ -948,6 +968,7 @@
 	  <last_modification_time>Wed, 28 Jun 2000 21:57:38 GMT</last_modification_time>
 	</signal>
 	<label>Freeze when not DCD</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<active>False</active>
 	<child>
 	  <padding>4</padding>
@@ -984,6 +1005,7 @@
 	  <last_modification_time>Wed, 28 Jun 2000 21:28:20 GMT</last_modification_time>
 	</signal>
 	<label>PTT</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<active>False</active>
 	<child>
 	  <padding>4</padding>
@@ -1128,6 +1150,7 @@
 	  <last_modification_time>Wed, 28 Jun 2000 21:27:45 GMT</last_modification_time>
 	</signal>
 	<label>Clear Count</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>4</padding>
 	  <expand>False</expand>
@@ -1259,6 +1282,7 @@
 	  <last_modification_time>Wed, 28 Jun 2000 21:28:08 GMT</last_modification_time>
 	</signal>
 	<label>PTT</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<active>False</active>
 	<child>
 	  <padding>4</padding>
@@ -1522,6 +1546,7 @@
 	<name>buttonpassall</name>
 	<can_focus>True</can_focus>
 	<label>Decode All Packets (Faulty CRC)</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<active>False</active>
 	<child>
 	  <padding>0</padding>
