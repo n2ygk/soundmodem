@@ -35,7 +35,6 @@
 #include "pttio.h"
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <winioctl.h>
