@@ -33,6 +33,11 @@
 
 #ifndef _RAISEDCOSINE_H
 #define _RAISEDCOSINE_H
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* --------------------------------------------------------------------- */
 
 extern double sinc(double x);
@@ -42,4 +47,8 @@ extern double root_raised_cosine_time(double time, double alpha);
 extern double root_raised_cosine_freq(double freq, double alpha);
 
 /* --------------------------------------------------------------------- */
+#ifdef  __cplusplus
+}
+#endif
+
 #endif /* _RAISEDCOSINE_H */

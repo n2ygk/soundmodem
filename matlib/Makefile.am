@@ -26,7 +26,9 @@ libmat_a_SOURCES = \
 	fcdet.c
 
 noinst_HEADERS = \
-	mat.h
+	mat.h \
+	fft.hh \
+	mat.hh
 
 noinst_PROGRAMS = tests
 

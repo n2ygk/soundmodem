@@ -148,7 +148,9 @@ libmat_a_SOURCES = \
 
 
 noinst_HEADERS = \
-	mat.h
+	mat.h \
+	fft.hh \
+	mat.hh
 
 
 noinst_PROGRAMS = tests

@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/matlib -I.
+INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc -I.
 
 
 noinst_LIBRARIES = libfsk.a
@@ -8,7 +8,7 @@ genpsptbl_SOURCES = genpsptbl.c
 genpsptbl_LDADD = ../matlib/libmat.a
 
 gendf9icfilt_SOURCES = gendf9icfilt.cc
-gendf9icfilt_LDADD = 
+gendf9icfilt_LDADD = ../matlib/libmat.a ../libmisc/libmisc.a
 
 if CROSSCOMP
 

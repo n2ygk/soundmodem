@@ -32,30 +32,17 @@
 #include <complex>
 #include <ostream>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
+#include "fft.hh"
+#include "mat.hh"
+#include "raisedcosine.h"
+
+#include "getopt.h"
+
 /* --------------------------------------------------------------------- */
-
-template<typename T> inline T par(const T& a)
-{
-	return a;
-}
-
-template<typename T> inline T par(const T& a, const T& b)
-{
-	return a * b / (a + b);
-}
-
-template<typename T> inline T par(const T& a, const T& b, const T& c)
-{
-	return a * b * c / (b * c + a * c + a * b);
-}
-
-template<typename T> inline T par(const T& a, const T& b, const T& c, const T& d)
-{
-	return a * b * c * d / (b * c * d + a * c * d + a * b * d + a * b * c);
-}
 
 template<typename T> complex<T> rxfilter(T freq)
 {
@@ -119,97 +106,199 @@ static void printtransferfunc(ostream& os, unsigned int nr, double over)
 
 /* ---------------------------------------------------------------------- */
 
-/*
- * This fft routine is from ~gabriel/src/filters/fft/fft.c;
- * I am unsure of the original source.  The file contains no
- * copyright notice or description.
- * The declaration is changed to the prototype form but the
- * function body is unchanged.  (J. T. Buck)
- */
-
-/*
- * Replace data by its discrete Fourier transform, if isign is
- * input as 1, or by its inverse discrete Fourier transform, if
- * "isign" is input as -1.  "data'"is a complex array of length "nn".
- * "nn" MUST be an integer power of 2 (this is not checked for!?)
- */
-
-template<typename T> static void fft_rif(complex<T> *data, unsigned int nn, int isign)
+template<typename T> static void matprintf(ostream& os, const char *name,
+					   unsigned int size1, unsigned int stride1,
+					   unsigned int size2, unsigned int stride2, const T *m)
 {
-        for (unsigned int i = 0, j = 0; i < nn; i++) {
-                if (j > i) {
-			complex<T> temp = data[j];
-			data[j] = data[i];
-			data[i] = temp;
-                }
-                unsigned int m = nn >> 1;
-                while (m > 0 && (int)j >= (int)m) {
-                        j -= m;
-                        m >>= 1;
-                }
-                j += m;
-        }
-        unsigned int mmax = 1;
-	T theta = -6.28318530717959 * 0.5;
-	if (isign < 0)
-		theta = -theta;
-	T sintheta = sin(theta);
-        while (nn > mmax) {
-		T oldsintheta = sintheta;
-		theta *= 0.5;
-		sintheta = sin(theta);
-		complex<T> wp(-2.0 * sintheta * sintheta, oldsintheta); /* -2.0 * sin(0.5*theta)^2 = cos(theta)-1 */
-		complex<T> w(1,0);
-                for (unsigned int m = 0; m < mmax; m++) {
-                        for (unsigned int i = m; i < nn; i += 2*mmax) {
-                                unsigned int j = i + mmax;
-				complex<T> temp = w * data[j];
-				data[j] = data[i] - temp;
-				data[i] += temp;
-                        }
-			w += w * wp;
-                }
-                mmax <<= 1;
-        }
+	os << "# name: " << name << "\n# type: matrix\n# rows: " << size1 << "\n# columns: " << size2 << "\n";
+	for (unsigned int i = 0; i < size1; i++) {
+		for (unsigned int j = 0; j < size2; j++)
+			os << " " << m[i*stride1 + j*stride2];
+		os << "\n";
+	}
 }
 
 /* ---------------------------------------------------------------------- */
 
-static void printfcoeff(ostream& os, unsigned int fftsz, double over)
+static double comptx(ostream& os, double *filt, const double *pulse, unsigned int filtlen, unsigned int pulselen, 
+		   unsigned int over, unsigned int odiv, double shift, unsigned int oct)
 {
-	complex<double> fftb[fftsz];
+        unsigned int rlen = 2 * filtlen + pulselen;
+        double C[rlen * filtlen];
+        double CT[rlen * filtlen];
+        double CTC[filtlen * filtlen];
+        double CTr[filtlen];
+        double Cf[rlen];
+        double r[rlen];
+        double e, e1;
+        double rcosalpha = 3.0 / 8;
+        int pidx;
+        unsigned int i, j;
 
-	over /= fftsz;
+	for (i = 0; i < rlen; i++) {
+                pidx = i - 2 * filtlen + 1;
+                if (pidx >= (signed int)pulselen) {
+                        rlen = i;
+                        break;
+                }
+                for (j = 0; j < filtlen; j++, pidx += odiv) {
+                        if (pidx < 0 || pidx >= (int)pulselen)
+                                C[i*filtlen+j] = 0;
+                        else
+                                C[i*filtlen+j] = pulse[pidx];
+                }
+        }
+        for (i = 0; i < rlen; i++)
+                r[i] = raised_cosine_time((i - 0.5 * (rlen-1)) / (double)over + shift, rcosalpha);
+        matprintf(os, "C", rlen, filtlen, filtlen, 1, C);
+        matprintf(os, "r", rlen, 1, 1, 1, r);
+        mtranspose(CT, C, rlen, filtlen);
+        mmul(CTC, CT, C, filtlen, rlen, filtlen);
+        mmul(CTr, CT, r, filtlen, rlen, 1);
+        mchol(CTC, CTr, filt, filtlen);
+        matprintf(os, "filt", filtlen, 1, 1, 1, filt);
+        mmul(Cf, C, filt, rlen, filtlen, 1);
+        for (i = 0, e = 0; i < rlen; i++) {
+                e1 = Cf[i] - r[i];
+                e += e1 * e1;
+        }
+	return e;
+}
+
+static void printfcoeff(ostream& os, unsigned int fftsz, unsigned int over, unsigned int oct)
+{
+	if (oct)
+		printtransferfunc(os, fftsz, over);
+	else
+		os << "/* this file is automatically generated, do not edit!! */\n\n";
+	complex<double> fftb[fftsz];
+	double rpulse[fftsz], tpulse[fftsz];
+	double dover = double(over) / fftsz;
+	double sum;
+
+	/* compute rx pulse */
 	for (unsigned int i = 1; i < fftsz/2; i++)
-		fftb[i] = rxfilter(i * over);
+		fftb[i] = rxfilter(i * dover);
 	fftb[0] = complex<double>(fftb[1].real(), 0);
 	fftb[fftsz/2] = 0;
 	for (unsigned int i = 1; i < fftsz/2; i++)
 		fftb[fftsz-i] = conj(fftb[i]);
-
-       	os << "# name: f\n"
-		"# type: complex matrix\n"
-		"# rows: " << fftsz << "\n"
-		"# columns: 1\n";
-	for (unsigned int i = 0; i < fftsz; i++)
-		os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
-
-
-
+	if (oct) {
+		os << "# name: rxs\n"
+			"# type: complex matrix\n"
+			"# rows: " << fftsz << "\n"
+			"# columns: 1\n";
+		for (unsigned int i = 0; i < fftsz; i++)
+			os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
+	}
 	fft_rif(fftb, fftsz, -1);
-       	os << "# name: rx\n"
-		"# type: complex matrix\n"
-		"# rows: " << fftsz << "\n"
-		"# columns: 1\n";
+	sum = 0;
+	for (unsigned int i = fftsz/2; i < fftsz; i++)
+		sum -= fftb[i].real();
+	sum *= double(2) / fftsz;
 	for (unsigned int i = 0; i < fftsz; i++)
-		os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
+		rpulse[i] = dover * (fftb[i].real() + sum);
+	if (oct) {
+		os << "# name: rx\n"
+			"# type: matrix\n"
+			"# rows: " << fftsz << "\n"
+			"# columns: 1\n";
+		for (unsigned int i = 0; i < fftsz; i++)
+			os << rpulse[i] << "\n";
+	} else {
+		os << "#define FSKIC_OVER " << over << "\n";
+		os << "\nstatic float rxpulse[" << 4 * over << "] = {";
+		for (unsigned int i = 0;;) {
+			if (!(i & 7))
+				os << "\n\t";
+			os << " " << rpulse[i];
+			i++;
+			if (i >= 4 * over)
+				break;
+			os << ",";
+		}
+		os << "\n};\n\n";
+	}
+	/* compute tx pulse */
+	for (unsigned int i = 1; i < fftsz/2; i++)
+		fftb[i] = txfilter(i * dover);
+	fftb[0] = complex<double>(fftb[1].real(), 0);
+	fftb[fftsz/2] = 0;
+	for (unsigned int i = 1; i < fftsz/2; i++)
+		fftb[fftsz-i] = conj(fftb[i]);
+	if (oct) {
+		os << "# name: txs\n"
+			"# type: complex matrix\n"
+			"# rows: " << fftsz << "\n"
+			"# columns: 1\n";
+		for (unsigned int i = 0; i < fftsz; i++)
+			os << "(" << fftb[i].real() << "," << fftb[i].imag() << ")\n";
+	}
+	fft_rif(fftb, fftsz, -1);
+	sum = 0;
+	for (unsigned int i = fftsz/2; i < fftsz; i++)
+		sum -= fftb[i].real();
+	sum *= double(2) / fftsz;
+	for (unsigned int i = 0; i < fftsz; i++)
+		tpulse[i] = dover * (fftb[i].real() + sum);
+	if (oct) {
+		os << "# name: tx\n"
+			"# type: matrix\n"
+			"# rows: " << fftsz << "\n"
+			"# columns: 1\n";
+		for (unsigned int i = 0; i < fftsz; i++)
+			os << tpulse[i] << "\n";
+	}
+	/* compute tx compensation filter */
+	double filt[6 * over];
+	double shift = 0;
+	ostringstream oss;
+	double err = comptx(oss, filt, rpulse, sizeof(filt) / sizeof(filt[0]), 4 * over, over, 2, shift, oct);
+	double maxf = 0;
+	for (unsigned int i = 0; i < sizeof(filt) / sizeof(filt[0]); i++)
+		if (filt[i] > maxf) {
+			maxf = filt[i];
+			shift = i;
+		}
+	shift -= sizeof(filt) / sizeof(filt[0]) / double(2);
+	shift *= double(2) / over;
+	shift = -shift;
+	err = comptx(os, filt, rpulse, sizeof(filt) / sizeof(filt[0]), 4 * over, over, 2, shift, oct);
+	if (oct) {
+		os << "# name: err\n"
+		   << "# type: scalar\n"
+		   << err << "\n";
+	}
+
+
+
 }
 
 /* ---------------------------------------------------------------------- */
 
 int main(int argc, char *argv[])
 {
-	printtransferfunc(cout, 4096, 16);
-	printfcoeff(cout, 2048, 16);
+        static const struct option long_options[] = {
+		{ 0, 0, 0, 0 }
+        };
+        int c, err = 0;
+	unsigned int oct = 0;
+
+        while ((c = getopt_long(argc, argv, "o", long_options, NULL)) != EOF) {
+                switch (c) {
+		case 'o':
+			oct = 1;
+			break;
+
+                default:
+                        err++;
+                        break;
+                }
+        }
+        if (err) {
+                cerr << "usage: [-o]\n";
+                exit(1);
+        }
+	printfcoeff(cout, 2048, 16, oct);
         return 0;
 }
