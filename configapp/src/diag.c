@@ -213,7 +213,7 @@ static void do_rxpacket(void)
                 goto flgabrt##j;                                              \
         if ((bitstream & (0x1f8 << j)) == (0xf8 << j))   /* stuffed bit */    \
                 goto stuff##j;                                                \
-  enditer##j:                                                                 \
+  enditer##j:;                                                                \
 })
 
 #define DECODEITERB(j)                                                                 \

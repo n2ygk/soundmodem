@@ -180,7 +180,7 @@ static inline int check_crc_ccitt(const u_int8_t *buffer, int len)
 ({                                             \
         if (!(notbitstream & (0x1f0 << j)))    \
                 goto stuff##j;                 \
-  encodeend##j:                                \
+  encodeend##j:;                               \
 })
 
 #define ENCODEITERB(j)                                          \
@@ -314,7 +314,7 @@ static void do_rxpacket(struct modemchannel *chan)
                 goto flgabrt##j;                                              \
         if ((bitstream & (0x1f8 << j)) == (0xf8 << j))   /* stuffed bit */    \
                 goto stuff##j;                                                \
-  enditer##j:                                                                 \
+  enditer##j:;                                                                \
 })
 
 #define DECODEITERB(j)                                                                 \
