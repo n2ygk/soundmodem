@@ -1,7 +1,7 @@
 AC_INIT(acconfig.h)
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE(soundmodem, 0.7)
+AM_INIT_AUTOMAKE(soundmodem, 0.8)
 AM_CONFIG_HEADER(config.h)
 
 dnl AC_CHECK_TOOL()
@@ -15,6 +15,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_HEADER_STDC
 AC_FUNC_ALLOCA
+AC_PROG_CXX
 
 AC_CHECK_PROG(RANLIB, ranlib, ranlib, :)
 AC_CHECK_PROG(DLLTOOL, dlltool, dlltool, dlltool)

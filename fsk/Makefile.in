@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -71,6 +71,7 @@ AUDIOFILE_LIBS = @AUDIOFILE_LIBS@
 BUILD_INCLUDED_LIBINTL = @BUILD_INCLUDED_LIBINTL@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
+CXX = @CXX@
 DATADIRNAME = @DATADIRNAME@
 DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
@@ -126,7 +127,10 @@ libfsk_a_SOURCES = modem.c modempsp.c psp.h
 genpsptbl_SOURCES = genpsptbl.c
 genpsptbl_LDADD = ../matlib/libmat.a
 
-@CROSSCOMP_FALSE@noinst_PROGRAMS = @CROSSCOMP_FALSE@genpsptbl
+gendf9icfilt_SOURCES = gendf9icfilt.cc
+gendf9icfilt_LDADD = 
+
+@CROSSCOMP_FALSE@noinst_PROGRAMS = @CROSSCOMP_FALSE@genpsptbl gendf9icfilt
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -139,12 +143,20 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libfsk_a_LIBADD = 
 libfsk_a_OBJECTS =  modem.$(OBJEXT) modempsp.$(OBJEXT)
-@CROSSCOMP_FALSE@noinst_PROGRAMS =  genpsptbl$(EXEEXT)
+@CROSSCOMP_FALSE@noinst_PROGRAMS =  genpsptbl$(EXEEXT) \
+@CROSSCOMP_FALSE@gendf9icfilt$(EXEEXT)
 PROGRAMS =  $(noinst_PROGRAMS)
 
 genpsptbl_OBJECTS =  genpsptbl.$(OBJEXT)
 genpsptbl_DEPENDENCIES =  ../matlib/libmat.a
 genpsptbl_LDFLAGS = 
+gendf9icfilt_OBJECTS =  gendf9icfilt.$(OBJEXT)
+gendf9icfilt_DEPENDENCIES = 
+gendf9icfilt_LDFLAGS = 
+CXXFLAGS = @CXXFLAGS@
+CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -156,13 +168,14 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/genpsptbl.P .deps/modem.P .deps/modempsp.P
-SOURCES = $(libfsk_a_SOURCES) $(genpsptbl_SOURCES)
-OBJECTS = $(libfsk_a_OBJECTS) $(genpsptbl_OBJECTS)
+DEP_FILES =  .deps/gendf9icfilt.P .deps/genpsptbl.P .deps/modem.P \
+.deps/modempsp.P
+SOURCES = $(libfsk_a_SOURCES) $(genpsptbl_SOURCES) $(gendf9icfilt_SOURCES)
+OBJECTS = $(libfsk_a_OBJECTS) $(genpsptbl_OBJECTS) $(gendf9icfilt_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .S .c .o .obj .s
+.SUFFIXES: .S .c .cc .o .obj .s
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu fsk/Makefile
 
@@ -219,6 +232,14 @@ maintainer-clean-noinstPROGRAMS:
 genpsptbl$(EXEEXT): $(genpsptbl_OBJECTS) $(genpsptbl_DEPENDENCIES)
 	@rm -f genpsptbl$(EXEEXT)
 	$(LINK) $(genpsptbl_LDFLAGS) $(genpsptbl_OBJECTS) $(genpsptbl_LDADD) $(LIBS)
+
+gendf9icfilt$(EXEEXT): $(gendf9icfilt_OBJECTS) $(gendf9icfilt_DEPENDENCIES)
+	@rm -f gendf9icfilt$(EXEEXT)
+	$(CXXLINK) $(gendf9icfilt_LDFLAGS) $(gendf9icfilt_OBJECTS) $(gendf9icfilt_LDADD) $(LIBS)
+.cc.o:
+	$(CXXCOMPILE) -c $<
+.cc.obj:
+	$(CXXCOMPILE) -c `cygpath -w $<`
 
 tags: TAGS
 
@@ -295,6 +316,25 @@ maintainer-clean-depend:
 %.lo: %.c
 	@echo '$(LTCOMPILE) -c $<'; \
 	$(LTCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
+	  < .deps/$(*F).pp > .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm -f .deps/$(*F).pp
+
+%.o: %.cc
+	@echo '$(CXXCOMPILE) -c $<'; \
+	$(CXXCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm .deps/$(*F).pp
+
+%.lo: %.cc
+	@echo '$(LTCXXCOMPILE) -c $<'; \
+	$(LTCXXCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
 	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
 	  < .deps/$(*F).pp > .deps/$(*F).P; \
 	tr ' ' '\012' < .deps/$(*F).pp \
