@@ -78,11 +78,19 @@ struct demodulator demodchain_x = {
 	NULL
 };
 
+#ifdef HAVE_ALSA
+#define ALSA_STR , "alsa"
+#else /* HAVE_ALSA */
+#define ALSA_STR 
+#endif /* HAVE_ALSA */
+
 struct modemparams ioparam_type[] = {
 	{ "type", "Audio IO Mode", "Audio IO Mode", "soundcard", MODEMPAR_COMBO, 
-	  { c: { { "soundcard", "file", "simulation" } } } },
+	  { c: { { "soundcard", "file", "simulation" ALSA_STR } } } },
 	{ NULL }
 };
+
+#undef ALSA_STR
 
 #ifdef WIN32
 

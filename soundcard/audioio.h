@@ -49,10 +49,12 @@ struct audioio {
 
 /* "private" audio IO functions */
 extern struct modemparams ioparams_soundcard[];
+extern struct modemparams ioparams_alsasoundcard[];
 extern struct modemparams ioparams_filein[];
 extern struct modemparams ioparams_sim[];
 
 extern void ioinit_soundcard(void);
+extern void ioinit_alsasoundcard(void);
 extern void ioinit_filein(void);
 extern void ioinit_sim(void);
 
@@ -61,6 +63,7 @@ extern void ioinit_sim(void);
 #define IO_RDWR     (IO_RDONLY|IO_WRONLY)
 
 extern struct audioio *ioopen_soundcard(unsigned int *samplerate, unsigned int flags, const char *params[]);
+extern struct audioio *ioopen_alsasoundcard(unsigned int *samplerate, unsigned int flags, const char *params[]);
 extern struct audioio *ioopen_filein(unsigned int *samplerate, unsigned int flags, const char *params[]);
 extern struct audioio *ioopen_sim(unsigned int *samplerate, unsigned int flags, const char *params[]);
 

@@ -72,11 +72,19 @@ static struct modemparams chaccparams[] = {
         { NULL }
 };
 
+#ifdef HAVE_ALSA
+#define ALSA_STR , "alsa"
+#else /* HAVE_ALSA */
+#define ALSA_STR 
+#endif /* HAVE_ALSA */
+
 static struct modemparams ioparam_type[] = {
 	{ "type", "Audio IO Mode", "Audio IO Mode", "soundcard", MODEMPAR_COMBO, 
-	  { c: { { "soundcard", "file", "simulation" } } } },
+	  { c: { { "soundcard", "file", "simulation" ALSA_STR } } } },
 	{ NULL }
 };
+
+#undef ALSA_STR
 
 /* ---------------------------------------------------------------------- */
 
@@ -284,6 +292,11 @@ static int parsecfg(xmlDocPtr doc, xmlNodePtr node, struct state *state, unsigne
 		state->audioio = ioopen_sim(&samplerate, IO_RDWR, par);
 		if (schedrr)
 			*schedrr = 0;
+#ifdef HAVE_ALSA
+	} else if (par[0] && !strcmp(par[0], ioparam_type[0].u.c.combostr[3])) {
+                getparam(doc, audio, ioparams_alsasoundcard, par);
+		state->audioio = ioopen_alsasoundcard(&samplerate, mode, par);
+#endif /* HAVE_ALSA */
 	} else {
 		getparam(doc, audio, ioparams_soundcard, par);
 		state->audioio = ioopen_soundcard(&samplerate, mode, par);

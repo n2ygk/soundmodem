@@ -738,6 +738,11 @@ static int diag_start(void)
         } else if (parptr[0] && !strcmp(parptr[0], ioparam_type[0].u.c.combostr[2])) {
                 getparam(diagstate.cfgname, NULL, "audio", ioparams_sim, parptr, params);
                 diagstate.audioio = ioopen_sim(&diagstate.samplerate, IO_RDWR, parptr);
+#ifdef HAVE_ALSA
+	} else if (parptr[0] && !strcmp(parptr[0], ioparam_type[0].u.c.combostr[3])) {
+                getparam(diagstate.cfgname, NULL, "audio", ioparams_alsasoundcard, parptr, params);
+		diagstate.audioio = ioopen_alsasoundcard(&diagstate.samplerate, diagstate.modch->modulate ? IO_RDWR : IO_RDONLY, parptr);
+#endif /* HAVE_ALSA */
         } else {
                 getparam(diagstate.cfgname, NULL, "audio", ioparams_soundcard, parptr, params);
                 diagstate.audioio = ioopen_soundcard(&diagstate.samplerate, diagstate.modch->modulate ? IO_RDWR : IO_RDONLY, parptr);

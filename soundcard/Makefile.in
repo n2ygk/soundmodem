@@ -69,6 +69,8 @@ target_triplet = @target@
 EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+ALSA_CFLAGS = @ALSA_CFLAGS@
+ALSA_LIBS = @ALSA_LIBS@
 AMTAR = @AMTAR@
 AR = @AR@
 AS = @AS@
@@ -89,6 +91,7 @@ GMSGFMT = @GMSGFMT@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_CONFIG = @GTK_CONFIG@
 GTK_LIBS = @GTK_LIBS@
+HAVE_ALSA = @HAVE_ALSA@
 HAVE_BITTYPES = @HAVE_BITTYPES@
 HAVE_DIRECTX = @HAVE_DIRECTX@
 HAVE_IFRNEWNAME = @HAVE_IFRNEWNAME@
@@ -146,7 +149,7 @@ man_MANS = soundmodem.8
 @WIN32_TRUE@libpttio_a_SOURCES = winptt2.c
 @WIN32_FALSE@libpttio_a_SOURCES = ptt.c
 @WIN32_TRUE@libaudioio_a_SOURCES = winaudioio.c audiofilein.c chansim.c
-@WIN32_FALSE@libaudioio_a_SOURCES = audioio.c audiofilein.c chansim.c
+@WIN32_FALSE@libaudioio_a_SOURCES = audioio.c alsaio.c audiofilein.c chansim.c
 @WIN32_TRUE@liblog_a_SOURCES = winlog.c
 @WIN32_FALSE@liblog_a_SOURCES = log.c
 
@@ -183,7 +186,8 @@ libaudioio_a_LIBADD =
 @WIN32_TRUE@am_libaudioio_a_OBJECTS = winaudioio.$(OBJEXT) \
 @WIN32_TRUE@	audiofilein.$(OBJEXT) chansim.$(OBJEXT)
 @WIN32_FALSE@am_libaudioio_a_OBJECTS = audioio.$(OBJEXT) \
-@WIN32_FALSE@	audiofilein.$(OBJEXT) chansim.$(OBJEXT)
+@WIN32_FALSE@	alsaio.$(OBJEXT) audiofilein.$(OBJEXT) \
+@WIN32_FALSE@	chansim.$(OBJEXT)
 libaudioio_a_OBJECTS = $(am_libaudioio_a_OBJECTS)
 libcommon_a_AR = $(AR) cru
 libcommon_a_LIBADD =
@@ -241,7 +245,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/audiofilein.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/alsaio.Po ./$(DEPDIR)/audiofilein.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/audioio.Po ./$(DEPDIR)/chansim.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/kisspkt.Po ./$(DEPDIR)/log.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/main.Po ./$(DEPDIR)/pktberr.Po \
@@ -341,6 +345,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alsaio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audiofilein.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audioio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chansim.Po@am__quote@

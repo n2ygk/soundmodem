@@ -17,7 +17,7 @@ else
 SBINPROG = soundmodem
 NOINSTPROG = testkiss chansim chansimberr
 libpttio_a_SOURCES = ptt.c
-libaudioio_a_SOURCES = audioio.c audiofilein.c chansim.c
+libaudioio_a_SOURCES = audioio.c alsaio.c audiofilein.c chansim.c
 liblog_a_SOURCES = log.c
 endif
 
