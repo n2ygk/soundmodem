@@ -30,7 +30,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <complex>
-#include <ostream>
 #include <iostream>
 #include <sstream>
 
