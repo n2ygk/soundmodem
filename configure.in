@@ -132,6 +132,14 @@ else
   AM_PATH_AUDIOFILE(0.1.0)
 fi
 
+dnl Only use -Wall if we have gcc
+if test "x$GCC" = "xyes"; then
+  if test -z "`echo "$CFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
+    CFLAGS="$CFLAGS -Wall -O2"
+    CXXFLAGS="$CXXFLAGS -Wall -O2"
+  fi
+fi
+
 if test x$ac_cv_cygwin = xyes -o x$ac_cv_mingw32 = xyes; then
   XMLCFLAGS=
   XMLLIBS=
