@@ -702,10 +702,10 @@ static void *transmitter(void *dummy)
 		pthread_mutex_unlock(&state.txmutex);
                 lprintf(10, "soundmodem: tx keying up\n");
 		pttsetptt(&state.ptt, 1);
-		if (!state.audioio->transmitstart)
+		if (state.audioio->transmitstart)
 			state.audioio->transmitstart(state.audioio);
 		state.pttstate = CH_PTT;
-                lprintf(10, "soundmodem: tx channel %u\n", curch);
+                lprintf(10, "soundmodem: tx channel %u (txdelay)\n", curch);
 		state.chan[curch].modch->modulate(state.chan[curch].modstate, state.txdelay * 10);
 		while (state.active) {
 			pthread_mutex_lock(&state.txmutex);

@@ -61,6 +61,7 @@ static void *modconfig(struct modemchannel *chan, unsigned int *samplerate, cons
 	if ((s = calloc(1, sizeof(struct txstate))) == NULL)
 		logprintf(MLOG_FATAL, "out of memory\n");
 	s->chan = chan;
+	s->saved = -1;
 	if (params[0]) {
 		s->bps = strtoul(params[0], NULL, 0);
 		if (s->bps < 1000)
@@ -125,11 +126,15 @@ static void modmodulate(void *state, unsigned int txdelay)
 	struct txstate *s = (struct txstate *)state;
 	int16_t *samples;
 	complex *cbuf;
+	unsigned char buf;
 	int n, i;
 
-	/* ugly... txdelay must be non-zero and txtail zero */
-	if (txdelay == 0)
+	/* check if there is data to be transmitted... */
+	if (!pktget(s->chan, &buf, 1))
 		return;
+
+	/* ...and save it */
+	s->saved = buf;
 
 	samples = alloca(s->bufsize * sizeof(int16_t));
 	cbuf = alloca(s->bufsize * sizeof(complex));

@@ -494,7 +494,7 @@ static void rxdata(void *state)
 					s->fecerrors[j]++;
 			s->bitbatches++;
 		}
-
+#if 0
 		/* sync tracking */
 		for (cor1 = cor2 = i = 0; i < DataCarriers; i++) {
 			if (s->power[i] < fabs(s->correl[i]) * RxSyncCorrThres) {
@@ -515,7 +515,7 @@ static void rxdata(void *state)
 				s->correl[i] /= 2.0;
 			logprintf(MLOG_INFO, "Correcting sync: %+d\n", s->skip);
 		}
-
+#endif
 		/* sum up phase errors */
 		for (i = 0; i < DataCarriers; i++)
 			s->phesum[i] += pherr[i] * pherr[i];

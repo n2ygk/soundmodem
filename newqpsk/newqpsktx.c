@@ -45,7 +45,19 @@ void init_newqpsktx(void *state)
 
 /* --------------------------------------------------------------------- */
 
-static unsigned getbitbatch(void *state)
+static int getbyte(void *state, unsigned char *buf)
+{
+	struct txstate *s = (struct txstate *)state;
+
+	if (s->saved != -1) {
+		*buf = (unsigned char) s->saved;
+		s->saved = -1;
+		return 1;
+	}
+	return pktget(s->chan, buf, 1);
+}
+
+static unsigned int getbitbatch(void *state)
 {
 	struct txstate *s = (struct txstate *)state;
 	unsigned int i, bit, data = 0;
@@ -53,7 +65,7 @@ static unsigned getbitbatch(void *state)
 
 	for (i = 0; i < s->fec.bitbatchlen; i++) {
 		if (s->shreg <= 1) {
-			if (!pktget(s->chan, &buf, 1))
+			if (!getbyte(s, &buf))
 				break;
 			s->shreg = buf;
 			s->shreg |= 0x100;

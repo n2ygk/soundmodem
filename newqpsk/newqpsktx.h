@@ -26,6 +26,7 @@ struct txstate {
 	unsigned txword[SymbolBits];
 	complex txwin[WindowLen];
 	complex fftbuf[WindowLen];
+	int saved;
 };
 
 /* --------------------------------------------------------------------- */
