@@ -260,8 +260,10 @@ static inline void iotxend(struct audioio_unix *audioio)
 	int sndparam;
 	short s;
 
+        fcntl(audioio->audiofd, F_SETFL, fcntl(audioio->audiofd, F_GETFL, 0) & ~O_NONBLOCK);
 	if (ioctl(audioio->audiofd, SNDCTL_DSP_SYNC, 0))
 		logerr(MLOG_ERROR, "ioctl: SNDCTL_DSP_SYNC");
+        fcntl(audioio->audiofd, F_SETFL, fcntl(audioio->audiofd, F_GETFL, 0) | O_NONBLOCK);
 	if (!(audioio->flags & CAP_HALFDUPLEX))
 		return;
 	/* the only reliable method seems to be to reopen the audio device :( */
