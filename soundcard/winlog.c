@@ -36,10 +36,6 @@
 
 #include "soundio.h"
 
-#ifdef HAVE_SYSLOG_H
-#include <syslog.h>
-#endif
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
