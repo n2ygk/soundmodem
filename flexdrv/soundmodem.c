@@ -719,7 +719,7 @@ static void *transmitter(void *dummy)
                         state.chan[curch].modch->modulate(state.chan[curch].modstate, 0);
 		}
 		pthread_mutex_unlock(&state.txmutex);
-                if (!state.audioio->transmitstop)
+                if (state.audioio->transmitstop)
 			state.audioio->transmitstop(state.audioio);
 		state.pttstate = 0;
 		pttsetptt(&state.ptt, 0);
