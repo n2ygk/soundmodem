@@ -11,7 +11,7 @@ Copyright: GPL
 Group: Networking/Hamradio
 Source: soundmodem-%{ver}.tar.gz
 BuildRoot: /tmp/soundmodem-root
-Packager: Thomas Sailer <sailer@ife.ee.ethz.ch>
+Packager: Thomas Sailer <t.sailer@alumni.ethz.ch>
 # Requires: /sbin/ifconfig /sbin/route /sbin/arp
 
 %description
