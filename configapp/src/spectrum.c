@@ -26,6 +26,7 @@
 #include <gtk/gtkgc.h>
 #include <gtk/gtkmain.h>
 #include <math.h>
+#include <string.h>
 
 #include <stdio.h>
 
