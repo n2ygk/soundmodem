@@ -13,6 +13,7 @@ LD=i686-pc-cygwin-ld
 RANLIB=i686-pc-cygwin-ranlib
 DLLTOOL=i686-pc-cygwin-dlltool
 WINDRES=i686-pc-cygwin-windres
+# for gcc3 and later, use -mms-bitfields instead of -fnative-struct
 CFLAGS="-O2 -g -I${CROSSPATH}/gtk/include -mno-cygwin -mpentium -fnative-struct"
 LDFLAGS="-L${CROSSPATH}/gtk/lib -mno-cygwin"
 export CC AS AR LD RANLIB DLLTOOL PATH CFLAGS LDFLAGS

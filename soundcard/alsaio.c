@@ -1,9 +1,9 @@
 /*****************************************************************************/
 
 /*
- *      audioio.c  --  Audio I/O.
+ *      alsaio.c  --  Audio I/O using the ALSA API.
  *
- *      Copyright (C) 1999-2000
+ *      Copyright (C) 1999-2000, 2004
  *        Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify

@@ -3,8 +3,8 @@
 /*
  *      modem.c  --  Linux Userland Soundmodem AFSK modem.
  *
- *      Copyright (C) 1998-2000
- *        Thomas Sailer <sailer@ife.ee.ethz.ch>
+ *      Copyright (C) 1998-2000, 2003
+ *        Thomas Sailer <t.sailer@alumni.ethz.ch>
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -36,18 +36,18 @@
 
 struct modstate {
 	struct modemchannel *chan;
-	unsigned bps, f0, f1, maxbitlen;
-	unsigned bitinc, bitph;
-	unsigned dds, ddsinc[2];
-	unsigned bit;
+	unsigned int bps, f0, f1, notdiff, maxbitlen;
+	unsigned int bitinc, bitph;
+	unsigned int dds, ddsinc[2];
+	unsigned int bit;
 };
 
 static const struct modemparams modparams[] = {
 	{ "bps", "Bits/s", "Bits per second", "1200", MODEMPAR_NUMERIC, { n: { 100, 9600, 100, 1200 } } },
 	{ "f0", "Frequency 0", "Frequency 0",  "1200", MODEMPAR_NUMERIC, { n: { 0, 38400, 100, 1000 } } },
 	{ "f1", "Frequency 1", "Frequency 1",  "2200", MODEMPAR_NUMERIC, { n: { 0, 38400, 100, 1000 } } },
+	{ "diffenc", "Differential Encoding", "Enable for differentially encoded waveforms (normally on!)", "1", MODEMPAR_CHECKBUTTON },
 	{ NULL }
-	
 };
 
 static void *modconfig(struct modemchannel *chan, unsigned int *samplerate, const char *params[])
@@ -77,6 +77,7 @@ static void *modconfig(struct modemchannel *chan, unsigned int *samplerate, cons
 			s->f1 = s->bps * 4;
 	} else
 		s->f1 = 2200;
+	s->notdiff = params[3] ? !strtoul(params[3], NULL, 0) : 0;
 	*samplerate = 8 * s->bps;
 	return s;
 }
@@ -100,7 +101,7 @@ static void modsendbits(struct modstate *s, unsigned int bits, unsigned int nrsy
         while (nrsyms > 0) {
                 if (s->bitph >= 0x10000) {
                         s->bitph &= 0xffff;
-                        s->bit = (~(s->bit ^ bits)) & 1;
+                        s->bit = (~((s->bit | s->notdiff) ^ bits)) & 1;
                         bits >>= 1;
                         nrsyms--;
                 }
@@ -156,7 +157,7 @@ struct modulator afskmodulator = {
 
 struct demodstate {
 	struct modemchannel *chan;
-	unsigned bps, f0, f1, firlen;
+	unsigned int bps, f0, f1, notdiff, firlen;
         unsigned int srate;
         unsigned int rxbits;
         unsigned int rxphase;
@@ -164,9 +165,9 @@ struct demodstate {
         int dcdcnt;
         unsigned int dcdtim;
 
-	unsigned div, divcnt;
-	unsigned pllinc, pll, pllthresh, pllcorr;
-	unsigned shreg, lastbit;
+	unsigned int div, divcnt;
+	unsigned int pllinc, pll, pllthresh, pllcorr;
+	unsigned int shreg, lastbit;
         int dcd_sum0, dcd_sum1, dcd_sum2;
         unsigned int dcd_time;
 	u_int32_t raws, rawb;
@@ -194,6 +195,7 @@ static const struct modemparams demodparams[] = {
 	{ "bps", "Bits/s", "Bits per second", "1200", MODEMPAR_NUMERIC, { n: { 100, 9600, 100, 1200 } } },
 	{ "f0", "Frequency 0", "Frequency 0",  "1200", MODEMPAR_NUMERIC, { n: { 0, 38400, 100, 1000 } } },
 	{ "f1", "Frequency 1", "Frequency 1",  "2200", MODEMPAR_NUMERIC, { n: { 0, 38400, 100, 1000 } } },
+	{ "diffdec", "Differential Decoding", "Enable for differentially encoded waveforms (normally on!)", "1", MODEMPAR_CHECKBUTTON },
 	{ NULL }
 };
 
@@ -224,7 +226,9 @@ static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, co
 			s->f1 = s->bps * 4;
 	} else
 		s->f1 = 2200;
-	*samplerate = 8 * s->bps;
+	s->notdiff = params[3] ? !strtoul(params[3], NULL, 0) : 0;
+	//*samplerate = 8 * s->bps;
+	*samplerate = 2 * s->bps;
 	return s;
 }
 
@@ -285,7 +289,7 @@ static void demod8bits(struct demodstate *s)
                 phase += phinc;
                 newv = demfilter(s, samples, phase);
                 s->rxbits >>= 1;
-                if (!((newv > 0) ^ (oldv > 0)))
+                if (!((newv > 0) ^ ((oldv > 0) | s->notdiff)))
                         s->rxbits |= 0x80;
                 else {
                         midv = demfilter(s, samples, phase - halfphinc);
