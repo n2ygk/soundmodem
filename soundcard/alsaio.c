@@ -61,6 +61,7 @@
 struct audioio_unix {
 	struct audioio audioio;
 	unsigned int samplerate;
+	unsigned int capturechannelmode;
 	snd_pcm_t *playback_handle;
 	snd_pcm_t *capture_handle;
 	unsigned int fragsize;
@@ -76,6 +77,8 @@ struct modemparams ioparams_alsasoundcard[] = {
 	{ "device", "ALSA Audio Driver", "Path name of the audio (soundcard) driver", "hw:0,0", MODEMPAR_COMBO, 
 	  { c: { { "hw:0,0", "hw:1,0", "hw:2,0", "hw:3,0" } } } },
         { "halfdup", "Half Duplex", "Force operating the Sound Driver in Half Duplex mode", "0", MODEMPAR_CHECKBUTTON },
+	{ "capturechannelmode", "Capture Channel", "Capture Channel", "Mono", MODEMPAR_COMBO, 
+	  { c: { { "Mono", "Left", "Right" } } } },
 	{ NULL, }
 };
 
@@ -118,7 +121,7 @@ static inline int iomodetofmode(unsigned int flags)
 
 /* ---------------------------------------------------------------------- */
 
-static snd_pcm_t *open_alsa(const char *name, snd_pcm_stream_t direction, unsigned int *samplerate)
+static snd_pcm_t *open_alsa(const char *name, snd_pcm_stream_t direction, unsigned int *samplerate, unsigned int *chanmode)
 {
 	snd_pcm_t *pcm_handle;
 	snd_pcm_hw_params_t *hwparams;
@@ -161,11 +164,20 @@ static snd_pcm_t *open_alsa(const char *name, snd_pcm_stream_t direction, unsign
                 goto err;
         }
         /* set the count of channels */
-        err = snd_pcm_hw_params_set_channels(pcm_handle, hwparams, 1);
-        if (err < 0) {
-                logprintf(MLOG_ERROR, "Channels count (1) not available for captures: %s\n", snd_strerror(err));
-                goto err;
-        }
+	if (chanmode && *chanmode) {
+		err = snd_pcm_hw_params_set_channels(pcm_handle, hwparams, 2);
+		if (err < 0) {
+			logprintf(MLOG_ERROR, "Channels count (2) not available for captures: %s; trying Mono\n", snd_strerror(err));
+			*chanmode = 0;
+		}
+	}
+	if (!chanmode || !*chanmode) {
+		err = snd_pcm_hw_params_set_channels(pcm_handle, hwparams, 1);
+		if (err < 0) {
+			logprintf(MLOG_ERROR, "Channels count (1) not available for captures: %s\n", snd_strerror(err));
+			goto err;
+		}
+	}
         /* set the stream rate */
         err = snd_pcm_hw_params_set_rate_near(pcm_handle, hwparams, samplerate, 0);
         if (err < 0) {
@@ -272,7 +284,7 @@ struct audioio *ioopen_alsasoundcard(unsigned int *samplerate, unsigned int flag
 {
 	const char *audiopath = params[0];
 	struct audioio_unix *audioio;
-	unsigned int prate, crate;
+	unsigned int prate, crate, i;
 
 	audioio = calloc(1, sizeof(struct audioio_unix));
 	if (!audioio)
@@ -281,11 +293,17 @@ struct audioio *ioopen_alsasoundcard(unsigned int *samplerate, unsigned int flag
 	if (!audiopath)
 		audiopath = "hw:0,0";
 	prate = crate = *samplerate;
+	audioio->capturechannelmode = 0;
+	if (params[2] && !strcmp(params[2], ioparams_alsasoundcard[2].u.c.combostr[1]))
+		audioio->capturechannelmode = 1;
+	else if (params[2] && !strcmp(params[2], ioparams_alsasoundcard[2].u.c.combostr[2]))
+		audioio->capturechannelmode = 2;
+	/* todo: remove configurations with different rx/tx rates or make different rates work...*/
 	if (flags & IO_RDONLY) {
 		audioio->audioio.terminateread = ioterminateread;
 		audioio->audioio.read = ioread;
 		audioio->audioio.curtime = iocurtime;
-		audioio->capture_handle = open_alsa(audiopath, SND_PCM_STREAM_CAPTURE, &crate);
+		audioio->capture_handle = open_alsa(audiopath, SND_PCM_STREAM_CAPTURE, &crate, &audioio->capturechannelmode);
 		if (!audioio->capture_handle)
 			goto err;
 	}
@@ -293,12 +311,13 @@ struct audioio *ioopen_alsasoundcard(unsigned int *samplerate, unsigned int flag
 		audioio->audioio.transmitstart = iotransmitstart;
 		audioio->audioio.transmitstop = iotransmitstop;
 		audioio->audioio.write = iowrite;
-		audioio->playback_handle = open_alsa(audiopath, SND_PCM_STREAM_PLAYBACK, &prate);
+		i = 0;
+		audioio->playback_handle = open_alsa(audiopath, SND_PCM_STREAM_PLAYBACK, &prate, &i);
 		if (!audioio->playback_handle)
 			goto err;
 	}
 	audioio->samplerate = prate;
-	if ((flags & (IO_RDONLY|IO_WRONLY)) == (IO_RDONLY|IO_WRONLY) && prate != crate) {
+	if ((flags & (IO_RDONLY|IO_WRONLY)) == (IO_RDONLY|IO_WRONLY) && abs(prate - crate) > 1) {
                 logprintf(MLOG_ERROR, "audio: Error, playback/capture sample rates do not match: %u/%u\n", prate, crate);
 		goto err;
 	}		
@@ -384,10 +403,10 @@ static void iowrite(struct audioio *aio, const int16_t *samples, unsigned int nr
 static void ioread(struct audioio *aio, int16_t *samples, unsigned int nr, u_int16_t tim)
 {
 	struct audioio_unix *audioio = (struct audioio_unix *)aio;
-	int16_t ibuf[AUDIOIBUFSIZE/8];
+	int16_t ibuf[2*AUDIOIBUFSIZE/8];
 	int16_t *ip;
 	unsigned int p;
-	int i;
+	int i, j;
 
 	pthread_mutex_lock(&audioio->iomutex);
 	while (nr > 0) {
@@ -429,7 +448,7 @@ static void ioread(struct audioio *aio, int16_t *samples, unsigned int nr, u_int
 		pthread_mutex_unlock(&audioio->iomutex);
 		if (!audioio->capture_handle)
 			logerr(MLOG_FATAL, "audio: read: capture handle NULL");
-		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0]));
+		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0])/2);
 		if (i < 0)
 			logprintf(MLOG_FATAL, "audio: snd_pcm_readi: %s", snd_strerror(i));
 		if (!i) {
@@ -442,14 +461,22 @@ static void ioread(struct audioio *aio, int16_t *samples, unsigned int nr, u_int
 		p = i;
 		pthread_mutex_lock(&audioio->iomutex);
 		audioio->flags &= ~FLG_READING;
-		for (ip = ibuf; p > 0; ) {
+		ip = ibuf;
+		if (audioio->capturechannelmode)
+			ip += audioio->capturechannelmode-1;
+		for (; p > 0; ) {
 			i = p;
 			if (i > AUDIOIBUFSIZE-audioio->ptr)
 				i = AUDIOIBUFSIZE-audioio->ptr;
-			memcpy(&audioio->ibuf[audioio->ptr], ip, i * sizeof(audioio->ibuf[0]));
+			if (audioio->capturechannelmode) {
+				for (j = 0; j < i; j++, ip += 2)
+					audioio->ibuf[audioio->ptr + j] = *ip;
+			} else {
+				memcpy(&audioio->ibuf[audioio->ptr], ip, i * sizeof(audioio->ibuf[0]));
+				ip += i;
+			}
 			audioio->ptr = (audioio->ptr + i) % AUDIOIBUFSIZE;
 			audioio->ptime += i;
-			ip += i;
 			p -= i;
 		}
 		pthread_cond_broadcast(&audioio->iocond);
@@ -461,10 +488,10 @@ static u_int16_t iocurtime(struct audioio *aio)
 {
 	struct audioio_unix *audioio = (struct audioio_unix *)aio;
         u_int16_t res;
-	int16_t ibuf[AUDIOIBUFSIZE/8];
+	int16_t ibuf[2*AUDIOIBUFSIZE/8];
 	int16_t *ip;
 	unsigned int p;
-	int i, r;
+	int i, j, r;
 
 	pthread_mutex_lock(&audioio->iomutex);
 	for (;;) {
@@ -477,7 +504,7 @@ static u_int16_t iocurtime(struct audioio *aio)
 		r = snd_pcm_nonblock(audioio->capture_handle, 1);
 		if (r < 0)
 			logprintf(MLOG_FATAL, "audio: snd_pcm_nonblock: %s", snd_strerror(r));
-		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0]));
+		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0])/2);
 		r = snd_pcm_nonblock(audioio->capture_handle, 0);
 		if (r < 0)
 			logprintf(MLOG_FATAL, "audio: snd_pcm_nonblock: %s", snd_strerror(r));
@@ -492,14 +519,22 @@ static u_int16_t iocurtime(struct audioio *aio)
 		p = i;
 		pthread_mutex_lock(&audioio->iomutex);
 		audioio->flags &= ~FLG_READING;
-		for (ip = ibuf; p > 0; ) {
+		ip = ibuf;
+		if (audioio->capturechannelmode)
+			ip += audioio->capturechannelmode-1;
+		for (; p > 0; ) {
 			i = p;
 			if (i > AUDIOIBUFSIZE-audioio->ptr)
 				i = AUDIOIBUFSIZE-audioio->ptr;
-			memcpy(&audioio->ibuf[audioio->ptr], ip, i * sizeof(audioio->ibuf[0]));
+			if (audioio->capturechannelmode) {
+				for (j = 0; j < i; j++, ip += 2)
+					audioio->ibuf[audioio->ptr + j] = *ip;
+			} else {
+				memcpy(&audioio->ibuf[audioio->ptr], ip, i * sizeof(audioio->ibuf[0]));
+				ip += i;
+			}
 			audioio->ptr = (audioio->ptr + i) % AUDIOIBUFSIZE;
 			audioio->ptime += i;
-			ip += i;
 			p -= i;
 		}
 		pthread_cond_broadcast(&audioio->iocond);

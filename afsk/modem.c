@@ -202,6 +202,7 @@ static const struct modemparams demodparams[] = {
 static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, const char *params[])
 {
 	struct demodstate *s;
+	unsigned int f;
 
 	if (!(s = malloc(sizeof(struct demodstate))))
 		logprintf(MLOG_FATAL, "out of memory\n");
@@ -227,8 +228,12 @@ static void *demodconfig(struct modemchannel *chan, unsigned int *samplerate, co
 	} else
 		s->f1 = 2200;
 	s->notdiff = params[3] ? !strtoul(params[3], NULL, 0) : 0;
-	//*samplerate = 8 * s->bps;
-	*samplerate = 2 * s->bps;
+	f = s->f0;
+	if (s->f1 > f)
+		f = s->f1;
+	f += s->bps/2;
+	f = (2*f) + (f >> 1);
+	*samplerate = f;
 	return s;
 }
 
