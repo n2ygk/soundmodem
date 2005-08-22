@@ -208,16 +208,16 @@ static void do_rxpacket(void)
 }
 
 #define DECODEITERA(j)                                                        \
-({                                                                            \
+do {                                                                          \
         if (!(notbitstream & (0x0fc << j)))              /* flag or abort */  \
                 goto flgabrt##j;                                              \
         if ((bitstream & (0x1f8 << j)) == (0xf8 << j))   /* stuffed bit */    \
                 goto stuff##j;                                                \
   enditer##j:;                                                                \
-})
+} while (0)
 
 #define DECODEITERB(j)                                                                 \
-({                                                                                     \
+do {                                                                                   \
   flgabrt##j:                                                                          \
         if (!(notbitstream & (0x1fc << j))) {              /* abort received */        \
                 state = 0;                                                             \
@@ -236,7 +236,7 @@ static void do_rxpacket(void)
         numbits--;                                                                     \
         bitbuf = (bitbuf & ((~0xff) << j)) | ((bitbuf & ~((~0xff) << j)) << 1);        \
         goto enditer##j;                                                               \
-})
+} while (0)
         
 static inline void hdlc_receive(const unsigned char *data, unsigned nrbytes)
 {
