@@ -1,5 +1,5 @@
 # Note that this is NOT a relocatable package
-%define ver      0.9
+%define ver      0.10
 %define rel      1
 %define prefix   /usr
 
@@ -7,7 +7,7 @@ Summary: Driver and diagnostic utility for Usermode SoundModem
 Name: soundmodem
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Networking/Hamradio
 Source: soundmodem-%{ver}.tar.gz
 BuildRoot: /tmp/soundmodem-root

@@ -80,6 +80,10 @@ char *alloca ();
 #include <arpa/inet.h>
 #endif
 
+#ifdef HAVE_NET_IF_ARP_H
+#include <net/if_arp.h>
+#endif
+
 #ifdef HAVE_PTY_H
 #include <pty.h>
 #else
@@ -874,7 +878,7 @@ void pktinitmkiss(struct modemchannel *chan, const char *params[])
         if (ioctl(fd, SIOCSIFMTU, &ifr) == -1)
                 logerr(MLOG_FATAL, "ioctl: SIOCSIFMTU");
 	if (parsehw(&sax25.sax25_call, params[1])) {
-		sax25.sax25_family = AF_AX25;
+		sax25.sax25_family = ARPHRD_AX25;
 		sax25.sax25_ndigis = 0;
 		memcpy(&ifr.ifr_hwaddr, &sax25, sizeof(ifr.ifr_hwaddr));
 		if (ioctl(fd, SIOCSIFHWADDR, &ifr) == -1)
