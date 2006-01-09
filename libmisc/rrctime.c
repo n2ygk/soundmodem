@@ -57,6 +57,6 @@ double root_raised_cosine_time(double time, double alpha)
 	at4 = alpha * time * 4;
 	omat4sq = 1 - at4 * at4;
 	if (fabs(omat4sq) < 1e-8)
-		return (1.0 / 8 / M_PI) * (opap * sin(opap * time) + sin(omap * time) / time / at4 - omap / at4 * cos(omap * time));
+		return ((4.0 * alpha) * cos(opap * time) - at4 * opap * sin(opap * time) + omap * cos(omap * time)) / (1 - 3 * at4 * at4) * (1.0 / M_PI);
 	return (4.0 / M_PI) * alpha / omat4sq * (cos(opap * time) + sin(omap * time) / at4);
 }
