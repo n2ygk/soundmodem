@@ -13518,7 +13518,7 @@ int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings
+return * gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings
   ;
   return 0;
 }
@@ -13964,7 +13964,7 @@ int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias ("")
+return * gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias ("")
   ;
   return 0;
 }
@@ -14019,7 +14019,7 @@ int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias ("")
+return * gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias ("")
   ;
   return 0;
 }
