@@ -29,12 +29,11 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
-install -g root -o root -m 0755 -d $RPM_BUILD_ROOT/etc/rc.d/init.d
-install -g root -o root -m 0755 soundmodem.initscript $RPM_BUILD_ROOT/etc/rc.d/init.d/soundmodem
-install -g root -o root -m 0755 -d $RPM_BUILD_ROOT/etc/ax25
+install -m 0755 -d $RPM_BUILD_ROOT/etc/rc.d/init.d
+install -m 0755 soundmodem.initscript $RPM_BUILD_ROOT/etc/rc.d/init.d/soundmodem
+install -m 0755 -d $RPM_BUILD_ROOT/etc/ax25
 touch $RPM_BUILD_ROOT/etc/ax25/soundmodem.conf
 chmod 0600 $RPM_BUILD_ROOT/etc/ax25/soundmodem.conf
-chown 0.0 $RPM_BUILD_ROOT/etc/ax25/soundmodem.conf
 rm -rf $RPM_BUILD_ROOT/usr/include
 
 %clean
