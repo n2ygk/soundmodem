@@ -258,8 +258,8 @@ static int parsecfg(xmlDocPtr doc, xmlNodePtr node, struct state *state, unsigne
 			continue;
 		}
 		if (!strcmp(node->name, "channel")) {
-			if (node->childs)
-				parsechannel(doc, node->childs, state, &samplerate);
+			if (node->children)
+				parsechannel(doc, node->children, state, &samplerate);
 			continue;
 		}
 		logprintf(MLOG_ERROR, "unknown node \"%s\"\n", node->name);
@@ -434,11 +434,11 @@ static void parseopts(int argc, char *argv[])
         if (optind < argc)
                 filename = argv[optind];
 	doc = xmlParseFile(filename);
-	if (!doc || !doc->root || !doc->root->name)
+	if (!doc || !doc->children || !doc->children->name)
 		logprintf(MLOG_FATAL, "Error parsing config file \"%s\"\n", filename);
-	if (strcmp(doc->root->name, "modem"))
+	if (strcmp(doc->children->name, "modem"))
 		logprintf(MLOG_FATAL, "Config file does not contain modem data\n");
-	for (node = doc->root->childs; node; node = node->next) {
+	for (node = doc->children->children; node; node = node->next) {
 		if (!node->name || strcmp(node->name, "configuration"))
 			continue;
 		if (!configname)
@@ -449,9 +449,9 @@ static void parseopts(int argc, char *argv[])
 	}
 	if (!node)
 		logprintf(MLOG_FATAL, "Configuartion not found\n");
-	if (!node->childs)
+	if (!node->children)
 		logprintf(MLOG_FATAL, "Configuration empty\n");
-	err = parsecfg(doc, node->childs, &state, &schedrr);
+	err = parsecfg(doc, node->children, &state, &schedrr);
 	xmlFreeDoc(doc);
 	if (err)
 		exit(1);
