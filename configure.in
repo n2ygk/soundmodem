@@ -108,7 +108,7 @@ AC_SUBST(HAVE_ALSA)
 
 dnl Add the languages which your application supports here.
 ALL_LINGUAS="sv"
-AM_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
 if test "x${prefix}" = "xNONE"; then
@@ -272,7 +272,6 @@ AC_SUBST(RANLIB)
 
 AC_OUTPUT([Makefile
 po/Makefile.in
-intl/Makefile
 directx/Makefile
 libmisc/Makefile
 matlib/Makefile
