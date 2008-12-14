@@ -195,6 +195,8 @@ static void do_rxpacket(void)
                 return;
 #endif
         {
+#warning FIXME: GtkText
+#if 1
 		GtkText *txt;
                 char buf[512];
 		int len;
@@ -204,6 +206,7 @@ static void do_rxpacket(void)
 
                 txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
 		gtk_text_insert(txt, NULL, NULL, NULL, buf, len);
+#endif
         }
 }
 
@@ -449,7 +452,10 @@ GtkWidget* create_led_pixmap(gchar *widget_name, gchar *string1, gchar *string2,
 
 static inline void update_display_p3d(void)
 {
+#warning FIXME: GtkText
+#if 1
         GtkText *txt;
+#endif
         GtkWidget *w;
         unsigned int i, j;
         char buf[4096], *cp;
@@ -487,6 +493,8 @@ static inline void update_display_p3d(void)
                                 cp += sprintf(cp, "%c", diagstate.p3d.packet[i]);
                 }
                 cp += sprintf(cp, "\n\n");
+#warning FIXME: GtkText
+#if 1
                 txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetraw"));
                 gtk_text_freeze(txt);
                 gtk_text_set_point(txt, gtk_text_get_length(txt));
@@ -499,6 +507,7 @@ static inline void update_display_p3d(void)
                         gtk_text_set_point(txt, gtk_text_get_length(txt));
                 }
                 gtk_text_thaw(txt);
+#endif
                 /* decode cooked packet if CRC ok or passall selected */
                 if (!diagstate.p3d.crc ||
                     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtk_object_get_data(GTK_OBJECT(p3dwindow), "buttonpassall")))) {
@@ -538,6 +547,8 @@ static void update_display(void)
                 diagstate.updpttthr = 0;
         }
 	if (diagstate.rxrd != diagstate.rxwr) {
+#warning FIXME: GtkText
+#if 1
 		GtkText *txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(receivewindow), "bitstext"));
 		gtk_text_freeze(txt);
 		gtk_text_set_point(txt, gtk_text_get_length(txt));
@@ -567,6 +578,7 @@ static void update_display(void)
 		}
 		gtk_text_thaw(txt);
 		diagstate.updcount = 1;
+#endif
 	}
 	if (diagstate.updcount) {
 		c0 = diagstate.count0;
@@ -681,7 +693,7 @@ static int diag_start(void)
         /* get current config/channel name */
         diagstate.cfgname = diagstate.chname = NULL;
         tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-        sel = GTK_TREE_SELECTION(tree);
+        sel = GTK_TREE_SELECTION_OLD(tree);
         if (sel) {
                 diagstate.cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
                 diagstate.chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");

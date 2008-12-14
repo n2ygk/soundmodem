@@ -112,6 +112,8 @@ static char *gtktostr(const gchar *in)
 
 /* ---------------------------------------------------------------------- */
 
+#warning FIXME: GtkTree
+#if 1
 void on_configtree_selection_changed(GtkTree *treex, gpointer user_data)
 {
 	GtkWidget *tree;
@@ -119,7 +121,7 @@ void on_configtree_selection_changed(GtkTree *treex, gpointer user_data)
 	const char *cfgname = NULL, *chname = NULL;
 
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION(tree);
+	sel = GTK_TREE_SELECTION_OLD(tree);
 	if (sel) {
 		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
 		chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");
@@ -139,6 +141,7 @@ void on_configtree_selection_changed(GtkTree *treex, gpointer user_data)
 	}
 	g_print("selection: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 }
+#endif
 
 static GtkWidget *create_notebookhead(GList *combo_items)
 {
@@ -740,13 +743,16 @@ static void on_channel_deselect(GtkWidget *item, gpointer data)
 
 static void dounselect(void)
 {
+#warning FIXME: GtkTree
+#if 1
 	GtkWidget *tree;
 	GList *chld;
 
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	chld = GTK_TREE_SELECTION(tree);
+	chld = GTK_TREE_SELECTION_OLD(tree);
 	if (chld)
 		gtk_tree_unselect_child(GTK_TREE(GTK_WIDGET(chld->data)->parent), GTK_WIDGET(chld->data));
+#endif
 }
 
 void on_quit_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -796,7 +802,10 @@ static GtkWidget *findconfigitem(const gchar *name)
 	const gchar *nm;
 
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+#warning FIXME: GtkTree
+#if 1
 	chld = GTK_TREE(tree)->children;
+#endif
 	for (; chld; chld = chld->next) {
 		if (!(nm = gtk_object_get_data(GTK_OBJECT(chld->data), "configname")))
 			continue;
@@ -813,8 +822,11 @@ static GtkWidget *findchannelitem(GtkWidget *cfgitem, const gchar *name)
 	GList *chld;
 	const gchar *nm;
 
+#warning FIXME: GtkTree
+#if 1
 	tree = GTK_TREE_ITEM(cfgitem)->subtree;
 	chld = GTK_TREE(tree)->children;
+#endif
 	for (; chld; chld = chld->next) {
 		if (!(nm = gtk_object_get_data(GTK_OBJECT(chld->data), "channame")))
 			continue;
@@ -833,6 +845,8 @@ GtkWidget *new_configuration(const gchar *name2)
 	if ((item = findconfigitem(name2)))
 		return item;
 	name = strdup(name2);
+#warning FIXME: GtkTree
+#if 1
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
         item = gtk_tree_item_new_with_label(name);
 	gtk_signal_connect_after(GTK_OBJECT(item), "select", GTK_SIGNAL_FUNC(on_config_select), item);
@@ -843,6 +857,7 @@ GtkWidget *new_configuration(const gchar *name2)
 	gtk_object_set_data(GTK_OBJECT(item), "parenttree", tree);
 	gtk_object_set_data(GTK_OBJECT(item), "configname", (void *)name);
 	gtk_object_set_data(GTK_OBJECT(item), "channame", NULL);
+#endif
 	return item;
 }
 
@@ -855,6 +870,8 @@ GtkWidget *new_channel(const gchar *cfgname, const gchar *name)
 		g_printerr("Could not find configuration \"%s\"\n", cfgname);
 		return NULL;
 	}
+#warning FIXME: GtkTree
+#if 1
 	tree = GTK_TREE_ITEM_SUBTREE(cfgitem);
 	if (!tree) {
 		tree = gtk_tree_new();
@@ -870,6 +887,7 @@ GtkWidget *new_channel(const gchar *cfgname, const gchar *name)
 	gtk_object_set_data(GTK_OBJECT(item), "parenttree", tree);
 	gtk_object_set_data(GTK_OBJECT(item), "configname", gtk_object_get_data(GTK_OBJECT(cfgitem), "configname"));
 	gtk_object_set_data(GTK_OBJECT(item), "channame", (void *)strdup(name));
+#endif
 	return item;
 }
 
@@ -882,7 +900,10 @@ static void renumber_onecfg(GtkWidget *tree)
 
 	if (!tree)
 		return;
+#warning FIXME: GtkTree
+#if 1
 	chld = GTK_TREE(tree)->children;
+#endif
 	for (; chld; chld = chld->next) {
 		label = GTK_BIN(chld->data)->child;
 		sprintf(buf, "Channel %u", cnt++);
@@ -895,11 +916,14 @@ void renumber_channels(void)
 	GtkWidget *tree;
 	GList *chld;
 
+#warning FIXME: GtkTree
+#if 1
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
 	chld = GTK_TREE(tree)->children;
 	for (; chld; chld = chld->next) {
 		renumber_onecfg(GTK_TREE_ITEM(chld->data)->subtree);
 	}
+#endif
 }
 
 /*    gtk_container_remove */
@@ -967,8 +991,10 @@ void on_newchannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 	GList *sel;
 	const char *cfgname = NULL, *chname = NULL;
 
+#warning FIXME: GtkTree
+#if 1
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION(tree);
+	sel = GTK_TREE_SELECTION_OLD(tree);
 	if (sel)
 		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
 	if (!cfgname) {
@@ -982,6 +1008,7 @@ void on_newchannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 	}
 	new_channel(cfgname, chname);
 	renumber_channels();
+#endif
 }
 
 
@@ -992,8 +1019,10 @@ void on_deleteconfiguration_activate(GtkMenuItem *menuitem, gpointer user_data)
 	const char *cfgname = NULL;
 	GList list = { NULL, NULL, NULL };
 
+#warning FIXME: GtkTree
+#if 1
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION(tree);
+	sel = GTK_TREE_SELECTION_OLD(tree);
 	if (sel)
 		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
 	dounselect();
@@ -1006,6 +1035,7 @@ void on_deleteconfiguration_activate(GtkMenuItem *menuitem, gpointer user_data)
 	gtk_container_remove(GTK_CONTAINER(tree), item);
 	//list.data = item;
 	//gtk_tree_remove_items(GTK_TREE(tree), &list);
+#endif
 }
 
 
@@ -1016,8 +1046,10 @@ void on_deletechannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 	const char *cfgname = NULL, *chname = NULL;
 	GList list = { NULL, NULL, NULL };
 
+#warning FIXME: GtkTree
+#if 1
 	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION(tree);
+	sel = GTK_TREE_SELECTION_OLD(tree);
 	if (sel) {
 		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
 		chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");
@@ -1035,4 +1067,5 @@ void on_deletechannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 	//list.data = chitem;
 	//gtk_tree_remove_items(GTK_TREE(tree), &list);
 	renumber_channels();
+#endif
 }

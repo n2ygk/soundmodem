@@ -35,7 +35,7 @@
 
 static void scope_class_init(ScopeClass *klass);
 static void scope_init(Scope *scope);
-static void scope_finalize(GtkObject *object);
+static void scope_finalize(GObject *object);
 static gint scope_expose(GtkWidget *widget, GdkEventExpose *event);
 static void scope_realize(GtkWidget *widget);
 static void scope_unrealize(GtkWidget *widget);
@@ -71,10 +71,10 @@ guint scope_get_type(void)
 
 static void scope_class_init(ScopeClass *klass)
 {
-	GtkObjectClass *object_class;
+	GObjectClass   *object_class;
 	GtkWidgetClass *widget_class;
 
-	object_class = (GtkObjectClass*)klass;
+	object_class = (GObjectClass*)klass;
 	widget_class = (GtkWidgetClass*)klass;
 
 	parent_class = gtk_type_class(gtk_widget_get_type());
@@ -223,11 +223,11 @@ GtkWidget* scope_new(const char *name, void *dummy0, void *dummy1, unsigned int 
 	return GTK_WIDGET(scope);
 }
 
-static void scope_finalize(GtkObject *object)
+static void scope_finalize(GObject *object)
 {
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(IS_SCOPE(object));
-	(*GTK_OBJECT_CLASS(parent_class)->finalize)(object);
+	(*G_OBJECT_CLASS(parent_class)->finalize)(object);
 }
 
 static gint scope_expose(GtkWidget *widget, GdkEventExpose *event)

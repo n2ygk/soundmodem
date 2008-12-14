@@ -23,8 +23,8 @@
 #else
 
 /* libxml includes */
-#include <tree.h>
-#include <parser.h>
+#include <libxml/tree.h>
+#include <libxml/parser.h>
 
 #endif
 
@@ -365,7 +365,7 @@ static xmlNodePtr findconfig(const char *newname)
 	xmlNodePtr node;
 	const char *name;
 
-	for (node = doc->root->childs; node; node = node->next) {
+	for (node = doc->children->children; node; node = node->next) {
                 if (!node->name || strcmp(node->name, "configuration"))
                         continue;
                 name = xmlGetProp(node, "name");
@@ -384,7 +384,7 @@ static xmlNodePtr findchannel(xmlNodePtr cfg, const char *newname)
 
 	if (!cfg)
 		return NULL;
-	for (node = cfg->childs; node; node = node->next) {
+	for (node = cfg->children; node; node = node->next) {
                 if (!node->name || strcmp(node->name, "channel"))
                         continue;
                 name = xmlGetProp(node, "name");
@@ -403,7 +403,7 @@ static void namechannels(xmlNodePtr cfg)
 	char buf[64];
 	const char *name;
 	
-	for (node = cfg->childs; node; node = node->next) {
+	for (node = cfg->children; node; node = node->next) {
                 if (!node->name || strcmp(node->name, "channel"))
                         continue;
                 name = xmlGetProp(node, "name");
@@ -428,7 +428,7 @@ int xml_newconfig(const char *newname)
 
 	if (node)
 		return -1;
-	node = xmlNewChild(doc->root, NULL, "configuration", NULL);
+	node = xmlNewChild(doc->children, NULL, "configuration", NULL);
 	xmlSetProp(node, "name", newname);
 	return 0;
 }
@@ -473,7 +473,7 @@ static xmlNodePtr propnode(const char *cfgname, const char *chname, const char *
 		node = findchannel(node, chname);
 	if (!node)
 		return NULL;
-	for (node2 = node->childs; node2; node2 = node2->next) {
+	for (node2 = node->children; node2; node2 = node2->next) {
 		if (!node2->name || strcmp(node2->name, typname))
 			continue;
 		return node2;
@@ -521,7 +521,7 @@ static void buildtree(xmlNodePtr xnode)
 		namechannels(xnode);
 		new_configuration(name);
 		/* now add channels */
-		for (node = xnode->childs; node; node = node->next) {
+		for (node = xnode->children; node; node = node->next) {
 			if (!node->name || strcmp(node->name, "channel"))
 				continue;
 			new_channel(name, xmlGetProp(node, "name"));
@@ -556,6 +556,7 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
 	bindtextdomain(PACKAGE, PACKAGE_LOCALE_DIR);
+	bind_textdomain_codeset (PACKAGE, "UTF-8");
 	textdomain(PACKAGE);
 #endif
 
@@ -566,6 +567,7 @@ int main (int argc, char *argv[])
 	add_pixmap_directory(PACKAGE_SOURCE_DIR "/pixmaps");
 
 	mainwindow = create_mainwindow();
+	gtk_notebook_remove_page(GTK_NOTEBOOK(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook")), 0);
 	gtk_notebook_remove_page(GTK_NOTEBOOK(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook")), 0);
 	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel")));
 	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration")));
@@ -579,16 +581,14 @@ int main (int argc, char *argv[])
         {
                 GtkWidget *w;
                 GtkStyle *st;
-                GdkFont *font = gdk_font_load("-*-courier-medium-r-normal-*-*-120-*-*-m-*-*-*");
-                if (!font) {
-                        g_printerr("Cannot load courier\n");
+		PangoFontDescription *font_desc = pango_font_description_from_string ("monospace 12");
+                if (!font_desc) {
+                        g_printerr("Cannot load monospace\n");
                 } else {
                         w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetraw"));
                         st = gtk_style_copy(w->style);
                         gtk_style_unref(w->style);
-                        gdk_font_unref(st->font);
-                        gdk_font_ref(font);
-                        st->font = font;
+                        st->font_desc = font_desc;
                         gtk_style_ref(st);
                         w->style = st;
                         w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetcooked"));
@@ -639,17 +639,17 @@ int main (int argc, char *argv[])
         if (optind < argc)
 		cfgfile = argv[optind];
         doc = xmlParseFile(cfgfile);
-	if (doc && (!doc->root || !doc->root->name || strcmp(doc->root->name, "modem"))) {
+	if (doc && (!doc->children || !doc->children->name || strcmp(doc->children->name, "modem"))) {
 		g_printerr("SoundModem Config: Invalid configuration file %s\n", cfgfile);
 		exit(1);
 	}
 	if (!doc && (doc = xmlNewDoc("1.0")))
-		doc->root = xmlNewDocNode(doc, NULL, "modem", NULL);
-	if (!doc || !doc->root) {
+		doc->children = xmlNewDocNode(doc, NULL, "modem", NULL);
+	if (!doc || !doc->children) {
 		g_printerr("SoundModem Config: out of memory\n");
 		exit(1);
 	}
-	buildtree(doc->root->childs);
+	buildtree(doc->children->children);
 #endif /* WIN32 */
 	renumber_channels();
 	gtk_widget_show(mainwindow);

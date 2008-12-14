@@ -46,8 +46,8 @@
 #include <string.h>
 
 /* libxml includes */
-#include <tree.h>
-#include <parser.h>
+#include <libxml/tree.h>
+#include <libxml/parser.h>
 
 #ifdef HAVE_SCHED_H
 #include <sched.h>

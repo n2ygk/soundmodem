@@ -5,6 +5,9 @@
 
 typedef struct {
 	float re, im;
+#ifdef __ia64__
+	int dummy;
+#endif
 } complex;
 
 /*

@@ -32,6 +32,8 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 /*
  * basic complex manipulations
  */

@@ -52,7 +52,19 @@ AC_CHECK_LIB(posix4,sched_setscheduler)
 AC_CHECK_LIB(uuid,GUID_NULL)
 AC_CHECK_FUNCS(getopt_long,,[AC_LIBOBJ([getopt]) AC_LIBOBJ([getopt1])])
 AC_CHECK_HEADERS(sys/audioio.h stropts.h sys/conf.h sys/soundcard.h sys/ioctl.h time.h inttypes.h net/if_arp.h)
-AC_CHECK_HEADERS(pty.h getopt.h syslog.h sched.h linux/if.h linux/ax25.h linux/sockios.h sys/ioccom.h linux/ppdev.h)
+AC_CHECK_HEADERS(pty.h getopt.h syslog.h sched.h linux/sockios.h sys/ioccom.h linux/ppdev.h)
+AC_CHECK_HEADERS(sys/socket.h linux/if.h,,,
+[[
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+]])
+AC_CHECK_HEADERS(sys/socket.h linux/ax25.h,,,
+[[
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+]])
 AC_CHECK_FUNCS(snprintf vsnprintf syslog vsyslog openlog closelog)
 AC_CHECK_FUNCS(mlockall)
 
@@ -87,13 +99,15 @@ AC_TRY_COMPILE([#include <math.h>],
 AC_MSG_RESULT($mlog10e)
 
 dnl check for ALSA
-if test x$CYGWIN != xyes -a x$MINGW32 != xyes; then
-AM_PATH_ALSA(1.0.0, AC_DEFINE(HAVE_ALSA,1,[Define if ALSA is available]))
-fi
+case $target_os in
+  linux*)
+    AM_PATH_ALSA(1.0.0, AC_DEFINE(HAVE_ALSA,1,[Define if ALSA is available]))
+    ;;
+esac
 AC_SUBST(HAVE_ALSA)
 
 dnl Add the languages which your application supports here.
-ALL_LINGUAS=""
+ALL_LINGUAS="sv"
 AM_GNU_GETTEXT
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
@@ -138,8 +152,9 @@ if test x$cross_compiling = xyes; then
     AUDIOFILE_LIBS="-L$CROSSCOMPPATH/audiofile/lib -laudiofile"
   fi
 else
-  AM_PATH_GTK(1.2.0,gtk=yes,AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
-  AM_PATH_AUDIOFILE(0.1.0)
+  PKG_CHECK_MODULES(XML,libxml-2.0)
+  PKG_CHECK_MODULES(GTK,gtk+-2.0)
+  PKG_CHECK_MODULES(AUDIOFILE,audiofile)
 fi
 
 dnl Only use -Wall if we have gcc
@@ -151,28 +166,14 @@ if test "x$GCC" = "xyes"; then
 fi
 
 if test x$CYGWIN = xyes -o x$MINGW32 = xyes; then
-  XMLCFLAGS=
-  XMLLIBS=
+  XML_CFLAGS=
+  XML_LIBS=
 else
   xlibs=$LIBS
   LIBS=
   AC_CHECK_LIB(util,openpty)
   AC_CHECK_FUNCS(openpty,LIBTHREAD="$LIBTHREAD $LIBS",[AC_LIBOBJ([openpty])])
   LIBS=$xlibs
-
-  AC_PATH_PROG(XML_CONFIG,xml-config,:)
-  if test "$XML_CONFIG" = ":" ; then
-    AC_MSG_ERROR(Could not find xml-config; libxml installed?)
-  fi
-  XMLCFLAGS=`$XML_CONFIG --cflags`
-  XMLLIBS=`$XML_CONFIG --libs`
-  xcflags=$CFLAGS
-  xlibs=$LIBS
-  LIBS="$LIBS $XMLLIBS"
-  CFLAGS="$CFLAGS $XMLCFLAGS"
-  AC_CHECK_LIB(xml, xmlNewDoc,, AC_MSG_ERROR(Cannot link libxml))
-  LIBS=$xlibs
-  CFLAGS=$xcflags
 fi
 
 xcflags="$CFLAGS"
@@ -257,8 +258,8 @@ AC_SUBST(M_PI)
 AC_SUBST(LIBTHREAD)
 AC_SUBST(USEMMX)
 AC_SUBST(USEVIS)
-AC_SUBST(XMLCFLAGS)
-AC_SUBST(XMLLIBS)
+AC_SUBST(XML_CFLAGS)
+AC_SUBST(XML_LIBS)
 AC_SUBST(GTK_LIBS)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)

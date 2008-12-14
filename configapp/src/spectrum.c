@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <stdio.h>
+#include <string.h>
 
 /* --------------------------------------------------------------------- */
 
@@ -123,7 +124,7 @@ static inline float fsqr(float x)
 
 static void spectrum_class_init(SpectrumClass *klass);
 static void spectrum_init(Spectrum *spec);
-static void spectrum_finalize(GtkObject *object);
+static void spectrum_finalize(GObject *object);
 static gint spectrum_expose(GtkWidget *widget, GdkEventExpose *event);
 static void spectrum_realize(GtkWidget *widget);
 static void spectrum_unrealize(GtkWidget *widget);
@@ -159,10 +160,10 @@ guint spectrum_get_type(void)
 
 static void spectrum_class_init(SpectrumClass *klass)
 {
-	GtkObjectClass *object_class;
+	GObjectClass   *object_class;
 	GtkWidgetClass *widget_class;
 
-	object_class = (GtkObjectClass*)klass;
+	object_class = (GObjectClass*)klass;
 	widget_class = (GtkWidgetClass*)klass;
 
 	parent_class = gtk_type_class(gtk_widget_get_type());
@@ -327,11 +328,11 @@ GtkWidget* spectrum_new(const char *name, void *dummy0, void *dummy1, unsigned i
 	return GTK_WIDGET(spec);
 }
 
-static void spectrum_finalize(GtkObject *object)
+static void spectrum_finalize(GObject *object)
 {
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(IS_SPECTRUM(object));
-	(*GTK_OBJECT_CLASS(parent_class)->finalize)(object);
+	(*G_OBJECT_CLASS(parent_class)->finalize)(object);
 }
 
 static gint spectrum_expose(GtkWidget *widget, GdkEventExpose *event)

@@ -10,13 +10,23 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
 #include "callbacks.h"
+#include "spectrum.h"
+#include "scope.h"
 #include "interface.h"
 #include "support.h"
+
+#define GLADE_HOOKUP_OBJECT(component,widget,name) \
+  g_object_set_data_full (G_OBJECT (component), name, \
+    gtk_widget_ref (widget), (GDestroyNotify) gtk_widget_unref)
+
+#define GLADE_HOOKUP_OBJECT_NO_REF(component,widget,name) \
+  g_object_set_data (G_OBJECT (component), name, widget)
 
 GtkWidget*
 create_mainwindow (void)
@@ -27,22 +37,18 @@ create_mainwindow (void)
   GtkWidget *menubar1;
   GtkWidget *file;
   GtkWidget *file_menu;
-  GtkAccelGroup *file_menu_accels;
   GtkWidget *new;
   GtkWidget *new_menu;
-  GtkAccelGroup *new_menu_accels;
   GtkWidget *newconfiguration;
   GtkWidget *newchannel;
   GtkWidget *delete;
   GtkWidget *delete_menu;
-  GtkAccelGroup *delete_menu_accels;
   GtkWidget *deleteconfiguration;
   GtkWidget *deletechannel;
   GtkWidget *separator1;
   GtkWidget *quit;
   GtkWidget *diagnostics;
   GtkWidget *diagnostics_menu;
-  GtkAccelGroup *diagnostics_menu_accels;
   GtkWidget *diagscope;
   GtkWidget *diagspectrum;
   GtkWidget *diagmodem;
@@ -50,7 +56,6 @@ create_mainwindow (void)
   GtkWidget *diagpassall;
   GtkWidget *help;
   GtkWidget *help_menu;
-  GtkAccelGroup *help_menu_accels;
   GtkWidget *about;
   GtkWidget *configbox;
   GtkWidget *scrolledwindow1;
@@ -59,233 +64,141 @@ create_mainwindow (void)
   GtkWidget *vbox3;
   GtkWidget *confignotebook;
   GtkWidget *empty_notebook_page;
+  GtkWidget *label32;
+  GtkWidget *label33;
   GtkWidget *statusbar1;
 
   mainwindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (mainwindow), "mainwindow", mainwindow);
   gtk_window_set_title (GTK_WINDOW (mainwindow), _("SoundModem Configurator"));
   gtk_window_set_default_size (GTK_WINDOW (mainwindow), 550, 330);
-  gtk_window_set_wmclass (GTK_WINDOW (mainwindow), "soundmodem", "soundmodem");
 
   vbox1 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "vbox1", vbox1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox1);
   gtk_container_add (GTK_CONTAINER (mainwindow), vbox1);
 
   handlebox1 = gtk_handle_box_new ();
-  gtk_widget_ref (handlebox1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "handlebox1", handlebox1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (handlebox1);
   gtk_box_pack_start (GTK_BOX (vbox1), handlebox1, FALSE, TRUE, 0);
 
   menubar1 = gtk_menu_bar_new ();
-  gtk_widget_ref (menubar1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "menubar1", menubar1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (menubar1);
   gtk_container_add (GTK_CONTAINER (handlebox1), menubar1);
 
-  file = gtk_menu_item_new_with_label (_("File"));
-  gtk_widget_ref (file);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "file", file,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  file = gtk_menu_item_new_with_mnemonic (_("File"));
   gtk_widget_show (file);
   gtk_container_add (GTK_CONTAINER (menubar1), file);
 
   file_menu = gtk_menu_new ();
-  gtk_widget_ref (file_menu);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "file_menu", file_menu,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (file), file_menu);
-  file_menu_accels = gtk_menu_ensure_uline_accel_group (GTK_MENU (file_menu));
 
-  new = gtk_menu_item_new_with_label (_("New"));
-  gtk_widget_ref (new);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "new", new,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  new = gtk_menu_item_new_with_mnemonic (_("New"));
   gtk_widget_show (new);
   gtk_container_add (GTK_CONTAINER (file_menu), new);
 
   new_menu = gtk_menu_new ();
-  gtk_widget_ref (new_menu);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "new_menu", new_menu,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (new), new_menu);
-  new_menu_accels = gtk_menu_ensure_uline_accel_group (GTK_MENU (new_menu));
 
-  newconfiguration = gtk_menu_item_new_with_label (_("Configuration"));
-  gtk_widget_ref (newconfiguration);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "newconfiguration", newconfiguration,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  newconfiguration = gtk_menu_item_new_with_mnemonic (_("Configuration"));
   gtk_widget_show (newconfiguration);
   gtk_container_add (GTK_CONTAINER (new_menu), newconfiguration);
 
-  newchannel = gtk_menu_item_new_with_label (_("Channel"));
-  gtk_widget_ref (newchannel);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "newchannel", newchannel,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  newchannel = gtk_menu_item_new_with_mnemonic (_("Channel"));
   gtk_widget_show (newchannel);
   gtk_container_add (GTK_CONTAINER (new_menu), newchannel);
 
-  delete = gtk_menu_item_new_with_label (_("Delete"));
-  gtk_widget_ref (delete);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "delete", delete,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  delete = gtk_menu_item_new_with_mnemonic (_("Delete"));
   gtk_widget_show (delete);
   gtk_container_add (GTK_CONTAINER (file_menu), delete);
 
   delete_menu = gtk_menu_new ();
-  gtk_widget_ref (delete_menu);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "delete_menu", delete_menu,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (delete), delete_menu);
-  delete_menu_accels = gtk_menu_ensure_uline_accel_group (GTK_MENU (delete_menu));
 
-  deleteconfiguration = gtk_menu_item_new_with_label (_("Configuration"));
-  gtk_widget_ref (deleteconfiguration);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "deleteconfiguration", deleteconfiguration,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  deleteconfiguration = gtk_menu_item_new_with_mnemonic (_("Configuration"));
   gtk_widget_show (deleteconfiguration);
   gtk_container_add (GTK_CONTAINER (delete_menu), deleteconfiguration);
 
-  deletechannel = gtk_menu_item_new_with_label (_("Channel"));
-  gtk_widget_ref (deletechannel);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "deletechannel", deletechannel,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  deletechannel = gtk_menu_item_new_with_mnemonic (_("Channel"));
   gtk_widget_show (deletechannel);
   gtk_container_add (GTK_CONTAINER (delete_menu), deletechannel);
 
   separator1 = gtk_menu_item_new ();
-  gtk_widget_ref (separator1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "separator1", separator1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (separator1);
   gtk_container_add (GTK_CONTAINER (file_menu), separator1);
   gtk_widget_set_sensitive (separator1, FALSE);
 
-  quit = gtk_menu_item_new_with_label (_("Quit"));
-  gtk_widget_ref (quit);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "quit", quit,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  quit = gtk_menu_item_new_with_mnemonic (_("Quit"));
   gtk_widget_show (quit);
   gtk_container_add (GTK_CONTAINER (file_menu), quit);
 
-  diagnostics = gtk_menu_item_new_with_label (_("Diagnostics"));
-  gtk_widget_ref (diagnostics);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagnostics", diagnostics,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagnostics = gtk_menu_item_new_with_mnemonic (_("Diagnostics"));
   gtk_widget_show (diagnostics);
   gtk_container_add (GTK_CONTAINER (menubar1), diagnostics);
 
   diagnostics_menu = gtk_menu_new ();
-  gtk_widget_ref (diagnostics_menu);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagnostics_menu", diagnostics_menu,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (diagnostics), diagnostics_menu);
-  diagnostics_menu_accels = gtk_menu_ensure_uline_accel_group (GTK_MENU (diagnostics_menu));
 
-  diagscope = gtk_menu_item_new_with_label (_("Scope"));
-  gtk_widget_ref (diagscope);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagscope", diagscope,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagscope = gtk_menu_item_new_with_mnemonic (_("Scope"));
   gtk_widget_show (diagscope);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagscope);
 
-  diagspectrum = gtk_menu_item_new_with_label (_("Spectrum"));
-  gtk_widget_ref (diagspectrum);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagspectrum", diagspectrum,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagspectrum = gtk_menu_item_new_with_mnemonic (_("Spectrum"));
   gtk_widget_show (diagspectrum);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagspectrum);
 
-  diagmodem = gtk_menu_item_new_with_label (_("Modem"));
-  gtk_widget_ref (diagmodem);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagmodem", diagmodem,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagmodem = gtk_menu_item_new_with_mnemonic (_("Modem"));
   gtk_widget_show (diagmodem);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagmodem);
 
-  diagp3dmodem = gtk_menu_item_new_with_label (_("AO-40 P3D Modem"));
-  gtk_widget_ref (diagp3dmodem);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagp3dmodem", diagp3dmodem,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagp3dmodem = gtk_menu_item_new_with_mnemonic (_("AO-40 P3D Modem"));
   gtk_widget_show (diagp3dmodem);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagp3dmodem);
 
-  diagpassall = gtk_check_menu_item_new_with_label (_("PASSALL (do not check CRC)"));
-  gtk_widget_ref (diagpassall);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "diagpassall", diagpassall,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  diagpassall = gtk_check_menu_item_new_with_mnemonic (_("PASSALL (do not check CRC)"));
   gtk_widget_show (diagpassall);
   gtk_container_add (GTK_CONTAINER (diagnostics_menu), diagpassall);
-  gtk_check_menu_item_set_show_toggle (GTK_CHECK_MENU_ITEM (diagpassall), TRUE);
 
-  help = gtk_menu_item_new_with_label (_("Help"));
-  gtk_widget_ref (help);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "help", help,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  help = gtk_menu_item_new_with_mnemonic (_("Help"));
   gtk_widget_show (help);
   gtk_container_add (GTK_CONTAINER (menubar1), help);
-  gtk_menu_item_right_justify (GTK_MENU_ITEM (help));
 
   help_menu = gtk_menu_new ();
-  gtk_widget_ref (help_menu);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "help_menu", help_menu,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (help), help_menu);
-  help_menu_accels = gtk_menu_ensure_uline_accel_group (GTK_MENU (help_menu));
 
-  about = gtk_menu_item_new_with_label (_("About"));
-  gtk_widget_ref (about);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "about", about,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  about = gtk_menu_item_new_with_mnemonic (_("About"));
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (help_menu), about);
 
   configbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (configbox);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "configbox", configbox,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (configbox);
   gtk_box_pack_start (GTK_BOX (vbox1), configbox, TRUE, TRUE, 0);
 
   scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "scrolledwindow1", scrolledwindow1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow1);
   gtk_box_pack_start (GTK_BOX (configbox), scrolledwindow1, TRUE, TRUE, 0);
-  gtk_widget_set_usize (scrolledwindow1, 60, 60);
+  GTK_WIDGET_UNSET_FLAGS (scrolledwindow1, GTK_CAN_FOCUS);
 
   viewport1 = gtk_viewport_new (NULL, NULL);
-  gtk_widget_ref (viewport1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "viewport1", viewport1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (viewport1);
   gtk_container_add (GTK_CONTAINER (scrolledwindow1), viewport1);
-  gtk_widget_set_usize (viewport1, 60, 60);
 
+#warning FIXME: GtkTree
+#if 1
   configtree = gtk_tree_new ();
-  gtk_widget_ref (configtree);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "configtree", configtree,
-                            (GtkDestroyNotify) gtk_widget_unref);
+
   gtk_widget_show (configtree);
   gtk_container_add (GTK_CONTAINER (viewport1), configtree);
+#else
+  configtree = gtk_tree_view_new ();
+  gtk_widget_show (configtree);
+  gtk_container_add (GTK_CONTAINER (viewport1), configtree);
+  GTK_WIDGET_UNSET_FLAGS (configtree, GTK_CAN_FOCUS);
+#endif
 
   vbox3 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox3);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "vbox3", vbox3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox3);
   gtk_box_pack_start (GTK_BOX (configbox), vbox3, TRUE, TRUE, 0);
 
   confignotebook = gtk_notebook_new ();
-  gtk_widget_ref (confignotebook);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "confignotebook", confignotebook,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (confignotebook);
   gtk_box_pack_start (GTK_BOX (vbox3), confignotebook, TRUE, TRUE, 0);
 
@@ -293,55 +206,104 @@ create_mainwindow (void)
   gtk_widget_show (empty_notebook_page);
   gtk_container_add (GTK_CONTAINER (confignotebook), empty_notebook_page);
 
+  label32 = gtk_label_new ("");
+  gtk_widget_show (label32);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (confignotebook), gtk_notebook_get_nth_page (GTK_NOTEBOOK (confignotebook), 0), label32);
+
+  empty_notebook_page = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (empty_notebook_page);
+  gtk_container_add (GTK_CONTAINER (confignotebook), empty_notebook_page);
+
+  label33 = gtk_label_new ("");
+  gtk_widget_show (label33);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (confignotebook), gtk_notebook_get_nth_page (GTK_NOTEBOOK (confignotebook), 1), label33);
+
   statusbar1 = gtk_statusbar_new ();
-  gtk_widget_ref (statusbar1);
-  gtk_object_set_data_full (GTK_OBJECT (mainwindow), "statusbar1", statusbar1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (statusbar1);
   gtk_box_pack_start (GTK_BOX (vbox1), statusbar1, FALSE, FALSE, 0);
 
-  gtk_signal_connect (GTK_OBJECT (mainwindow), "destroy_event",
-                      GTK_SIGNAL_FUNC (on_mainwindow_destroy_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (mainwindow), "delete_event",
-                      GTK_SIGNAL_FUNC (on_mainwindow_delete_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (newconfiguration), "activate",
-                      GTK_SIGNAL_FUNC (on_newconfiguration_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (newchannel), "activate",
-                      GTK_SIGNAL_FUNC (on_newchannel_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (deleteconfiguration), "activate",
-                      GTK_SIGNAL_FUNC (on_deleteconfiguration_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (deletechannel), "activate",
-                      GTK_SIGNAL_FUNC (on_deletechannel_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (quit), "activate",
-                      GTK_SIGNAL_FUNC (on_quit_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (diagscope), "activate",
-                      GTK_SIGNAL_FUNC (on_diagscope_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (diagspectrum), "activate",
-                      GTK_SIGNAL_FUNC (on_diagspectrum_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (diagmodem), "activate",
-                      GTK_SIGNAL_FUNC (on_diagmodem_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (diagp3dmodem), "activate",
-                      GTK_SIGNAL_FUNC (on_diagp3dmodem_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (diagpassall), "activate",
-                      GTK_SIGNAL_FUNC (on_diagpassall_activate),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (about), "activate",
-                      GTK_SIGNAL_FUNC (on_about_activate),
-                      NULL);
-  gtk_signal_connect_after (GTK_OBJECT (configtree), "selection_changed",
-                            GTK_SIGNAL_FUNC (on_configtree_selection_changed),
-                            NULL);
+  g_signal_connect ((gpointer) mainwindow, "destroy_event",
+                    G_CALLBACK (on_mainwindow_destroy_event),
+                    NULL);
+  g_signal_connect ((gpointer) mainwindow, "delete_event",
+                    G_CALLBACK (on_mainwindow_delete_event),
+                    NULL);
+  g_signal_connect ((gpointer) newconfiguration, "activate",
+                    G_CALLBACK (on_newconfiguration_activate),
+                    NULL);
+  g_signal_connect ((gpointer) newchannel, "activate",
+                    G_CALLBACK (on_newchannel_activate),
+                    NULL);
+  g_signal_connect ((gpointer) deleteconfiguration, "activate",
+                    G_CALLBACK (on_deleteconfiguration_activate),
+                    NULL);
+  g_signal_connect ((gpointer) deletechannel, "activate",
+                    G_CALLBACK (on_deletechannel_activate),
+                    NULL);
+  g_signal_connect ((gpointer) quit, "activate",
+                    G_CALLBACK (on_quit_activate),
+                    NULL);
+  g_signal_connect ((gpointer) diagscope, "activate",
+                    G_CALLBACK (on_diagscope_activate),
+                    NULL);
+  g_signal_connect ((gpointer) diagspectrum, "activate",
+                    G_CALLBACK (on_diagspectrum_activate),
+                    NULL);
+  g_signal_connect ((gpointer) diagmodem, "activate",
+                    G_CALLBACK (on_diagmodem_activate),
+                    NULL);
+  g_signal_connect ((gpointer) diagp3dmodem, "activate",
+                    G_CALLBACK (on_diagp3dmodem_activate),
+                    NULL);
+  g_signal_connect ((gpointer) diagpassall, "activate",
+                    G_CALLBACK (on_diagpassall_activate),
+                    NULL);
+  g_signal_connect ((gpointer) about, "activate",
+                    G_CALLBACK (on_about_activate),
+                    NULL);
+#warning FIXME: GtkTree
+#if 1
+g_signal_connect_after ((gpointer) configtree, "selection_changed",
+                          G_CALLBACK (on_configtree_selection_changed),
+                          NULL);
+#endif
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (mainwindow, mainwindow, "mainwindow");
+  GLADE_HOOKUP_OBJECT (mainwindow, vbox1, "vbox1");
+  GLADE_HOOKUP_OBJECT (mainwindow, handlebox1, "handlebox1");
+  GLADE_HOOKUP_OBJECT (mainwindow, menubar1, "menubar1");
+  GLADE_HOOKUP_OBJECT (mainwindow, file, "file");
+  GLADE_HOOKUP_OBJECT (mainwindow, file_menu, "file_menu");
+  GLADE_HOOKUP_OBJECT (mainwindow, new, "new");
+  GLADE_HOOKUP_OBJECT (mainwindow, new_menu, "new_menu");
+  GLADE_HOOKUP_OBJECT (mainwindow, newconfiguration, "newconfiguration");
+  GLADE_HOOKUP_OBJECT (mainwindow, newchannel, "newchannel");
+  GLADE_HOOKUP_OBJECT (mainwindow, delete, "delete");
+  GLADE_HOOKUP_OBJECT (mainwindow, delete_menu, "delete_menu");
+  GLADE_HOOKUP_OBJECT (mainwindow, deleteconfiguration, "deleteconfiguration");
+  GLADE_HOOKUP_OBJECT (mainwindow, deletechannel, "deletechannel");
+  GLADE_HOOKUP_OBJECT (mainwindow, separator1, "separator1");
+  GLADE_HOOKUP_OBJECT (mainwindow, quit, "quit");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagnostics, "diagnostics");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagnostics_menu, "diagnostics_menu");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagscope, "diagscope");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagspectrum, "diagspectrum");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagmodem, "diagmodem");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagp3dmodem, "diagp3dmodem");
+  GLADE_HOOKUP_OBJECT (mainwindow, diagpassall, "diagpassall");
+  GLADE_HOOKUP_OBJECT (mainwindow, help, "help");
+  GLADE_HOOKUP_OBJECT (mainwindow, help_menu, "help_menu");
+  GLADE_HOOKUP_OBJECT (mainwindow, about, "about");
+  GLADE_HOOKUP_OBJECT (mainwindow, configbox, "configbox");
+  GLADE_HOOKUP_OBJECT (mainwindow, scrolledwindow1, "scrolledwindow1");
+  GLADE_HOOKUP_OBJECT (mainwindow, viewport1, "viewport1");
+  GLADE_HOOKUP_OBJECT (mainwindow, configtree, "configtree");
+  GLADE_HOOKUP_OBJECT (mainwindow, vbox3, "vbox3");
+  GLADE_HOOKUP_OBJECT (mainwindow, confignotebook, "confignotebook");
+  GLADE_HOOKUP_OBJECT (mainwindow, label32, "label32");
+  GLADE_HOOKUP_OBJECT (mainwindow, label33, "label33");
+  GLADE_HOOKUP_OBJECT (mainwindow, statusbar1, "statusbar1");
 
   return mainwindow;
 }
@@ -354,18 +316,21 @@ create_fileselection1 (void)
   GtkWidget *cancel_button1;
 
   fileselection1 = gtk_file_selection_new (_("Select File"));
-  gtk_object_set_data (GTK_OBJECT (fileselection1), "fileselection1", fileselection1);
   gtk_container_set_border_width (GTK_CONTAINER (fileselection1), 10);
+  gtk_window_set_type_hint (GTK_WINDOW (fileselection1), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   ok_button1 = GTK_FILE_SELECTION (fileselection1)->ok_button;
-  gtk_object_set_data (GTK_OBJECT (fileselection1), "ok_button1", ok_button1);
   gtk_widget_show (ok_button1);
   GTK_WIDGET_SET_FLAGS (ok_button1, GTK_CAN_DEFAULT);
 
   cancel_button1 = GTK_FILE_SELECTION (fileselection1)->cancel_button;
-  gtk_object_set_data (GTK_OBJECT (fileselection1), "cancel_button1", cancel_button1);
   gtk_widget_show (cancel_button1);
   GTK_WIDGET_SET_FLAGS (cancel_button1, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, fileselection1, "fileselection1");
+  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, ok_button1, "ok_button1");
+  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, cancel_button1, "cancel_button1");
 
   return fileselection1;
 }
@@ -379,70 +344,67 @@ create_aboutwindow (void)
   GtkWidget *vbox4;
   GtkWidget *label13;
   GtkWidget *label14;
+  GtkWidget *label1;
   GtkWidget *dialog_action_area1;
   GtkWidget *hbuttonbox1;
   GtkWidget *aboutok;
 
   aboutwindow = gtk_dialog_new ();
-  gtk_object_set_data (GTK_OBJECT (aboutwindow), "aboutwindow", aboutwindow);
   gtk_window_set_title (GTK_WINDOW (aboutwindow), _("About SoundModem Configurator"));
-  gtk_window_set_policy (GTK_WINDOW (aboutwindow), TRUE, TRUE, FALSE);
-  gtk_window_set_wmclass (GTK_WINDOW (aboutwindow), "soundmodem", "soundmodem");
+  gtk_window_set_type_hint (GTK_WINDOW (aboutwindow), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox1 = GTK_DIALOG (aboutwindow)->vbox;
-  gtk_object_set_data (GTK_OBJECT (aboutwindow), "dialog_vbox1", dialog_vbox1);
   gtk_widget_show (dialog_vbox1);
 
-  frame1 = gtk_frame_new (_("SoundModem Configurator"));
-  gtk_widget_ref (frame1);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "frame1", frame1,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  frame1 = gtk_frame_new (NULL);
   gtk_widget_show (frame1);
   gtk_box_pack_start (GTK_BOX (dialog_vbox1), frame1, TRUE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (frame1), 6);
   gtk_frame_set_label_align (GTK_FRAME (frame1), 0.5, 0.5);
-  gtk_frame_set_shadow_type (GTK_FRAME (frame1), GTK_SHADOW_ETCHED_OUT);
 
   vbox4 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox4);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "vbox4", vbox4,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox4);
   gtk_container_add (GTK_CONTAINER (frame1), vbox4);
 
   label13 = gtk_label_new (_("Copyright 2000"));
-  gtk_widget_ref (label13);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "label13", label13,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label13);
   gtk_box_pack_start (GTK_BOX (vbox4), label13, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label13), GTK_JUSTIFY_CENTER);
 
   label14 = gtk_label_new (_("Thomas Sailer"));
-  gtk_widget_ref (label14);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "label14", label14,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label14);
   gtk_box_pack_start (GTK_BOX (vbox4), label14, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label14), GTK_JUSTIFY_CENTER);
+
+  label1 = gtk_label_new (_("SoundModem Configurator"));
+  gtk_widget_show (label1);
+  gtk_frame_set_label_widget (GTK_FRAME (frame1), label1);
 
   dialog_action_area1 = GTK_DIALOG (aboutwindow)->action_area;
-  gtk_object_set_data (GTK_OBJECT (aboutwindow), "dialog_action_area1", dialog_action_area1);
   gtk_widget_show (dialog_action_area1);
-  gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area1), 10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area1), GTK_BUTTONBOX_END);
 
   hbuttonbox1 = gtk_hbutton_box_new ();
-  gtk_widget_ref (hbuttonbox1);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "hbuttonbox1", hbuttonbox1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbuttonbox1);
-  gtk_box_pack_start (GTK_BOX (dialog_action_area1), hbuttonbox1, FALSE, FALSE, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_action_area1), hbuttonbox1);
+  gtk_box_set_spacing (GTK_BOX (hbuttonbox1), 30);
 
-  aboutok = gtk_button_new_with_label (_("Ok"));
-  gtk_widget_ref (aboutok);
-  gtk_object_set_data_full (GTK_OBJECT (aboutwindow), "aboutok", aboutok,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  aboutok = gtk_button_new_with_mnemonic (_("Ok"));
   gtk_widget_show (aboutok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), aboutok);
   GTK_WIDGET_SET_FLAGS (aboutok, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (aboutwindow, aboutwindow, "aboutwindow");
+  GLADE_HOOKUP_OBJECT_NO_REF (aboutwindow, dialog_vbox1, "dialog_vbox1");
+  GLADE_HOOKUP_OBJECT (aboutwindow, frame1, "frame1");
+  GLADE_HOOKUP_OBJECT (aboutwindow, vbox4, "vbox4");
+  GLADE_HOOKUP_OBJECT (aboutwindow, label13, "label13");
+  GLADE_HOOKUP_OBJECT (aboutwindow, label14, "label14");
+  GLADE_HOOKUP_OBJECT (aboutwindow, label1, "label1");
+  GLADE_HOOKUP_OBJECT_NO_REF (aboutwindow, dialog_action_area1, "dialog_action_area1");
+  GLADE_HOOKUP_OBJECT (aboutwindow, hbuttonbox1, "hbuttonbox1");
+  GLADE_HOOKUP_OBJECT (aboutwindow, aboutok, "aboutok");
 
   return aboutwindow;
 }
@@ -464,70 +426,62 @@ create_newconfigwindow (void)
   accel_group = gtk_accel_group_new ();
 
   newconfigwindow = gtk_dialog_new ();
-  gtk_object_set_data (GTK_OBJECT (newconfigwindow), "newconfigwindow", newconfigwindow);
   gtk_window_set_title (GTK_WINDOW (newconfigwindow), _("New Configuration"));
-  gtk_window_set_policy (GTK_WINDOW (newconfigwindow), TRUE, TRUE, FALSE);
-  gtk_window_set_wmclass (GTK_WINDOW (newconfigwindow), "soundmodem", "soundmodem");
+  gtk_window_set_type_hint (GTK_WINDOW (newconfigwindow), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox2 = GTK_DIALOG (newconfigwindow)->vbox;
-  gtk_object_set_data (GTK_OBJECT (newconfigwindow), "dialog_vbox2", dialog_vbox2);
   gtk_widget_show (dialog_vbox2);
 
   hbox2 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox2);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "hbox2", hbox2,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox2);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), hbox2, TRUE, TRUE, 0);
 
   label15 = gtk_label_new (_("Configuration Name"));
-  gtk_widget_ref (label15);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "label15", label15,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label15);
   gtk_box_pack_start (GTK_BOX (hbox2), label15, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label15), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label15), 6, 6);
 
   newconfigentry = gtk_entry_new ();
-  gtk_widget_ref (newconfigentry);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "newconfigentry", newconfigentry,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (newconfigentry);
   gtk_box_pack_start (GTK_BOX (hbox2), newconfigentry, TRUE, TRUE, 6);
+  gtk_entry_set_invisible_char (GTK_ENTRY (newconfigentry), 9679);
 
   dialog_action_area2 = GTK_DIALOG (newconfigwindow)->action_area;
-  gtk_object_set_data (GTK_OBJECT (newconfigwindow), "dialog_action_area2", dialog_action_area2);
   gtk_widget_show (dialog_action_area2);
-  gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area2), 10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
 
   hbuttonbox2 = gtk_hbutton_box_new ();
-  gtk_widget_ref (hbuttonbox2);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "hbuttonbox2", hbuttonbox2,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbuttonbox2);
-  gtk_box_pack_start (GTK_BOX (dialog_action_area2), hbuttonbox2, TRUE, TRUE, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_action_area2), hbuttonbox2);
+  gtk_box_set_spacing (GTK_BOX (hbuttonbox2), 30);
 
-  newconfigcancel = gtk_button_new_with_label (_("Cancel"));
-  gtk_widget_ref (newconfigcancel);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "newconfigcancel", newconfigcancel,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  newconfigcancel = gtk_button_new_with_mnemonic (_("Cancel"));
   gtk_widget_show (newconfigcancel);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), newconfigcancel);
   GTK_WIDGET_SET_FLAGS (newconfigcancel, GTK_CAN_DEFAULT);
   gtk_widget_add_accelerator (newconfigcancel, "clicked", accel_group,
-                              GDK_Escape, 0,
+                              GDK_Escape, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
 
-  newconfigok = gtk_button_new_with_label (_("OK"));
-  gtk_widget_ref (newconfigok);
-  gtk_object_set_data_full (GTK_OBJECT (newconfigwindow), "newconfigok", newconfigok,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  newconfigok = gtk_button_new_with_mnemonic (_("OK"));
   gtk_widget_show (newconfigok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), newconfigok);
   GTK_WIDGET_SET_FLAGS (newconfigok, GTK_CAN_DEFAULT);
   gtk_widget_add_accelerator (newconfigok, "clicked", accel_group,
-                              GDK_Return, 0,
+                              GDK_Return, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (newconfigwindow, newconfigwindow, "newconfigwindow");
+  GLADE_HOOKUP_OBJECT_NO_REF (newconfigwindow, dialog_vbox2, "dialog_vbox2");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, hbox2, "hbox2");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, label15, "label15");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, newconfigentry, "newconfigentry");
+  GLADE_HOOKUP_OBJECT_NO_REF (newconfigwindow, dialog_action_area2, "dialog_action_area2");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, hbuttonbox2, "hbuttonbox2");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, newconfigcancel, "newconfigcancel");
+  GLADE_HOOKUP_OBJECT (newconfigwindow, newconfigok, "newconfigok");
 
   gtk_window_add_accel_group (GTK_WINDOW (newconfigwindow), accel_group);
 
@@ -548,47 +502,44 @@ create_errordialog (void)
   accel_group = gtk_accel_group_new ();
 
   errordialog = gtk_dialog_new ();
-  gtk_object_set_data (GTK_OBJECT (errordialog), "errordialog", errordialog);
   gtk_window_set_title (GTK_WINDOW (errordialog), _("Error"));
   gtk_window_set_modal (GTK_WINDOW (errordialog), TRUE);
-  gtk_window_set_policy (GTK_WINDOW (errordialog), TRUE, TRUE, FALSE);
-  gtk_window_set_wmclass (GTK_WINDOW (errordialog), "soundmodem", "soundmodem");
+  gtk_window_set_type_hint (GTK_WINDOW (errordialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox3 = GTK_DIALOG (errordialog)->vbox;
-  gtk_object_set_data (GTK_OBJECT (errordialog), "dialog_vbox3", dialog_vbox3);
   gtk_widget_show (dialog_vbox3);
 
   errorlabel = gtk_label_new (_("Error"));
-  gtk_widget_ref (errorlabel);
-  gtk_object_set_data_full (GTK_OBJECT (errordialog), "errorlabel", errorlabel,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (errorlabel);
   gtk_box_pack_start (GTK_BOX (dialog_vbox3), errorlabel, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (errorlabel), GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap (GTK_LABEL (errorlabel), TRUE);
   gtk_misc_set_padding (GTK_MISC (errorlabel), 6, 6);
 
   dialog_action_area3 = GTK_DIALOG (errordialog)->action_area;
-  gtk_object_set_data (GTK_OBJECT (errordialog), "dialog_action_area3", dialog_action_area3);
   gtk_widget_show (dialog_action_area3);
-  gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area3), 10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
 
   hbuttonbox3 = gtk_hbutton_box_new ();
-  gtk_widget_ref (hbuttonbox3);
-  gtk_object_set_data_full (GTK_OBJECT (errordialog), "hbuttonbox3", hbuttonbox3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbuttonbox3);
-  gtk_box_pack_start (GTK_BOX (dialog_action_area3), hbuttonbox3, TRUE, TRUE, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_action_area3), hbuttonbox3);
+  gtk_box_set_spacing (GTK_BOX (hbuttonbox3), 30);
 
-  errorok = gtk_button_new_with_label (_("OK"));
-  gtk_widget_ref (errorok);
-  gtk_object_set_data_full (GTK_OBJECT (errordialog), "errorok", errorok,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  errorok = gtk_button_new_with_mnemonic (_("OK"));
   gtk_widget_show (errorok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox3), errorok);
   GTK_WIDGET_SET_FLAGS (errorok, GTK_CAN_DEFAULT);
   gtk_widget_add_accelerator (errorok, "clicked", accel_group,
-                              GDK_Return, 0,
+                              GDK_Return, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (errordialog, errordialog, "errordialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (errordialog, dialog_vbox3, "dialog_vbox3");
+  GLADE_HOOKUP_OBJECT (errordialog, errorlabel, "errorlabel");
+  GLADE_HOOKUP_OBJECT_NO_REF (errordialog, dialog_action_area3, "dialog_action_area3");
+  GLADE_HOOKUP_OBJECT (errordialog, hbuttonbox3, "hbuttonbox3");
+  GLADE_HOOKUP_OBJECT (errordialog, errorok, "errorok");
 
   gtk_window_add_accel_group (GTK_WINDOW (errordialog), accel_group);
 
@@ -611,122 +562,107 @@ create_specwindow (void)
   GtkWidget *leddcd;
   GtkWidget *frame4;
   GtkWidget *spec;
+  GtkWidget *label26;
 
   specwindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (specwindow), "specwindow", specwindow);
   gtk_window_set_title (GTK_WINDOW (specwindow), _("Spectrum Display"));
-  gtk_window_set_policy (GTK_WINDOW (specwindow), FALSE, FALSE, FALSE);
-  gtk_window_set_wmclass (GTK_WINDOW (specwindow), "soundmodem", "soundmodem");
 
   vbox1 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox1);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "vbox1", vbox1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox1);
   gtk_container_add (GTK_CONTAINER (specwindow), vbox1);
 
   hbox1 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox1);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "hbox1", hbox1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox1);
   gtk_box_pack_start (GTK_BOX (vbox1), hbox1, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox1), 4);
 
   label1 = gtk_label_new (_("Pointer"));
-  gtk_widget_ref (label1);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "label1", label1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label1);
   gtk_box_pack_start (GTK_BOX (hbox1), label1, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label1), GTK_JUSTIFY_CENTER);
 
   specfreqpointer = gtk_entry_new ();
-  gtk_widget_ref (specfreqpointer);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "specfreqpointer", specfreqpointer,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (specfreqpointer);
   gtk_box_pack_start (GTK_BOX (hbox1), specfreqpointer, FALSE, TRUE, 4);
-  gtk_widget_set_usize (specfreqpointer, 60, -2);
   GTK_WIDGET_UNSET_FLAGS (specfreqpointer, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (specfreqpointer), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (specfreqpointer), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (specfreqpointer), 9679);
 
   label25 = gtk_label_new ("");
-  gtk_widget_ref (label25);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "label25", label25,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label25);
   gtk_box_pack_start (GTK_BOX (hbox1), label25, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label25), GTK_JUSTIFY_CENTER);
 
-  ptt = gtk_toggle_button_new_with_label (_("PTT"));
-  gtk_widget_ref (ptt);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "ptt", ptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ptt = gtk_toggle_button_new_with_mnemonic (_("PTT"));
   gtk_widget_show (ptt);
   gtk_box_pack_start (GTK_BOX (hbox1), ptt, FALSE, TRUE, 4);
-  gtk_widget_set_usize (ptt, 50, -2);
   GTK_WIDGET_UNSET_FLAGS (ptt, GTK_CAN_FOCUS);
 
   label20 = gtk_label_new (_("PTT"));
-  gtk_widget_ref (label20);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "label20", label20,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label20);
   gtk_box_pack_start (GTK_BOX (hbox1), label20, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label20), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label20), 7, 0);
 
-  ledptt = create_led_pixmap ("ledptt", NULL, NULL, 0, 0);
-  gtk_widget_ref (ledptt);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "ledptt", ledptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox1), ledptt, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
 
   label19 = gtk_label_new (_("DCD"));
-  gtk_widget_ref (label19);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "label19", label19,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label19);
   gtk_box_pack_start (GTK_BOX (hbox1), label19, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label19), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label19), 7, 0);
 
-  leddcd = create_led_pixmap ("leddcd", NULL, NULL, 0, 0);
-  gtk_widget_ref (leddcd);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "leddcd", leddcd,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox1), leddcd, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
 
-  frame4 = gtk_frame_new (_("Spectrum"));
-  gtk_widget_ref (frame4);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "frame4", frame4,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  frame4 = gtk_frame_new (NULL);
   gtk_widget_show (frame4);
   gtk_box_pack_start (GTK_BOX (vbox1), frame4, FALSE, FALSE, 0);
 
-  spec = spectrum_new ("spec", NULL, NULL, 0, 0);
-  gtk_widget_ref (spec);
-  gtk_object_set_data_full (GTK_OBJECT (specwindow), "spec", spec,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  spec = spectrum_new ("spec", "", "", 0, 0);
   gtk_widget_show (spec);
   gtk_container_add (GTK_CONTAINER (frame4), spec);
-  gtk_widget_set_usize (spec, 512, 384);
+  gtk_widget_set_size_request (spec, 512, 384);
   GTK_WIDGET_SET_FLAGS (spec, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (spec, GTK_CAN_DEFAULT);
   gtk_widget_set_events (spec, GDK_POINTER_MOTION_MASK);
 
-  gtk_signal_connect (GTK_OBJECT (specwindow), "delete_event",
-                      GTK_SIGNAL_FUNC (on_specwindow_delete_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (ptt), "toggled",
-                      GTK_SIGNAL_FUNC (on_ptt_toggled),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (spec), "motion_notify_event",
-                      GTK_SIGNAL_FUNC (on_spec_motion_event),
-                      NULL);
+  label26 = gtk_label_new (_("Spectrum"));
+  gtk_widget_show (label26);
+  gtk_frame_set_label_widget (GTK_FRAME (frame4), label26);
+
+  g_signal_connect ((gpointer) specwindow, "delete_event",
+                    G_CALLBACK (on_specwindow_delete_event),
+                    NULL);
+  g_signal_connect ((gpointer) ptt, "toggled",
+                    G_CALLBACK (on_ptt_toggled),
+                    NULL);
+  g_signal_connect ((gpointer) spec, "motion_notify_event",
+                    G_CALLBACK (on_spec_motion_event),
+                    NULL);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (specwindow, specwindow, "specwindow");
+  GLADE_HOOKUP_OBJECT (specwindow, vbox1, "vbox1");
+  GLADE_HOOKUP_OBJECT (specwindow, hbox1, "hbox1");
+  GLADE_HOOKUP_OBJECT (specwindow, label1, "label1");
+  GLADE_HOOKUP_OBJECT (specwindow, specfreqpointer, "specfreqpointer");
+  GLADE_HOOKUP_OBJECT (specwindow, label25, "label25");
+  GLADE_HOOKUP_OBJECT (specwindow, ptt, "ptt");
+  GLADE_HOOKUP_OBJECT (specwindow, label20, "label20");
+  GLADE_HOOKUP_OBJECT (specwindow, ledptt, "ledptt");
+  GLADE_HOOKUP_OBJECT (specwindow, label19, "label19");
+  GLADE_HOOKUP_OBJECT (specwindow, leddcd, "leddcd");
+  GLADE_HOOKUP_OBJECT (specwindow, frame4, "frame4");
+  GLADE_HOOKUP_OBJECT (specwindow, spec, "spec");
+  GLADE_HOOKUP_OBJECT (specwindow, label26, "label26");
 
   return specwindow;
 }
@@ -746,109 +682,96 @@ create_scopewindow (void)
   GtkWidget *leddcd;
   GtkWidget *frame5;
   GtkWidget *scope;
+  GtkWidget *label27;
 
   scopewindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (scopewindow), "scopewindow", scopewindow);
   gtk_window_set_title (GTK_WINDOW (scopewindow), _("Scope"));
-  gtk_window_set_wmclass (GTK_WINDOW (scopewindow), "soundmodem", "soundmodem");
 
   vbox5 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox5);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "vbox5", vbox5,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox5);
   gtk_container_add (GTK_CONTAINER (scopewindow), vbox5);
 
   hbox2 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox2);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "hbox2", hbox2,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox2);
   gtk_box_pack_start (GTK_BOX (vbox5), hbox2, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox2), 4);
 
-  dcdfreeze = gtk_toggle_button_new_with_label (_("Freeze when not DCD"));
-  gtk_widget_ref (dcdfreeze);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "dcdfreeze", dcdfreeze,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  dcdfreeze = gtk_toggle_button_new_with_mnemonic (_("Freeze when not DCD"));
   gtk_widget_show (dcdfreeze);
   gtk_box_pack_start (GTK_BOX (hbox2), dcdfreeze, FALSE, FALSE, 4);
 
   label26 = gtk_label_new ("");
-  gtk_widget_ref (label26);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "label26", label26,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label26);
   gtk_box_pack_start (GTK_BOX (hbox2), label26, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label26), GTK_JUSTIFY_CENTER);
 
-  ptt = gtk_toggle_button_new_with_label (_("PTT"));
-  gtk_widget_ref (ptt);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "ptt", ptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ptt = gtk_toggle_button_new_with_mnemonic (_("PTT"));
   gtk_widget_show (ptt);
   gtk_box_pack_start (GTK_BOX (hbox2), ptt, FALSE, FALSE, 4);
-  gtk_widget_set_usize (ptt, 50, -2);
 
   label21 = gtk_label_new (_("PTT"));
-  gtk_widget_ref (label21);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "label21", label21,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label21);
   gtk_box_pack_start (GTK_BOX (hbox2), label21, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label21), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label21), 7, 0);
 
-  ledptt = create_led_pixmap ("ledptt", NULL, NULL, 0, 0);
-  gtk_widget_ref (ledptt);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "ledptt", ledptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox2), ledptt, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
 
   label22 = gtk_label_new (_("DCD"));
-  gtk_widget_ref (label22);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "label22", label22,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label22);
   gtk_box_pack_start (GTK_BOX (hbox2), label22, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label22), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label22), 7, 0);
 
-  leddcd = create_led_pixmap ("leddcd", NULL, NULL, 0, 0);
-  gtk_widget_ref (leddcd);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "leddcd", leddcd,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox2), leddcd, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
 
-  frame5 = gtk_frame_new (_("Scope"));
-  gtk_widget_ref (frame5);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "frame5", frame5,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  frame5 = gtk_frame_new (NULL);
   gtk_widget_show (frame5);
   gtk_box_pack_start (GTK_BOX (vbox5), frame5, FALSE, FALSE, 0);
 
-  scope = scope_new ("scope", NULL, NULL, 0, 0);
-  gtk_widget_ref (scope);
-  gtk_object_set_data_full (GTK_OBJECT (scopewindow), "scope", scope,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  scope = scope_new ("scope", "", "", 0, 0);
   gtk_widget_show (scope);
   gtk_container_add (GTK_CONTAINER (frame5), scope);
-  gtk_widget_set_usize (scope, 512, 384);
+  gtk_widget_set_size_request (scope, 512, 384);
   GTK_WIDGET_SET_FLAGS (scope, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (scope, GTK_CAN_DEFAULT);
 
-  gtk_signal_connect (GTK_OBJECT (scopewindow), "delete_event",
-                      GTK_SIGNAL_FUNC (on_scopewindow_delete_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (dcdfreeze), "toggled",
-                      GTK_SIGNAL_FUNC (on_dcdfreeze_toggled),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (ptt), "toggled",
-                      GTK_SIGNAL_FUNC (on_ptt_toggled),
-                      NULL);
+  label27 = gtk_label_new (_("Scope"));
+  gtk_widget_show (label27);
+  gtk_frame_set_label_widget (GTK_FRAME (frame5), label27);
+
+  g_signal_connect ((gpointer) scopewindow, "delete_event",
+                    G_CALLBACK (on_scopewindow_delete_event),
+                    NULL);
+  g_signal_connect ((gpointer) dcdfreeze, "toggled",
+                    G_CALLBACK (on_dcdfreeze_toggled),
+                    NULL);
+  g_signal_connect ((gpointer) ptt, "toggled",
+                    G_CALLBACK (on_ptt_toggled),
+                    NULL);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (scopewindow, scopewindow, "scopewindow");
+  GLADE_HOOKUP_OBJECT (scopewindow, vbox5, "vbox5");
+  GLADE_HOOKUP_OBJECT (scopewindow, hbox2, "hbox2");
+  GLADE_HOOKUP_OBJECT (scopewindow, dcdfreeze, "dcdfreeze");
+  GLADE_HOOKUP_OBJECT (scopewindow, label26, "label26");
+  GLADE_HOOKUP_OBJECT (scopewindow, ptt, "ptt");
+  GLADE_HOOKUP_OBJECT (scopewindow, label21, "label21");
+  GLADE_HOOKUP_OBJECT (scopewindow, ledptt, "ledptt");
+  GLADE_HOOKUP_OBJECT (scopewindow, label22, "label22");
+  GLADE_HOOKUP_OBJECT (scopewindow, leddcd, "leddcd");
+  GLADE_HOOKUP_OBJECT (scopewindow, frame5, "frame5");
+  GLADE_HOOKUP_OBJECT (scopewindow, scope, "scope");
+  GLADE_HOOKUP_OBJECT (scopewindow, label27, "label27");
 
   return scopewindow;
 }
@@ -876,199 +799,201 @@ create_receivewindow (void)
   GtkWidget *frame6;
   GtkWidget *scrolledwindow2;
   GtkWidget *packettext;
+  GtkWidget *label28;
   GtkWidget *frame7;
   GtkWidget *scrolledwindow3;
   GtkWidget *bitstext;
+  GtkWidget *label29;
 
   receivewindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (receivewindow), "receivewindow", receivewindow);
   gtk_window_set_title (GTK_WINDOW (receivewindow), _("Receive Packets/Bits"));
-  gtk_window_set_wmclass (GTK_WINDOW (receivewindow), "soundmodem", "soundmodem");
 
   vbox6 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox6);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "vbox6", vbox6,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox6);
   gtk_container_add (GTK_CONTAINER (receivewindow), vbox6);
 
   hbox3 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox3);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "hbox3", hbox3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox3, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox3), 4);
 
-  clearbutton = gtk_button_new_with_label (_("Clear Count"));
-  gtk_widget_ref (clearbutton);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "clearbutton", clearbutton,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  clearbutton = gtk_button_new_with_mnemonic (_("Clear Count"));
   gtk_widget_show (clearbutton);
   gtk_box_pack_start (GTK_BOX (hbox3), clearbutton, FALSE, FALSE, 4);
 
   label7 = gtk_label_new (_("Zeros"));
-  gtk_widget_ref (label7);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label7", label7,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label7);
   gtk_box_pack_start (GTK_BOX (hbox3), label7, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label7), GTK_JUSTIFY_CENTER);
 
   count0 = gtk_entry_new ();
-  gtk_widget_ref (count0);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "count0", count0,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (count0);
   gtk_box_pack_start (GTK_BOX (hbox3), count0, FALSE, TRUE, 4);
-  gtk_widget_set_usize (count0, 60, -2);
+  gtk_widget_set_size_request (count0, 60, -1);
   GTK_WIDGET_UNSET_FLAGS (count0, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (count0), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (count0), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (count0), 9679);
 
   label17 = gtk_label_new (_("Ones"));
-  gtk_widget_ref (label17);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label17", label17,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label17);
   gtk_box_pack_start (GTK_BOX (hbox3), label17, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label17), GTK_JUSTIFY_CENTER);
 
   count1 = gtk_entry_new ();
-  gtk_widget_ref (count1);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "count1", count1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (count1);
   gtk_box_pack_start (GTK_BOX (hbox3), count1, FALSE, TRUE, 0);
-  gtk_widget_set_usize (count1, 60, -2);
+  gtk_widget_set_size_request (count1, 60, -1);
   GTK_WIDGET_UNSET_FLAGS (count1, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (count1), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (count1), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (count1), 9679);
 
   label18 = gtk_label_new (_("Total"));
-  gtk_widget_ref (label18);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label18", label18,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label18);
   gtk_box_pack_start (GTK_BOX (hbox3), label18, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label18), GTK_JUSTIFY_CENTER);
 
   counttot = gtk_entry_new ();
-  gtk_widget_ref (counttot);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "counttot", counttot,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (counttot);
   gtk_box_pack_start (GTK_BOX (hbox3), counttot, FALSE, TRUE, 0);
-  gtk_widget_set_usize (counttot, 60, -2);
+  gtk_widget_set_size_request (counttot, 60, -1);
   GTK_WIDGET_UNSET_FLAGS (counttot, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (counttot), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (counttot), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (counttot), 9679);
 
   label27 = gtk_label_new ("");
-  gtk_widget_ref (label27);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label27", label27,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label27);
   gtk_box_pack_start (GTK_BOX (hbox3), label27, TRUE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label27), GTK_JUSTIFY_CENTER);
 
-  ptt = gtk_toggle_button_new_with_label (_("PTT"));
-  gtk_widget_ref (ptt);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "ptt", ptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ptt = gtk_toggle_button_new_with_mnemonic (_("PTT"));
   gtk_widget_show (ptt);
   gtk_box_pack_start (GTK_BOX (hbox3), ptt, FALSE, FALSE, 4);
-  gtk_widget_set_usize (ptt, 50, -2);
 
   label23 = gtk_label_new (_("PTT"));
-  gtk_widget_ref (label23);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label23", label23,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label23);
   gtk_box_pack_start (GTK_BOX (hbox3), label23, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label23), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label23), 7, 0);
 
-  ledptt = create_led_pixmap ("ledptt", NULL, NULL, 0, 0);
-  gtk_widget_ref (ledptt);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "ledptt", ledptt,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox3), ledptt, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
 
   label24 = gtk_label_new (_("DCD"));
-  gtk_widget_ref (label24);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "label24", label24,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label24);
   gtk_box_pack_start (GTK_BOX (hbox3), label24, FALSE, TRUE, 0);
+  gtk_label_set_justify (GTK_LABEL (label24), GTK_JUSTIFY_CENTER);
   gtk_misc_set_padding (GTK_MISC (label24), 7, 0);
 
-  leddcd = create_led_pixmap ("leddcd", NULL, NULL, 0, 0);
-  gtk_widget_ref (leddcd);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "leddcd", leddcd,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox3), leddcd, FALSE, TRUE, 4);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
 
   vpaned1 = gtk_vpaned_new ();
-  gtk_widget_ref (vpaned1);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "vpaned1", vpaned1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vpaned1);
   gtk_box_pack_start (GTK_BOX (vbox6), vpaned1, TRUE, TRUE, 0);
+  GTK_WIDGET_UNSET_FLAGS (vpaned1, GTK_CAN_FOCUS);
 
-  frame6 = gtk_frame_new (_("Received Packets"));
-  gtk_widget_ref (frame6);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "frame6", frame6,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  frame6 = gtk_frame_new (NULL);
   gtk_widget_show (frame6);
   gtk_paned_pack1 (GTK_PANED (vpaned1), frame6, TRUE, TRUE);
 
   scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow2);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "scrolledwindow2", scrolledwindow2,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow2);
   gtk_container_add (GTK_CONTAINER (frame6), scrolledwindow2);
+  GTK_WIDGET_UNSET_FLAGS (scrolledwindow2, GTK_CAN_FOCUS);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
+#warning FIXME: GtkText
+#if 1
   packettext = gtk_text_new (NULL, NULL);
-  gtk_widget_ref (packettext);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "packettext", packettext,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (packettext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packettext);
   GTK_WIDGET_UNSET_FLAGS (packettext, GTK_CAN_FOCUS);
+#else
+  packettext = gtk_text_view_new ();
+  gtk_widget_show (packettext);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow2), packettext);
+  GTK_WIDGET_UNSET_FLAGS (packettext, GTK_CAN_FOCUS);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (packettext), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packettext), GTK_WRAP_WORD);
+#endif
 
-  frame7 = gtk_frame_new (_("Received Bits"));
-  gtk_widget_ref (frame7);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "frame7", frame7,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  label28 = gtk_label_new (_("Received Packets"));
+  gtk_widget_show (label28);
+  gtk_frame_set_label_widget (GTK_FRAME (frame6), label28);
+
+  frame7 = gtk_frame_new (NULL);
   gtk_widget_show (frame7);
   gtk_paned_pack2 (GTK_PANED (vpaned1), frame7, TRUE, TRUE);
 
   scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow3);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "scrolledwindow3", scrolledwindow3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow3);
   gtk_container_add (GTK_CONTAINER (frame7), scrolledwindow3);
+  GTK_WIDGET_UNSET_FLAGS (scrolledwindow3, GTK_CAN_FOCUS);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
+#warning FIXME: GtkText
+#if 1
   bitstext = gtk_text_new (NULL, NULL);
-  gtk_widget_ref (bitstext);
-  gtk_object_set_data_full (GTK_OBJECT (receivewindow), "bitstext", bitstext,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (bitstext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), bitstext);
   GTK_WIDGET_UNSET_FLAGS (bitstext, GTK_CAN_FOCUS);
+#else
+  bitstext = gtk_text_view_new ();
+  gtk_widget_show (bitstext);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow3), bitstext);
+  GTK_WIDGET_UNSET_FLAGS (bitstext, GTK_CAN_FOCUS);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (bitstext), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (bitstext), GTK_WRAP_WORD);
+#endif
 
-  gtk_signal_connect (GTK_OBJECT (receivewindow), "delete_event",
-                      GTK_SIGNAL_FUNC (on_receivewindow_delete_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (clearbutton), "clicked",
-                      GTK_SIGNAL_FUNC (on_clearbutton_clicked),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (ptt), "toggled",
-                      GTK_SIGNAL_FUNC (on_ptt_toggled),
-                      NULL);
+  label29 = gtk_label_new (_("Received Bits"));
+  gtk_widget_show (label29);
+  gtk_frame_set_label_widget (GTK_FRAME (frame7), label29);
+
+  g_signal_connect ((gpointer) receivewindow, "delete_event",
+                    G_CALLBACK (on_receivewindow_delete_event),
+                    NULL);
+  g_signal_connect ((gpointer) clearbutton, "clicked",
+                    G_CALLBACK (on_clearbutton_clicked),
+                    NULL);
+  g_signal_connect ((gpointer) ptt, "toggled",
+                    G_CALLBACK (on_ptt_toggled),
+                    NULL);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (receivewindow, receivewindow, "receivewindow");
+  GLADE_HOOKUP_OBJECT (receivewindow, vbox6, "vbox6");
+  GLADE_HOOKUP_OBJECT (receivewindow, hbox3, "hbox3");
+  GLADE_HOOKUP_OBJECT (receivewindow, clearbutton, "clearbutton");
+  GLADE_HOOKUP_OBJECT (receivewindow, label7, "label7");
+  GLADE_HOOKUP_OBJECT (receivewindow, count0, "count0");
+  GLADE_HOOKUP_OBJECT (receivewindow, label17, "label17");
+  GLADE_HOOKUP_OBJECT (receivewindow, count1, "count1");
+  GLADE_HOOKUP_OBJECT (receivewindow, label18, "label18");
+  GLADE_HOOKUP_OBJECT (receivewindow, counttot, "counttot");
+  GLADE_HOOKUP_OBJECT (receivewindow, label27, "label27");
+  GLADE_HOOKUP_OBJECT (receivewindow, ptt, "ptt");
+  GLADE_HOOKUP_OBJECT (receivewindow, label23, "label23");
+  GLADE_HOOKUP_OBJECT (receivewindow, ledptt, "ledptt");
+  GLADE_HOOKUP_OBJECT (receivewindow, label24, "label24");
+  GLADE_HOOKUP_OBJECT (receivewindow, leddcd, "leddcd");
+  GLADE_HOOKUP_OBJECT (receivewindow, vpaned1, "vpaned1");
+  GLADE_HOOKUP_OBJECT (receivewindow, frame6, "frame6");
+  GLADE_HOOKUP_OBJECT (receivewindow, scrolledwindow2, "scrolledwindow2");
+  GLADE_HOOKUP_OBJECT (receivewindow, packettext, "packettext");
+  GLADE_HOOKUP_OBJECT (receivewindow, label28, "label28");
+  GLADE_HOOKUP_OBJECT (receivewindow, frame7, "frame7");
+  GLADE_HOOKUP_OBJECT (receivewindow, scrolledwindow3, "scrolledwindow3");
+  GLADE_HOOKUP_OBJECT (receivewindow, bitstext, "bitstext");
+  GLADE_HOOKUP_OBJECT (receivewindow, label29, "label29");
 
   return receivewindow;
 }
@@ -1089,134 +1014,147 @@ create_p3dwindow (void)
   GtkWidget *frame6;
   GtkWidget *scrolledwindow2;
   GtkWidget *packetcooked;
+  GtkWidget *label30;
   GtkWidget *frame7;
   GtkWidget *scrolledwindow3;
   GtkWidget *packetraw;
+  GtkWidget *label31;
 
   p3dwindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (p3dwindow), "p3dwindow", p3dwindow);
   gtk_window_set_title (GTK_WINDOW (p3dwindow), _("AO-40 Phase 3D Receive Window"));
-  gtk_window_set_wmclass (GTK_WINDOW (p3dwindow), "soundmodem", "soundmodem");
 
   vbox6 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox6);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "vbox6", vbox6,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox6);
   gtk_container_add (GTK_CONTAINER (p3dwindow), vbox6);
 
   hbox3 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox3);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "hbox3", hbox3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox3, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox3), 4);
 
   label7 = gtk_label_new (_("Receiver Status"));
-  gtk_widget_ref (label7);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "label7", label7,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label7);
   gtk_box_pack_start (GTK_BOX (hbox3), label7, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label7), GTK_JUSTIFY_CENTER);
 
   rxstatus = gtk_entry_new ();
-  gtk_widget_ref (rxstatus);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "rxstatus", rxstatus,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (rxstatus);
   gtk_box_pack_start (GTK_BOX (hbox3), rxstatus, FALSE, TRUE, 4);
-  gtk_widget_set_usize (rxstatus, 120, -2);
+  gtk_widget_set_size_request (rxstatus, 120, -1);
   GTK_WIDGET_UNSET_FLAGS (rxstatus, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (rxstatus), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (rxstatus), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (rxstatus), 9679);
 
   label17 = gtk_label_new (_("Carrier Frequency"));
-  gtk_widget_ref (label17);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "label17", label17,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label17);
   gtk_box_pack_start (GTK_BOX (hbox3), label17, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label17), GTK_JUSTIFY_CENTER);
 
   carrierfreq = gtk_entry_new ();
-  gtk_widget_ref (carrierfreq);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "carrierfreq", carrierfreq,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (carrierfreq);
   gtk_box_pack_start (GTK_BOX (hbox3), carrierfreq, FALSE, TRUE, 0);
-  gtk_widget_set_usize (carrierfreq, 60, -2);
+  gtk_widget_set_size_request (carrierfreq, 60, -1);
   GTK_WIDGET_UNSET_FLAGS (carrierfreq, GTK_CAN_FOCUS);
-  gtk_entry_set_editable (GTK_ENTRY (carrierfreq), FALSE);
+  gtk_editable_set_editable (GTK_EDITABLE (carrierfreq), FALSE);
+  gtk_entry_set_invisible_char (GTK_ENTRY (carrierfreq), 9679);
 
   label18 = gtk_label_new (_("Hz"));
-  gtk_widget_ref (label18);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "label18", label18,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label18);
   gtk_box_pack_start (GTK_BOX (hbox3), label18, FALSE, FALSE, 3);
+  gtk_label_set_justify (GTK_LABEL (label18), GTK_JUSTIFY_CENTER);
 
-  buttonpassall = gtk_toggle_button_new_with_label (_("Decode All Packets (Faulty CRC)"));
-  gtk_widget_ref (buttonpassall);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "buttonpassall", buttonpassall,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  buttonpassall = gtk_toggle_button_new_with_mnemonic (_("Decode All Packets (Faulty CRC)"));
   gtk_widget_show (buttonpassall);
   gtk_box_pack_end (GTK_BOX (hbox3), buttonpassall, FALSE, FALSE, 0);
 
   vpaned1 = gtk_vpaned_new ();
-  gtk_widget_ref (vpaned1);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "vpaned1", vpaned1,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vpaned1);
   gtk_box_pack_start (GTK_BOX (vbox6), vpaned1, TRUE, TRUE, 0);
+  GTK_WIDGET_UNSET_FLAGS (vpaned1, GTK_CAN_FOCUS);
 
-  frame6 = gtk_frame_new (_("Received Decoded Packets"));
-  gtk_widget_ref (frame6);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "frame6", frame6,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  frame6 = gtk_frame_new (NULL);
   gtk_widget_show (frame6);
   gtk_paned_pack1 (GTK_PANED (vpaned1), frame6, TRUE, TRUE);
 
   scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow2);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "scrolledwindow2", scrolledwindow2,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow2);
   gtk_container_add (GTK_CONTAINER (frame6), scrolledwindow2);
+  GTK_WIDGET_UNSET_FLAGS (scrolledwindow2, GTK_CAN_FOCUS);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
+#warning FIXME: GtkText
+#if 1
   packetcooked = gtk_text_new (NULL, NULL);
-  gtk_widget_ref (packetcooked);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "packetcooked", packetcooked,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (packetcooked);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packetcooked);
   GTK_WIDGET_UNSET_FLAGS (packetcooked, GTK_CAN_FOCUS);
+#else
+  packetcooked = gtk_text_view_new ();
+  gtk_widget_show (packetcooked);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow2), packetcooked);
+  GTK_WIDGET_UNSET_FLAGS (packetcooked, GTK_CAN_FOCUS);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (packetcooked), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetcooked), GTK_WRAP_WORD);
+#endif
 
-  frame7 = gtk_frame_new (_("Received Raw Packets"));
-  gtk_widget_ref (frame7);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "frame7", frame7,
-                            (GtkDestroyNotify) gtk_widget_unref);
+  label30 = gtk_label_new (_("Received Decoded Packets"));
+  gtk_widget_show (label30);
+  gtk_frame_set_label_widget (GTK_FRAME (frame6), label30);
+
+  frame7 = gtk_frame_new (NULL);
   gtk_widget_show (frame7);
   gtk_paned_pack2 (GTK_PANED (vpaned1), frame7, TRUE, TRUE);
 
   scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow3);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "scrolledwindow3", scrolledwindow3,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow3);
   gtk_container_add (GTK_CONTAINER (frame7), scrolledwindow3);
+  GTK_WIDGET_UNSET_FLAGS (scrolledwindow3, GTK_CAN_FOCUS);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
+#warning FIXME: GtkText
+#if 1
   packetraw = gtk_text_new (NULL, NULL);
-  gtk_widget_ref (packetraw);
-  gtk_object_set_data_full (GTK_OBJECT (p3dwindow), "packetraw", packetraw,
-                            (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (packetraw);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), packetraw);
   GTK_WIDGET_UNSET_FLAGS (packetraw, GTK_CAN_FOCUS);
+#else
+  packetraw = gtk_text_view_new ();
+  gtk_widget_show (packetraw);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow3), packetraw);
+  GTK_WIDGET_UNSET_FLAGS (packetraw, GTK_CAN_FOCUS);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (packetraw), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetraw), GTK_WRAP_WORD);
+#endif
 
-  gtk_signal_connect (GTK_OBJECT (p3dwindow), "delete_event",
-                      GTK_SIGNAL_FUNC (on_p3dwindow_delete_event),
-                      NULL);
+  label31 = gtk_label_new (_("Received Raw Packets"));
+  gtk_widget_show (label31);
+  gtk_frame_set_label_widget (GTK_FRAME (frame7), label31);
+
+  g_signal_connect ((gpointer) p3dwindow, "delete_event",
+                    G_CALLBACK (on_p3dwindow_delete_event),
+                    NULL);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (p3dwindow, p3dwindow, "p3dwindow");
+  GLADE_HOOKUP_OBJECT (p3dwindow, vbox6, "vbox6");
+  GLADE_HOOKUP_OBJECT (p3dwindow, hbox3, "hbox3");
+  GLADE_HOOKUP_OBJECT (p3dwindow, label7, "label7");
+  GLADE_HOOKUP_OBJECT (p3dwindow, rxstatus, "rxstatus");
+  GLADE_HOOKUP_OBJECT (p3dwindow, label17, "label17");
+  GLADE_HOOKUP_OBJECT (p3dwindow, carrierfreq, "carrierfreq");
+  GLADE_HOOKUP_OBJECT (p3dwindow, label18, "label18");
+  GLADE_HOOKUP_OBJECT (p3dwindow, buttonpassall, "buttonpassall");
+  GLADE_HOOKUP_OBJECT (p3dwindow, vpaned1, "vpaned1");
+  GLADE_HOOKUP_OBJECT (p3dwindow, frame6, "frame6");
+  GLADE_HOOKUP_OBJECT (p3dwindow, scrolledwindow2, "scrolledwindow2");
+  GLADE_HOOKUP_OBJECT (p3dwindow, packetcooked, "packetcooked");
+  GLADE_HOOKUP_OBJECT (p3dwindow, label30, "label30");
+  GLADE_HOOKUP_OBJECT (p3dwindow, frame7, "frame7");
+  GLADE_HOOKUP_OBJECT (p3dwindow, scrolledwindow3, "scrolledwindow3");
+  GLADE_HOOKUP_OBJECT (p3dwindow, packetraw, "packetraw");
+  GLADE_HOOKUP_OBJECT (p3dwindow, label31, "label31");
 
   return p3dwindow;
 }

@@ -1,4 +1,4 @@
-INCLUDES = @XMLCFLAGS@ -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
+INCLUDES = @XML_CFLAGS@ -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
         -I$(top_srcdir)/directx/include \
         -I$(top_srcdir)/directx/include/directx6 \
 	@AUDIOFILE_CFLAGS@
@@ -31,15 +31,15 @@ noinst_LIBRARIES = libcommon.a libpttio.a libaudioio.a liblog.a
 libcommon_a_SOURCES = simd.c snprintpkt.c
 
 soundmodem_SOURCES = kisspkt.c main.c
-soundmodem_LDADD = $(MODEMLIBS) libcommon.a liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XMLLIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
+soundmodem_LDADD = $(MODEMLIBS) libcommon.a liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XML_LIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
 
 testkiss_SOURCES = kisspkt.c testkiss.c log.c snprintpkt.c
 testkiss_LDADD = ../libmisc/libmisc.a @LIBTHREAD@
 
 chansim_SOURCES = simd.c pktsimple.c main.c
-chansim_LDADD = $(MODEMLIBS) liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XMLLIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
+chansim_LDADD = $(MODEMLIBS) liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XML_LIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
 
 chansimberr_SOURCES = simd.c pktberr.c main.c
-chansimberr_LDADD = $(MODEMLIBS) liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XMLLIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
+chansimberr_LDADD = $(MODEMLIBS) liblog.a libaudioio.a libpttio.a ../matlib/libmat.a ../libmisc/libmisc.a @XML_LIBS@ @LIBTHREAD@ @AUDIOFILE_LIBS@
 
 EXTRA_DIST = test.xml audioio.c audiofilein.c chansim.c winaudioio.c ptt.c winptt.c winptt2.c log.c winlog.c soundmodem.8
