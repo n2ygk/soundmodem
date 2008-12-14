@@ -360,6 +360,9 @@ static inline void iotxstart(struct audioio_unix *audioio)
 {
 	int err;
 
+	if (snd_pcm_prepare(audioio->playback_handle) < 0) {
+                logprintf(MLOG_ERROR, "Error preparing tx.\n");
+        }
 	err = snd_pcm_start(audioio->playback_handle);
 	if (err < 0)
 		logprintf(MLOG_ERROR, "snd_pcm_start: %s", snd_strerror(err));
