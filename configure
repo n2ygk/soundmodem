@@ -9017,7 +9017,7 @@ fi
 esac
 
 
-ALL_LINGUAS="sv"
+ALL_LINGUAS="sv fr"
 
   { $as_echo "$as_me:$LINENO: checking whether NLS is requested" >&5
 $as_echo_n "checking whether NLS is requested... " >&6; }

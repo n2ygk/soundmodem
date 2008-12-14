@@ -107,7 +107,7 @@ esac
 AC_SUBST(HAVE_ALSA)
 
 dnl Add the languages which your application supports here.
-ALL_LINGUAS="sv"
+ALL_LINGUAS="sv fr"
 AM_GNU_GETTEXT([external])
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
