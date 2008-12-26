@@ -75,7 +75,7 @@ struct audioio_unix {
 
 struct modemparams ioparams_alsasoundcard[] = {
 	{ "device", "ALSA Audio Driver", "Path name of the audio (soundcard) driver", "hw:0,0", MODEMPAR_COMBO, 
-	  { c: { { "hw:0,0", "hw:1,0", "hw:2,0", "hw:3,0" } } } },
+	  { c: { { "hw:0,0", "plughw:0,0", "hw:1,0", "plughw:1,0", "hw:2,0", "plughw:2,0", "hw:3,0", "plughw:3,0" } } } },
         { "halfdup", "Half Duplex", "Force operating the Sound Driver in Half Duplex mode", "0", MODEMPAR_CHECKBUTTON },
 	{ "capturechannelmode", "Capture Channel", "Capture Channel", "Mono", MODEMPAR_COMBO, 
 	  { c: { { "Mono", "Left", "Right" } } } },
@@ -348,12 +348,12 @@ static inline void iotxend(struct audioio_unix *audioio)
 
 	err = snd_pcm_drain(audioio->playback_handle);
 	if (err < 0)
-		logprintf(MLOG_ERROR, "snd_pcm_drain: %s", snd_strerror(err));
+		logprintf(MLOG_ERROR, "snd_pcm_drain in iotxend: %s", snd_strerror(err));
 	if (!(audioio->flags & CAP_HALFDUPLEX))
 		return;
 	err = snd_pcm_start(audioio->capture_handle);
-	if (err < 0)
-		logprintf(MLOG_ERROR, "snd_pcm_start: %s", snd_strerror(err));
+	if (err < 0 && err != -EBADFD)
+		logprintf(MLOG_ERROR, "snd_pcm_start in iotxend: %s", snd_strerror(err));
 }
 
 static inline void iotxstart(struct audioio_unix *audioio)
@@ -365,7 +365,7 @@ static inline void iotxstart(struct audioio_unix *audioio)
         }
 	err = snd_pcm_start(audioio->playback_handle);
 	if (err < 0)
-		logprintf(MLOG_ERROR, "snd_pcm_start: %s", snd_strerror(err));
+		logprintf(MLOG_ERROR, "snd_pcm_start in iotxstart: %s", snd_strerror(err));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -393,6 +393,12 @@ static void iowrite(struct audioio *aio, const int16_t *samples, unsigned int nr
 	if (!audioio->playback_handle)
 		return;
 	err = snd_pcm_writei(audioio->playback_handle, p, nr);
+	if (err == -EPIPE) {
+		if (snd_pcm_prepare(audioio->capture_handle) < 0) {
+			logprintf(MLOG_ERROR, "Error preparing tx.\n");
+		}
+		err = snd_pcm_writei(audioio->playback_handle, p, nr);
+	}
 	if (err < 0) {
 		logprintf(MLOG_ERROR, "audio: snd_pcm_writei: %s", snd_strerror(err));
 		return;
@@ -452,6 +458,12 @@ static void ioread(struct audioio *aio, int16_t *samples, unsigned int nr, u_int
 		if (!audioio->capture_handle)
 			logerr(MLOG_FATAL, "audio: read: capture handle NULL");
 		i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0])/2);
+		if (i == -EPIPE) {
+			if (snd_pcm_prepare(audioio->capture_handle) < 0) {
+				logprintf(MLOG_ERROR, "Error preparing rx.\n");
+			}
+			i = snd_pcm_readi(audioio->capture_handle, ibuf, sizeof(ibuf)/sizeof(ibuf[0])/2);
+		}
 		if (i < 0)
 			logprintf(MLOG_FATAL, "audio: snd_pcm_readi: %s", snd_strerror(i));
 		if (!i) {
@@ -563,10 +575,10 @@ static void iotransmitstart(struct audioio *aio)
 static void iotransmitstop(struct audioio *aio)
 {
 	struct audioio_unix *audioio = (struct audioio_unix *)aio;
-	short sbuf[256];
-	unsigned int i, j;
 
 #if 0
+	short sbuf[256];
+	unsigned int i, j;
 	/* add 20ms tail */
 	i = audioio->samplerate / 50;
 	memset(sbuf, 0, sizeof(sbuf));
