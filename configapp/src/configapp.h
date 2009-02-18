@@ -50,8 +50,9 @@ extern struct modemparams pktmkissparams_x[];
 extern struct modemparams ioparam_type[];
 
 extern GtkWidget *mainwindow, *specwindow, *scopewindow, *receivewindow, *p3dwindow;
-extern GtkWidget *new_configuration(const gchar *name);
-extern GtkWidget *new_channel(const gchar *cfgname, const gchar *name);
+extern GtkTreeModel *configmodel;
+extern void new_configuration(const gchar *name);
+extern void new_channel(const gchar *cfgname, const gchar *name);
 extern void renumber_channels(void);
 extern void error_dialog(const gchar *text);
 extern int xml_newconfig(const char *newname);
@@ -60,6 +61,7 @@ extern int xml_deleteconfig(const char *newname);
 extern int xml_deletechannel(const char *cfgname, const char *chname);
 extern int xml_setprop(const char *cfgname, const char *chname, const char *typname, const char *propname, const char *data);
 extern int xml_getprop(const char *cfgname, const char *chname, const char *typname, const char *propname, char *buf, unsigned int bufsz);
+extern GtkTreeModel *create_configmodel(void);
 
 /* diagnostics stuff */
 extern void diag_stop(void);

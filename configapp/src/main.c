@@ -38,6 +38,7 @@
 /* ---------------------------------------------------------------------- */
   
 GtkWidget *mainwindow, *specwindow, *scopewindow, *receivewindow, *p3dwindow;
+GtkTreeModel *configmodel;
 
 /* ---------------------------------------------------------------------- */
 
@@ -577,11 +578,12 @@ int main (int argc, char *argv[])
 	scopewindow = create_scopewindow();
 	receivewindow = create_receivewindow();
 	p3dwindow = create_p3dwindow();
+	configmodel = create_configmodel();
 
         {
                 GtkWidget *w;
                 GtkStyle *st;
-		PangoFontDescription *font_desc = pango_font_description_from_string ("monospace 12");
+		PangoFontDescription *font_desc = pango_font_description_from_string ("monospace 10");
                 if (!font_desc) {
                         g_printerr("Cannot load monospace\n");
                 } else {
@@ -652,6 +654,7 @@ int main (int argc, char *argv[])
 	buildtree(doc->children->children);
 #endif /* WIN32 */
 	renumber_channels();
+	gtk_tree_view_expand_all(GTK_TREE_VIEW(g_object_get_data(G_OBJECT(mainwindow), "configtree")));
 	gtk_widget_show(mainwindow);
 	gtk_main();
 #ifdef WIN32

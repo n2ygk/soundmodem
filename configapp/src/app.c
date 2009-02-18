@@ -57,6 +57,20 @@ char *alloca ();
 #include <stdlib.h>
 #include <string.h>
 
+enum {
+  LABEL_COL,
+  CFGNAME_COL,
+  CHNAME_COL,
+  NUM_COLUMNS
+};
+
+typedef struct _CallbackData CallbackData;
+struct _CallbackData
+{
+  GtkTreeModel *model;
+  GtkTreePath *path;
+};
+
 /* ---------------------------------------------------------------------- */
 
 #ifdef WIN32
@@ -111,37 +125,6 @@ static char *gtktostr(const gchar *in)
 #endif /* WIN32 */
 
 /* ---------------------------------------------------------------------- */
-
-#warning FIXME: GtkTree
-#if 1
-void on_configtree_selection_changed(GtkTree *treex, gpointer user_data)
-{
-	GtkWidget *tree;
-	GList *sel;
-	const char *cfgname = NULL, *chname = NULL;
-
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION_OLD(tree);
-	if (sel) {
-		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
-		chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");
-	}
-	if (cfgname && chname) {
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
-	} else if (cfgname) {
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
-	} else {
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
-	}
-	g_print("selection: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
-}
-#endif
 
 static GtkWidget *create_notebookhead(GList *combo_items)
 {
@@ -466,24 +449,6 @@ static void on_iotypecombochg_changed(GtkEditable *editable, gpointer user_data)
 }
 
 
-static void on_config_select(GtkWidget *item, gpointer data)
-{
-	const char *cfgname = NULL, *chname = NULL;
-
-	cfgname = gtk_object_get_data(GTK_OBJECT(item), "configname");
-	chname = gtk_object_get_data(GTK_OBJECT(item), "channame");
-	cfg_select(cfgname, chname);
-}
-
-static void on_config_deselect(GtkWidget *item, gpointer data)
-{
-	const char *cfgname = NULL, *chname = NULL;
-
-	cfgname = gtk_object_get_data(GTK_OBJECT(item), "configname");
-	chname = gtk_object_get_data(GTK_OBJECT(item), "channame");
-	cfg_deselect(cfgname, chname);
-}
-
 struct packetio {
 	struct packetio *next;
 	const char *name;
@@ -646,10 +611,9 @@ static guint notebookcombochg = 0;
 
 static gint do_notebookcombo_change(gpointer user_data)
 {
-	GtkWidget *notebook, *w, *combo, *combo_entry;
-	const char *cfgname, *chname, *text2;
-        char text1[128];
-	gint nbcurpage, changed = 0;
+	GtkWidget *notebook, *w;
+	const char *cfgname, *chname;
+	gint nbcurpage;
 
 	notebookcombochg = 0;
 	/* recreate notebook widgets */
@@ -660,37 +624,6 @@ static gint do_notebookcombo_change(gpointer user_data)
 	chname = gtk_object_get_data(GTK_OBJECT(w), "chname");
 
 	g_print("on_notebookcombo_changed: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
-#if 0
-	/* check if something changed */
-	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 0);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_getprop(cfgname, chname, "mod", "mode", text1, sizeof(text1));
-	text2 = gtk_entry_get_text(GTK_ENTRY(combo_entry));
-	if (!text2 || strcmp(text1, text2))
-		changed = 1;
-	g_printerr("Text1 %s Text2 %s chg %d\n", text1, text2, changed);
-	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 1);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_getprop(cfgname, chname, "demod", "mode", text1, sizeof(text1));
-	text2 = gtk_entry_get_text(GTK_ENTRY(combo_entry));
-	if (!text2 || strcmp(text1, text2))
-		changed = 1;
-	g_printerr("Text1 %s Text2 %s chg %d\n", text1, text2, changed);
-#ifndef WIN32
-	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 2);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_getprop(cfgname, chname, "pkt", "mode", text1, sizeof(text1));
-	text2 = gtk_entry_get_text(GTK_ENTRY(combo_entry));
-	if (!text2 || strcmp(text1, text2))
-		changed = 1;
-	g_printerr("Text1 %s Text2 %s chg %d\n", text1, text2, changed);
-#endif /* WIN32 */
-	if (!changed)
-		return FALSE;
-#endif
 	nbcurpage = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 	destroy_notebook_menus();
 	g_print("Recreating menus\n");
@@ -708,51 +641,130 @@ static void on_notebookcombo_changed(GtkEditable *editable, gpointer user_data)
 		notebookcombochg = gtk_idle_add_priority(G_PRIORITY_HIGH, do_notebookcombo_change, NULL);
 }
 
-static void on_channel_select(GtkWidget *item, gpointer data)
+static int
+compare_sels (char* config_a, char *channel_a, char *config_b, char *channel_b)
 {
-	const char *cfgname = NULL, *chname = NULL;
-
-	cfgname = gtk_object_get_data(GTK_OBJECT(item), "configname");
-	chname = gtk_object_get_data(GTK_OBJECT(item), "channame");
-
-	g_print("channel_select: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
-
-	make_notebook_menus(cfgname, chname);
-	gtk_widget_show(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+	
+	if (config_a && !config_b)
+		return 1;
+	if (config_b && !config_a)
+		return -1;
+	if (config_a) {
+		int res = strcmp(config_a, config_b);
+		if (res != 0)
+			return res;
+	}
+	/* Same config */
+	if (channel_a && !channel_b)
+		return 1;
+	if (channel_b && !channel_a)
+		return -1;
+	if (channel_a)
+		return strcmp(channel_a, channel_b);
+	/* If we get here, all inputs were NULL */
+	return 0;
 }
 
-static void on_channel_deselect(GtkWidget *item, gpointer data)
+void on_configtree_selection_changed(GtkTreeSelection *selection, gpointer user_data)
 {
-	const char *cfgname = NULL, *chname = NULL;
+	GtkTreeIter       iter;
+	char *cfgname = NULL, *chname = NULL;
+	char *old_cfgname = NULL, *old_chname = NULL;
 
-	if (notebookcombochg)
-		gtk_idle_remove(notebookcombochg);
-	notebookcombochg = 0;
+	printf("on_configtree_selection_changed\n");
+	old_cfgname = g_object_get_data(G_OBJECT(configmodel), "cfgname");
+	old_chname = g_object_get_data(G_OBJECT(configmodel), "chname");
+	if (gtk_tree_selection_get_selected(selection, &configmodel, &iter))
+		gtk_tree_model_get(configmodel, &iter, CFGNAME_COL, &cfgname, CHNAME_COL, &chname, -1);
+	if (old_cfgname) {
+		if (compare_sels(old_cfgname, old_chname, cfgname, chname) == 0) {
+			printf("no change\n");
+			return;
+		} else {
+			if (old_chname) {
+				if (notebookcombochg)
+					gtk_idle_remove(notebookcombochg);
+				notebookcombochg = 0;
+				destroy_notebook_menus();
+				gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+				diag_stop();
 
-	cfgname = gtk_object_get_data(GTK_OBJECT(item), "configname");
-	chname = gtk_object_get_data(GTK_OBJECT(item), "channame");
+			} else {
+				cfg_deselect(old_cfgname, old_chname);
+			}
+		}
+	}
+	if (chname) {
+		make_notebook_menus(cfgname, chname);
+		gtk_widget_show(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+	} else if (cfgname) {
+		cfg_select(cfgname, chname);
+	}
+	g_object_set_data(G_OBJECT(configmodel), "cfgname", g_strdup(cfgname));
+	g_object_set_data(G_OBJECT(configmodel), "chname", g_strdup(chname));
+	g_free(old_cfgname);
+	g_free(old_chname);
 
-	g_print("channel_deselect: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
-
-	destroy_notebook_menus();
-	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
-	diag_stop();
+	if (cfgname && chname) {
+		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+	} else if (cfgname) {
+		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+	} else {
+		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+	}
+	g_print("selection: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 }
+
+
+GtkTreeModel *
+create_configmodel(void)
+{
+	GtkTreeStore *model;
+	GtkWidget *view;
+	GtkTreeSelection *selection;
+	GtkCellRenderer *cell;
+	GtkTreeViewColumn *column;
+	
+	model = gtk_tree_store_new(NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(model));
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+	g_signal_connect_after((gpointer) selection, "changed",
+			       G_CALLBACK(on_configtree_selection_changed),
+			       NULL);
+
+	gtk_tree_selection_set_mode(GTK_TREE_SELECTION(selection),
+				    GTK_SELECTION_BROWSE);
+	cell = gtk_cell_renderer_text_new();
+
+	column = gtk_tree_view_column_new_with_attributes("Configurations",
+							  cell,
+							  "text", LABEL_COL,
+							  NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view),
+				    GTK_TREE_VIEW_COLUMN(column));
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
+
+	return GTK_TREE_MODEL(model);
+}
+
 
 /* ---------------------------------------------------------------------- */
 
 static void dounselect(void)
 {
-#warning FIXME: GtkTree
-#if 1
-	GtkWidget *tree;
-	GList *chld;
+	GtkWidget *view;
+	GtkTreeSelection *selection;
 
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	chld = GTK_TREE_SELECTION_OLD(tree);
-	if (chld)
-		gtk_tree_unselect_child(GTK_TREE(GTK_WIDGET(chld->data)->parent), GTK_WIDGET(chld->data));
-#endif
+	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+	gtk_tree_selection_unselect_all(selection);
 }
 
 void on_quit_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -795,135 +807,98 @@ void on_about_activate(GtkMenuItem *menuitem, gpointer user_data)
 
 /* ---------------------------------------------------------------------- */
 
-static GtkWidget *findconfigitem(const gchar *name)
+static gboolean findconfigitem(const gchar *name, GtkTreeIter *iter)
 {
-	GtkWidget *tree;
-	GList *chld;
-	const gchar *nm;
+	char *str;
 
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-#warning FIXME: GtkTree
-#if 1
-	chld = GTK_TREE(tree)->children;
-#endif
-	for (; chld; chld = chld->next) {
-		if (!(nm = gtk_object_get_data(GTK_OBJECT(chld->data), "configname")))
-			continue;
-		if (strcmp(nm, name))
-			continue;
-		return GTK_WIDGET(chld->data);
-	}
-	return NULL;
+	if (!gtk_tree_model_get_iter_first(configmodel, iter))
+		return FALSE;
+	do {
+		gtk_tree_model_get(configmodel, iter, 0, &str, -1);
+		if (strcmp(name, str) == 0) {
+			g_free(str);
+			return TRUE;
+		}
+		g_free(str);
+	} while (gtk_tree_model_iter_next(configmodel, iter));
+	return FALSE;
 }
 
-static GtkWidget *findchannelitem(GtkWidget *cfgitem, const gchar *name)
+static gboolean findchannelitem(const gchar *name, GtkTreeIter *itercfg, GtkTreeIter *iter)
 {
-	GtkWidget *tree;
-	GList *chld;
-	const gchar *nm;
+	char *str;
 
-#warning FIXME: GtkTree
-#if 1
-	tree = GTK_TREE_ITEM(cfgitem)->subtree;
-	chld = GTK_TREE(tree)->children;
-#endif
-	for (; chld; chld = chld->next) {
-		if (!(nm = gtk_object_get_data(GTK_OBJECT(chld->data), "channame")))
-			continue;
-		if (strcmp(nm, name))
-			continue;
-		return GTK_WIDGET(chld->data);
-	}
-	return NULL;
+	if (!gtk_tree_model_iter_children(configmodel, iter, itercfg))
+		return FALSE;
+	do {
+		gtk_tree_model_get(configmodel, iter, 0, &str, -1);
+		if (strcmp(name, str) == 0) {
+			g_free(str);
+			return TRUE;
+		}
+		g_free(str);
+	} while (gtk_tree_model_iter_next(configmodel, iter));
+	return FALSE;
 }
 
-GtkWidget *new_configuration(const gchar *name2)
+void new_configuration(const gchar *name)
 {
-	GtkWidget *item, *tree;
-	char *name;
+	GtkTreeIter iter;
 
-	if ((item = findconfigitem(name2)))
-		return item;
-	name = strdup(name2);
-#warning FIXME: GtkTree
-#if 1
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-        item = gtk_tree_item_new_with_label(name);
-	gtk_signal_connect_after(GTK_OBJECT(item), "select", GTK_SIGNAL_FUNC(on_config_select), item);
-	gtk_signal_connect_after(GTK_OBJECT(item), "deselect", GTK_SIGNAL_FUNC(on_config_deselect), item);
-	gtk_tree_append(GTK_TREE(tree), item);
-	gtk_widget_show(item);
-	gtk_object_set_data(GTK_OBJECT(item), "configitem", item);
-	gtk_object_set_data(GTK_OBJECT(item), "parenttree", tree);
-	gtk_object_set_data(GTK_OBJECT(item), "configname", (void *)name);
-	gtk_object_set_data(GTK_OBJECT(item), "channame", NULL);
-#endif
-	return item;
+	if (findconfigitem(name, &iter))
+		return;
+	gtk_tree_store_append(GTK_TREE_STORE(configmodel), &iter, NULL);
+	gtk_tree_store_set(GTK_TREE_STORE(configmodel), &iter, 
+			    LABEL_COL, name, 
+			    CFGNAME_COL, name, -1);
 }
 
-GtkWidget *new_channel(const gchar *cfgname, const gchar *name)
+void new_channel(const gchar *cfgname, const gchar *name)
 {
-	GtkWidget *item, *tree, *cfgitem;
+	GtkTreeIter iter, child_iter;
+	GtkTreeView *view;
+	GtkTreePath *path;
 
-	cfgitem = findconfigitem(cfgname);
-	if (!cfgitem) {
+	if (!findconfigitem(cfgname, &iter)) {
 		g_printerr("Could not find configuration \"%s\"\n", cfgname);
-		return NULL;
+		return;
 	}
-#warning FIXME: GtkTree
-#if 1
-	tree = GTK_TREE_ITEM_SUBTREE(cfgitem);
-	if (!tree) {
-		tree = gtk_tree_new();
-		gtk_tree_item_set_subtree(GTK_TREE_ITEM(cfgitem), tree);
-	}
-	item = gtk_tree_item_new_with_label("");
-	gtk_signal_connect_after(GTK_OBJECT(item), "select", GTK_SIGNAL_FUNC(on_channel_select), item);
-	gtk_signal_connect_after(GTK_OBJECT(item), "deselect", GTK_SIGNAL_FUNC(on_channel_deselect), item);
-	gtk_tree_append(GTK_TREE(tree), item);
-	gtk_tree_item_expand(GTK_TREE_ITEM(cfgitem));
-	gtk_widget_show(item);
-	gtk_object_set_data(GTK_OBJECT(item), "configitem", cfgitem);
-	gtk_object_set_data(GTK_OBJECT(item), "parenttree", tree);
-	gtk_object_set_data(GTK_OBJECT(item), "configname", gtk_object_get_data(GTK_OBJECT(cfgitem), "configname"));
-	gtk_object_set_data(GTK_OBJECT(item), "channame", (void *)strdup(name));
-#endif
-	return item;
+	gtk_tree_store_append(GTK_TREE_STORE(configmodel), &child_iter, &iter);
+	gtk_tree_store_set(GTK_TREE_STORE(configmodel), &child_iter, 
+			   LABEL_COL, name, 
+			   CFGNAME_COL, cfgname, 
+			   CHNAME_COL, name, -1);
+	path = gtk_tree_model_get_path(configmodel, &iter);
+	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	gtk_tree_view_expand_row(view, path, FALSE);
+	gtk_tree_path_free(path);
 }
 
-static void renumber_onecfg(GtkWidget *tree)
+static void renumber_onecfg(GtkTreeIter *cfgiter)
 {
+	GtkTreeIter iter;
 	unsigned int cnt = 0;
 	gchar buf[64];
-	GtkWidget *label;
-	GList *chld;
 
-	if (!tree)
+	if (!gtk_tree_model_iter_children(configmodel, &iter, cfgiter))
 		return;
-#warning FIXME: GtkTree
-#if 1
-	chld = GTK_TREE(tree)->children;
-#endif
-	for (; chld; chld = chld->next) {
-		label = GTK_BIN(chld->data)->child;
+	do {
 		sprintf(buf, "Channel %u", cnt++);
-		gtk_label_set_text(GTK_LABEL(label), buf);
-	}
+		gtk_tree_store_set(GTK_TREE_STORE (configmodel), &iter, 
+				   LABEL_COL, buf, -1);
+	} while (gtk_tree_model_iter_next(configmodel, &iter));
+	
 }
 
 void renumber_channels(void)
 {
-	GtkWidget *tree;
-	GList *chld;
+	GtkTreeIter iter;
 
-#warning FIXME: GtkTree
-#if 1
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	chld = GTK_TREE(tree)->children;
-	for (; chld; chld = chld->next) {
-		renumber_onecfg(GTK_TREE_ITEM(chld->data)->subtree);
-	}
-#endif
+	if (!gtk_tree_model_get_iter_first(configmodel, &iter))
+		return;
+	do {
+		renumber_onecfg(&iter);
+	} while (gtk_tree_model_iter_next(configmodel, &iter));
 }
 
 /*    gtk_container_remove */
@@ -949,7 +924,7 @@ void error_dialog(const gchar *text)
 
 static void on_newconfigok_clicked(GtkButton *button, gpointer user_data)
 {
-	gchar *text = gtk_entry_get_text(GTK_ENTRY(gtk_object_get_data(GTK_OBJECT(user_data), "newconfigentry")));
+	const gchar *text = gtk_entry_get_text(GTK_ENTRY(gtk_object_get_data(GTK_OBJECT(user_data), "newconfigentry")));
 	int ret;
 	char buf[128];
 	
@@ -987,16 +962,9 @@ void on_newconfiguration_activate(GtkMenuItem *menuitem, gpointer user_data)
 
 void on_newchannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	GtkWidget *tree;
-	GList *sel;
 	const char *cfgname = NULL, *chname = NULL;
 
-#warning FIXME: GtkTree
-#if 1
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION_OLD(tree);
-	if (sel)
-		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
+	cfgname = g_object_get_data(G_OBJECT(configmodel), "cfgname");
 	if (!cfgname) {
 		g_printerr("on_newchannel_activate: cfgname NULL\n");
 		return;
@@ -1008,64 +976,43 @@ void on_newchannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 	}
 	new_channel(cfgname, chname);
 	renumber_channels();
-#endif
 }
 
 
 void on_deleteconfiguration_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	GtkWidget *tree, *item;
-	GList *sel;
 	const char *cfgname = NULL;
-	GList list = { NULL, NULL, NULL };
+	GtkTreeIter iter;
 
-#warning FIXME: GtkTree
-#if 1
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION_OLD(tree);
-	if (sel)
-		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
-	dounselect();
+	cfgname = g_object_get_data(G_OBJECT(configmodel), "cfgname");
 	if (!cfgname)
 		return;
-	item = findconfigitem(cfgname);
-	if (xml_deleteconfig(cfgname))
-		return;
-	free((char *)cfgname);
-	gtk_container_remove(GTK_CONTAINER(tree), item);
-	//list.data = item;
-	//gtk_tree_remove_items(GTK_TREE(tree), &list);
-#endif
-}
+	if (findconfigitem(cfgname, &iter)) {
+		g_print("delete cfg %s\n", cfgname);
+		if (xml_deleteconfig(cfgname) == 0) {
+			g_object_set_data(G_OBJECT(configmodel), "cfgname", NULL);
+			free((char *)cfgname);
+			gtk_tree_store_remove(GTK_TREE_STORE(configmodel), &iter);
+		}
+	}
 
+}
 
 void on_deletechannel_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	GtkWidget *tree, *cfgitem, *chitem;
-	GList *sel;
 	const char *cfgname = NULL, *chname = NULL;
-	GList list = { NULL, NULL, NULL };
+	GtkTreeIter cfg_iter, iter;
 
-#warning FIXME: GtkTree
-#if 1
-	tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-	sel = GTK_TREE_SELECTION_OLD(tree);
-	if (sel) {
-		cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
-		chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");
-	}
-	dounselect();
+	cfgname = g_object_get_data(G_OBJECT(configmodel), "cfgname");
+	chname = g_object_get_data(G_OBJECT(configmodel), "chname");
 	if (!cfgname || !chname)
 		return;
-	cfgitem = findconfigitem(cfgname);
-	chitem = findchannelitem(cfgitem, chname);
-	g_print("delete channel cfg %s ch %s\n", cfgname, chname);
-	if (xml_deletechannel(cfgname, chname))
-		return;
-	gtk_container_remove(GTK_CONTAINER(GTK_TREE_ITEM(cfgitem)->subtree), chitem);
-        free((char *)chname);
-	//list.data = chitem;
-	//gtk_tree_remove_items(GTK_TREE(tree), &list);
-	renumber_channels();
-#endif
+	if (findconfigitem(cfgname, &cfg_iter) && findchannelitem(chname, &cfg_iter, &iter)) {
+		if (xml_deletechannel(cfgname, chname) == 0) {
+			g_object_set_data(G_OBJECT(configmodel), "chname", NULL);
+			free((char *)chname);
+			renumber_channels();
+			gtk_tree_store_remove(GTK_TREE_STORE(configmodel), &iter);
+		}
+	}
 }

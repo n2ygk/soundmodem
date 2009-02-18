@@ -195,18 +195,22 @@ static void do_rxpacket(void)
                 return;
 #endif
         {
-#warning FIXME: GtkText
-#if 1
-		GtkText *txt;
+		GtkTextView   *view;
+		GtkTextBuffer *model;
                 char buf[512];
-		int len;
+		int i, len;
                 len = snprintpkt(buf, sizeof(buf), diagstate.hrx.buf, diagstate.hrx.bufcnt-2);
+		for (i = 0; i < len; i++) {
+			if (!g_ascii_isprint(buf[i]) &&
+			    !g_ascii_isspace(buf[i]))
+				buf[i] = '*';
+		}
 
                 g_printerr("Packet: %s\n", buf);
-
-                txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
-		gtk_text_insert(txt, NULL, NULL, NULL, buf, len);
-#endif
+                view  = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
+		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+		gtk_text_buffer_insert_at_cursor(model, buf, len);
+		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
         }
 }
 
@@ -452,10 +456,8 @@ GtkWidget* create_led_pixmap(gchar *widget_name, gchar *string1, gchar *string2,
 
 static inline void update_display_p3d(void)
 {
-#warning FIXME: GtkText
-#if 1
-        GtkText *txt;
-#endif
+	GtkTextView   *view;
+	GtkTextBuffer *model;
         GtkWidget *w;
         unsigned int i, j;
         char buf[4096], *cp;
@@ -493,21 +495,19 @@ static inline void update_display_p3d(void)
                                 cp += sprintf(cp, "%c", diagstate.p3d.packet[i]);
                 }
                 cp += sprintf(cp, "\n\n");
-#warning FIXME: GtkText
-#if 1
-                txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetraw"));
-                gtk_text_freeze(txt);
-                gtk_text_set_point(txt, gtk_text_get_length(txt));
-                gtk_text_insert(txt, NULL, NULL, NULL, buf, cp-buf);
-                i = gtk_text_get_length(txt);
-                if (i > 16384) {
-                        i -= 16384;
-                        gtk_text_set_point(txt, 0);
-                        gtk_text_forward_delete(txt, i);
-                        gtk_text_set_point(txt, gtk_text_get_length(txt));
-                }
-                gtk_text_thaw(txt);
-#endif
+                view  = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
+		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+		gtk_text_buffer_insert_at_cursor(model, buf, cp-buf);
+		i = gtk_text_buffer_get_char_count(model);
+		if (i > 16384) {
+			GtkTextIter start, end;
+
+			i -= 16384;
+			gtk_text_buffer_get_iter_at_offset(model, &start, 0);
+			gtk_text_buffer_get_iter_at_offset(model, &end, i);
+			gtk_text_buffer_delete(model, &start, &end);
+		}
+		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
                 /* decode cooked packet if CRC ok or passall selected */
                 if (!diagstate.p3d.crc ||
                     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtk_object_get_data(GTK_OBJECT(p3dwindow), "buttonpassall")))) {
@@ -547,11 +547,11 @@ static void update_display(void)
                 diagstate.updpttthr = 0;
         }
 	if (diagstate.rxrd != diagstate.rxwr) {
-#warning FIXME: GtkText
-#if 1
-		GtkText *txt = GTK_TEXT(gtk_object_get_data(GTK_OBJECT(receivewindow), "bitstext"));
-		gtk_text_freeze(txt);
-		gtk_text_set_point(txt, gtk_text_get_length(txt));
+		GtkTextView   *view;
+		GtkTextBuffer *model;
+
+		view = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "bitstext"));
+		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 		while (diagstate.rxrd != diagstate.rxwr) {
 			ch = diagstate.rxbuf[diagstate.rxrd];
 			diagstate.rxrd = (diagstate.rxrd + 1) % sizeof(diagstate.rxbuf);
@@ -567,18 +567,19 @@ static void update_display(void)
 			buf[5] = '0'+((ch >> 5) & 1);
 			buf[6] = '0'+((ch >> 6) & 1);
 			buf[7] = '0'+((ch >> 7) & 1);
-			gtk_text_insert(txt, NULL, NULL, NULL, buf, 8);
+			gtk_text_buffer_insert_at_cursor(model, buf, 8);
 		}
-		c0 = gtk_text_get_length(txt);
+		c0 = gtk_text_buffer_get_char_count(model);
 		if (c0 > 16384) {
+			GtkTextIter start, end;
+
 			c0 -= 16384;
-			gtk_text_set_point(txt, 0);
-			gtk_text_forward_delete(txt, c0);
-			gtk_text_set_point(txt, gtk_text_get_length(txt));
+			gtk_text_buffer_get_iter_at_offset(model, &start, 0);
+			gtk_text_buffer_get_iter_at_offset(model, &end, c0);
+			gtk_text_buffer_delete(model, &start, &end);
 		}
-		gtk_text_thaw(txt);
+		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
 		diagstate.updcount = 1;
-#endif
 	}
 	if (diagstate.updcount) {
 		c0 = diagstate.count0;
@@ -677,8 +678,6 @@ static int diag_start(void)
 {
 	struct modulator *modch = &modchain_x;
 	struct demodulator *demodch = &demodchain_x;
-	GtkWidget *tree;
-	GList *sel;
         char params[MAX_PAR][64];
         const char *parptr[MAX_PAR];
 	unsigned int i;
@@ -692,12 +691,8 @@ static int diag_start(void)
 #endif
         /* get current config/channel name */
         diagstate.cfgname = diagstate.chname = NULL;
-        tree = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
-        sel = GTK_TREE_SELECTION_OLD(tree);
-        if (sel) {
-                diagstate.cfgname = gtk_object_get_data(GTK_OBJECT(sel->data), "configname");
-                diagstate.chname = gtk_object_get_data(GTK_OBJECT(sel->data), "channame");
-        }
+	diagstate.cfgname = g_object_get_data(G_OBJECT(configmodel), "cfgname");
+	diagstate.chname = g_object_get_data(G_OBJECT(configmodel), "chname");
         if (!diagstate.cfgname || !diagstate.chname) {
                 g_printerr("diag activate: no channel selected\n");
                 return -1;

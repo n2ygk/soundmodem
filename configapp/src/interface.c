@@ -181,18 +181,10 @@ create_mainwindow (void)
   gtk_widget_show (viewport1);
   gtk_container_add (GTK_CONTAINER (scrolledwindow1), viewport1);
 
-#warning FIXME: GtkTree
-#if 1
-  configtree = gtk_tree_new ();
-
-  gtk_widget_show (configtree);
-  gtk_container_add (GTK_CONTAINER (viewport1), configtree);
-#else
   configtree = gtk_tree_view_new ();
   gtk_widget_show (configtree);
   gtk_container_add (GTK_CONTAINER (viewport1), configtree);
   GTK_WIDGET_UNSET_FLAGS (configtree, GTK_CAN_FOCUS);
-#endif
 
   vbox3 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox3);
@@ -261,12 +253,6 @@ create_mainwindow (void)
   g_signal_connect ((gpointer) about, "activate",
                     G_CALLBACK (on_about_activate),
                     NULL);
-#warning FIXME: GtkTree
-#if 1
-g_signal_connect_after ((gpointer) configtree, "selection_changed",
-                          G_CALLBACK (on_configtree_selection_changed),
-                          NULL);
-#endif
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (mainwindow, mainwindow, "mainwindow");
@@ -909,20 +895,12 @@ create_receivewindow (void)
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
-#warning FIXME: GtkText
-#if 1
-  packettext = gtk_text_new (NULL, NULL);
-  gtk_widget_show (packettext);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow2), packettext);
-  GTK_WIDGET_UNSET_FLAGS (packettext, GTK_CAN_FOCUS);
-#else
   packettext = gtk_text_view_new ();
   gtk_widget_show (packettext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packettext);
   GTK_WIDGET_UNSET_FLAGS (packettext, GTK_CAN_FOCUS);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packettext), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packettext), GTK_WRAP_WORD);
-#endif
 
   label28 = gtk_label_new (_("Received Packets"));
   gtk_widget_show (label28);
@@ -939,20 +917,12 @@ create_receivewindow (void)
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
-#warning FIXME: GtkText
-#if 1
-  bitstext = gtk_text_new (NULL, NULL);
-  gtk_widget_show (bitstext);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow3), bitstext);
-  GTK_WIDGET_UNSET_FLAGS (bitstext, GTK_CAN_FOCUS);
-#else
   bitstext = gtk_text_view_new ();
   gtk_widget_show (bitstext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), bitstext);
   GTK_WIDGET_UNSET_FLAGS (bitstext, GTK_CAN_FOCUS);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (bitstext), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (bitstext), GTK_WRAP_WORD);
-#endif
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (bitstext), GTK_WRAP_CHAR);
 
   label29 = gtk_label_new (_("Received Bits"));
   gtk_widget_show (label29);
@@ -1083,20 +1053,12 @@ create_p3dwindow (void)
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
-#warning FIXME: GtkText
-#if 1
-  packetcooked = gtk_text_new (NULL, NULL);
-  gtk_widget_show (packetcooked);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow2), packetcooked);
-  GTK_WIDGET_UNSET_FLAGS (packetcooked, GTK_CAN_FOCUS);
-#else
   packetcooked = gtk_text_view_new ();
   gtk_widget_show (packetcooked);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packetcooked);
   GTK_WIDGET_UNSET_FLAGS (packetcooked, GTK_CAN_FOCUS);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packetcooked), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetcooked), GTK_WRAP_WORD);
-#endif
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetcooked), GTK_WRAP_CHAR);
 
   label30 = gtk_label_new (_("Received Decoded Packets"));
   gtk_widget_show (label30);
@@ -1113,20 +1075,12 @@ create_p3dwindow (void)
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
-#warning FIXME: GtkText
-#if 1
-  packetraw = gtk_text_new (NULL, NULL);
-  gtk_widget_show (packetraw);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow3), packetraw);
-  GTK_WIDGET_UNSET_FLAGS (packetraw, GTK_CAN_FOCUS);
-#else
   packetraw = gtk_text_view_new ();
   gtk_widget_show (packetraw);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), packetraw);
   GTK_WIDGET_UNSET_FLAGS (packetraw, GTK_CAN_FOCUS);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packetraw), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetraw), GTK_WRAP_WORD);
-#endif
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetraw), GTK_WRAP_CHAR);
 
   label31 = gtk_label_new (_("Received Raw Packets"));
   gtk_widget_show (label31);

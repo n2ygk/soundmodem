@@ -55,12 +55,9 @@ void
 on_about_activate                      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
-#warning FIXME: GtkTree
-#if 1
 void
-on_configtree_selection_changed        (GtkTree         *tree,
+on_configtree_cursor_changed           (GtkTreeView     *tree_view,
                                         gpointer         user_data);
-#endif
 
 void
 on_new_configuration_activate          (GtkMenuItem     *menuitem,
