@@ -23,7 +23,7 @@
 
 #define GLADE_HOOKUP_OBJECT(component,widget,name) \
   g_object_set_data_full (G_OBJECT (component), name, \
-    gtk_widget_ref (widget), (GDestroyNotify) gtk_widget_unref)
+    g_object_ref (widget), (GDestroyNotify) g_object_unref)
 
 #define GLADE_HOOKUP_OBJECT_NO_REF(component,widget,name) \
   g_object_set_data (G_OBJECT (component), name, widget)
@@ -292,33 +292,6 @@ create_mainwindow (void)
   GLADE_HOOKUP_OBJECT (mainwindow, statusbar1, "statusbar1");
 
   return mainwindow;
-}
-
-GtkWidget*
-create_fileselection1 (void)
-{
-  GtkWidget *fileselection1;
-  GtkWidget *ok_button1;
-  GtkWidget *cancel_button1;
-
-  fileselection1 = gtk_file_selection_new (_("Select File"));
-  gtk_container_set_border_width (GTK_CONTAINER (fileselection1), 10);
-  gtk_window_set_type_hint (GTK_WINDOW (fileselection1), GDK_WINDOW_TYPE_HINT_DIALOG);
-
-  ok_button1 = GTK_FILE_SELECTION (fileselection1)->ok_button;
-  gtk_widget_show (ok_button1);
-  GTK_WIDGET_SET_FLAGS (ok_button1, GTK_CAN_DEFAULT);
-
-  cancel_button1 = GTK_FILE_SELECTION (fileselection1)->cancel_button;
-  gtk_widget_show (cancel_button1);
-  GTK_WIDGET_SET_FLAGS (cancel_button1, GTK_CAN_DEFAULT);
-
-  /* Store pointers to all widgets, for use by lookup_widget(). */
-  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, fileselection1, "fileselection1");
-  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, ok_button1, "ok_button1");
-  GLADE_HOOKUP_OBJECT_NO_REF (fileselection1, cancel_button1, "cancel_button1");
-
-  return fileselection1;
 }
 
 GtkWidget*

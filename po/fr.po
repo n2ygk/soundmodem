@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: soundmodem 0.11\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-02-19 17:25+0100\n"
+"POT-Creation-Date: 2009-03-17 06:19+0100\n"
 "PO-Revision-Date: 2008-12-14 21:23+0100\n"
 "Last-Translator: Stéphane Fillod <fillods@users.sf.net>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -16,31 +16,31 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: configapp/src/app.c:138
+#: configapp/src/app.c:139
 msgid "Mode"
 msgstr "Mode"
 
-#: configapp/src/app.c:373
+#: configapp/src/app.c:389
 msgid "IO"
 msgstr "E/S"
 
-#: configapp/src/app.c:388
+#: configapp/src/app.c:404
 msgid "Channel Access"
 msgstr "Cannel d'Accès"
 
-#: configapp/src/app.c:506
+#: configapp/src/app.c:527
 msgid "Modulator"
 msgstr "Modulateur"
 
-#: configapp/src/app.c:530
+#: configapp/src/app.c:552
 msgid "Demodulator"
 msgstr "Démodulateur"
 
-#: configapp/src/app.c:555
+#: configapp/src/app.c:578
 msgid "Packet IO"
 msgstr "E/S Paquet"
 
-#: configapp/src/interface.c:72 configapp/src/interface.c:365
+#: configapp/src/interface.c:72 configapp/src/interface.c:338
 msgid "SoundModem Configurator"
 msgstr "Configurateur SoundModem"
 
@@ -72,12 +72,12 @@ msgstr "Quitter"
 msgid "Diagnostics"
 msgstr "Diagnostics"
 
-#: configapp/src/interface.c:140 configapp/src/interface.c:674
-#: configapp/src/interface.c:733
+#: configapp/src/interface.c:140 configapp/src/interface.c:647
+#: configapp/src/interface.c:706
 msgid "Scope"
 msgstr "Scope"
 
-#: configapp/src/interface.c:144 configapp/src/interface.c:623
+#: configapp/src/interface.c:144 configapp/src/interface.c:596
 msgid "Spectrum"
 msgstr "Spectre"
 
@@ -101,122 +101,118 @@ msgstr "Aide"
 msgid "About"
 msgstr "A Propos"
 
-#: configapp/src/interface.c:304
-msgid "Select File"
-msgstr "Sélectionne Fichier"
-
-#: configapp/src/interface.c:339
+#: configapp/src/interface.c:312
 msgid "About SoundModem Configurator"
 msgstr "A Propos du Configurateur SoundModem"
 
-#: configapp/src/interface.c:355
+#: configapp/src/interface.c:328
 msgid "Copyright 2000"
 msgstr "Copyright 2000"
 
-#: configapp/src/interface.c:360
+#: configapp/src/interface.c:333
 msgid "Thomas Sailer"
 msgstr "Thomas Sailer"
 
-#: configapp/src/interface.c:378
+#: configapp/src/interface.c:351
 msgid "Ok"
 msgstr "Ok"
 
-#: configapp/src/interface.c:415
+#: configapp/src/interface.c:388
 msgid "New Configuration"
 msgstr "Nouvelle Configuration"
 
-#: configapp/src/interface.c:425
+#: configapp/src/interface.c:398
 msgid "Configuration Name"
 msgstr "Nom de la Configuration"
 
-#: configapp/src/interface.c:445
+#: configapp/src/interface.c:418
 msgid "Cancel"
 msgstr "Annler"
 
-#: configapp/src/interface.c:453 configapp/src/interface.c:514
+#: configapp/src/interface.c:426 configapp/src/interface.c:487
 msgid "OK"
 msgstr "OK"
 
-#: configapp/src/interface.c:491 configapp/src/interface.c:498
+#: configapp/src/interface.c:464 configapp/src/interface.c:471
 msgid "Error"
 msgstr "Erreur"
 
-#: configapp/src/interface.c:554
+#: configapp/src/interface.c:527
 msgid "Spectrum Display"
 msgstr "Ecran de Spectre"
 
-#: configapp/src/interface.c:565
+#: configapp/src/interface.c:538
 msgid "Pointer"
 msgstr "Pointeur"
 
-#: configapp/src/interface.c:582 configapp/src/interface.c:587
-#: configapp/src/interface.c:694 configapp/src/interface.c:698
-#: configapp/src/interface.c:854 configapp/src/interface.c:858
+#: configapp/src/interface.c:555 configapp/src/interface.c:560
+#: configapp/src/interface.c:667 configapp/src/interface.c:671
+#: configapp/src/interface.c:827 configapp/src/interface.c:831
 msgid "PTT"
 msgstr "PTT"
 
-#: configapp/src/interface.c:599 configapp/src/interface.c:710
-#: configapp/src/interface.c:870
+#: configapp/src/interface.c:572 configapp/src/interface.c:683
+#: configapp/src/interface.c:843
 msgid "DCD"
 msgstr "DCD"
 
-#: configapp/src/interface.c:685
+#: configapp/src/interface.c:658
 msgid "Freeze when not DCD"
 msgstr "Gèle quand pas de DCD"
 
-#: configapp/src/interface.c:795
+#: configapp/src/interface.c:768
 msgid "Receive Packets/Bits"
 msgstr "Paquets/Bits Reçus"
 
-#: configapp/src/interface.c:806
+#: configapp/src/interface.c:779
 msgid "Clear Count"
 msgstr "RAZ Compte"
 
-#: configapp/src/interface.c:810
+#: configapp/src/interface.c:783
 msgid "Zeros"
 msgstr "Zéros"
 
-#: configapp/src/interface.c:823
+#: configapp/src/interface.c:796
 msgid "Ones"
 msgstr "Uns"
 
-#: configapp/src/interface.c:836
+#: configapp/src/interface.c:809
 msgid "Total"
 msgstr "Total"
 
-#: configapp/src/interface.c:905
+#: configapp/src/interface.c:878
 msgid "Received Packets"
 msgstr "Paquets Reçus"
 
-#: configapp/src/interface.c:927
+#: configapp/src/interface.c:900
 msgid "Received Bits"
 msgstr "Bits Reçus"
 
-#: configapp/src/interface.c:994
+#: configapp/src/interface.c:967
 msgid "AO-40 Phase 3D Receive Window"
 msgstr "Fenêtre Réception AO-40 Phase 3D"
 
-#: configapp/src/interface.c:1005
+#: configapp/src/interface.c:978
 msgid "Receiver Status"
 msgstr "Status Récepteur"
 
-#: configapp/src/interface.c:1018
+#: configapp/src/interface.c:991
 msgid "Carrier Frequency"
 msgstr "Fréquence Porteuse"
 
-#: configapp/src/interface.c:1031
+#: configapp/src/interface.c:1004
 msgid "Hz"
 msgstr "Hz"
 
-#: configapp/src/interface.c:1036
+#: configapp/src/interface.c:1009
 msgid "Decode All Packets (Faulty CRC)"
 msgstr "Décode Tous les Paquets (CRC erronés)"
 
-#: configapp/src/interface.c:1063
+#: configapp/src/interface.c:1036
 msgid "Received Decoded Packets"
 msgstr "Paquets Décodés Reçus"
 
-#: configapp/src/interface.c:1085
+#: configapp/src/interface.c:1058
 msgid "Received Raw Packets"
 msgstr "Paquets Bruts Reçus"
 
@@ -224,3 +220,6 @@ msgstr "Paquets Bruts Reçus"
 #, c-format
 msgid "Couldn't find pixmap file: %s"
 msgstr "Ne peut pas trouver le fichier pixmap: %s"
+
+#~ msgid "Select File"
+#~ msgstr "Sélectionne Fichier"

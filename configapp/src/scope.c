@@ -53,18 +53,20 @@ guint scope_get_type(void)
 
 	if (!scope_type)
 	{
-		static const GtkTypeInfo scope_info =
+		static const GTypeInfo scope_info =
 		{
-			"Scope",
-			sizeof(Scope),
 			sizeof(ScopeClass),
-			(GtkClassInitFunc)scope_class_init,
-			(GtkObjectInitFunc)scope_init,
-			/* reserved_1 */ NULL,
-			/* reserved_2 */ NULL,
-			(GtkClassInitFunc)NULL,
+			NULL,		/* base_init */
+			NULL,		/* base_finalize */
+			(GClassInitFunc)scope_class_init,
+			NULL,		/* class_finalize */
+			NULL,		/* class_data */
+			sizeof(Scope),
+			0,		/* n_preallocs */
+			(GInstanceInitFunc)scope_init,
 		};
-		scope_type = gtk_type_unique(gtk_widget_get_type(), &scope_info);
+		scope_type = g_type_register_static 
+		  (GTK_TYPE_WIDGET, "Scope", &scope_info, 0);
 	}
 	return scope_type;
 }
@@ -77,7 +79,7 @@ static void scope_class_init(ScopeClass *klass)
 	object_class = (GObjectClass*)klass;
 	widget_class = (GtkWidgetClass*)klass;
 
-	parent_class = gtk_type_class(gtk_widget_get_type());
+	parent_class = g_type_class_peek(GTK_TYPE_WIDGET);
 	scope_class = klass;
 
 	object_class->finalize = scope_finalize;
@@ -135,14 +137,16 @@ static void scope_realize(GtkWidget *widget)
 	gtk_style_set_background(widget->style, widget->window, GTK_STATE_NORMAL);
 
 	/* gc's if necessary */
-	if (!gdk_color_alloc(widget->style->colormap, &scope->tracecol))
+	if (!gdk_colormap_alloc_color(widget->style->colormap, &scope->tracecol,
+				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  scope->tracecol.red, scope->tracecol.green, scope->tracecol.blue);
 	gc_values.foreground = scope->tracecol;
 	scope->trace_gc = gtk_gc_get(widget->style->depth, 
 				    widget->style->colormap,
 				    &gc_values, GDK_GC_FOREGROUND);
-	if (!gdk_color_alloc(widget->style->colormap, &scope->gridcol))
+	if (!gdk_colormap_alloc_color(widget->style->colormap, &scope->gridcol,
+				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  scope->gridcol.red, scope->gridcol.green, scope->gridcol.blue);
 	gc_values.foreground = scope->gridcol;
@@ -164,14 +168,14 @@ static void scope_unrealize(GtkWidget *widget)
 
 	scope = SCOPE(widget);
 	if (scope->idlefunc)
-		gtk_idle_remove(scope->idlefunc);
+		g_source_remove(scope->idlefunc);
 	if (scope->trace_gc)
 		gtk_gc_release(scope->trace_gc);
 	if (scope->grid_gc)
 		gtk_gc_release(scope->grid_gc);
 	scope->trace_gc = scope->grid_gc = NULL;
 	if (scope->pixmap)
-			gdk_pixmap_unref(scope->pixmap);
+			g_object_unref(scope->pixmap);
 	scope->pixmap = NULL;
 	if (GTK_WIDGET_CLASS(parent_class)->unrealize)
 		(*GTK_WIDGET_CLASS(parent_class)->unrealize)(widget);
@@ -218,7 +222,7 @@ GtkWidget* scope_new(const char *name, void *dummy0, void *dummy1, unsigned int 
 {
 	Scope *scope;
 	
-	scope = gtk_type_new(scope_get_type());
+	scope = g_object_new(scope_get_type(), NULL);
 	memset(&scope->y, 0, sizeof(scope->y));
 	return GTK_WIDGET(scope);
 }
@@ -240,7 +244,7 @@ static gint scope_expose(GtkWidget *widget, GdkEventExpose *event)
 	if (GTK_WIDGET_DRAWABLE(widget)) {
 		scope = SCOPE(widget);
 		if (!scope->idlefunc)
-			scope->idlefunc = gtk_idle_add_priority(PRIO, idle_callback, scope);
+			scope->idlefunc = g_idle_add_full(PRIO, idle_callback, scope, NULL);
 	}
 	return FALSE;
 }
@@ -283,8 +287,8 @@ static void draw(Scope *scope)
 	/* draw trace */
 	gdk_draw_lines(scope->pixmap, scope->trace_gc, pt, SCOPE_WIDTH);
 	/* draw to screen */
-	gdk_draw_pixmap(widget->window, widget->style->base_gc[widget->state], scope->pixmap, 
-			0, 0, 0, 0, widget->allocation.width, widget->allocation.height);
+	gdk_draw_drawable(widget->window, widget->style->base_gc[widget->state], scope->pixmap, 
+			  0, 0, 0, 0, widget->allocation.width, widget->allocation.height);
 }
 
 
@@ -306,7 +310,7 @@ void scope_setdata(Scope *scope, short *samples)
         memcpy(scope->y, samples, sizeof(scope->y));
 	if (GTK_WIDGET_DRAWABLE(GTK_WIDGET(scope))) {
 		if (!scope->idlefunc)
-			scope->idlefunc = gtk_idle_add_priority(PRIO, idle_callback, scope);
+			scope->idlefunc = g_idle_add_full(PRIO, idle_callback, scope, NULL);
 	}
 }
 
@@ -319,7 +323,7 @@ void scope_setmarker(Scope *scope, int pointer)
 		scope->pointer = pointer;
 	if (GTK_WIDGET_DRAWABLE(GTK_WIDGET(scope))) {
 		if (!scope->idlefunc)
-			scope->idlefunc = gtk_idle_add_priority(PRIO, idle_callback, scope);
+			scope->idlefunc = g_idle_add_full(PRIO, idle_callback, scope, NULL);
 	}
 }
 #endif

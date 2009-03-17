@@ -207,7 +207,7 @@ static void do_rxpacket(void)
 		}
 
                 g_printerr("Packet: %s\n", buf);
-                view  = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
+                view  = GTK_TEXT_VIEW(g_object_get_data(G_OBJECT(receivewindow), "packettext"));
 		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 		gtk_text_buffer_insert_at_cursor(model, buf, len);
 		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
@@ -421,35 +421,21 @@ static void *receiver(void *dummy)
 
 /* ---------------------------------------------------------------------- */
 
-static void setled(GtkPixmap *pixmap, int on)
+static void setled(GtkImage *image, int on)
 {
-        GdkColormap *colormap;
-        GdkPixmap *gdkpixmap;
-        GdkBitmap *mask;
-
-        colormap = gtk_widget_get_colormap(mainwindow);
-        gdkpixmap = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, on ? option2_xpm : option1_xpm);
-        gtk_pixmap_set(pixmap, gdkpixmap, mask);
-        gdk_pixmap_unref(gdkpixmap);
-        gdk_bitmap_unref(mask);
+	GdkPixbuf *pixbuf  = gdk_pixbuf_new_from_xpm_data(on ? (const char **)option2_xpm : (const char **)option1_xpm);
+	
+	gtk_image_set_from_pixbuf(image, pixbuf);
+	g_object_unref(pixbuf);
 }
 
 GtkWidget* create_led_pixmap(gchar *widget_name, gchar *string1, gchar *string2, gint int1, gint int2)
 {
-        GtkWidget *pixmap, *wnd;
-        GdkColormap *colormap;
-        GdkPixmap *gdkpixmap;
-        GdkBitmap *mask;
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_xpm_data((const char **)option1_xpm);
+	GtkWidget *image  = gtk_image_new_from_pixbuf(pixbuf);
 
-        wnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-        gtk_widget_ref(wnd);
-        colormap = gtk_widget_get_colormap(wnd);
-        gdkpixmap = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, option1_xpm);
-        pixmap = gtk_pixmap_new(gdkpixmap, mask);
-        gdk_pixmap_unref(gdkpixmap);
-        gdk_bitmap_unref(mask);
-        gtk_widget_unref(wnd);
-        return pixmap;
+	g_object_unref(pixbuf);
+	return image;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -465,10 +451,10 @@ static inline void update_display_p3d(void)
         if (diagstate.p3d.newstate) {
                 diagstate.p3d.newstate = 0;
                 snprintf(buf, sizeof(buf), "%s", diagstate.p3d.state == 2 ? "RECEIVE (SYNCSCAN)" : diagstate.p3d.state ? "RECEIVE" : "SYNC HUNT");
-                w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "rxstatus"));
+                w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "rxstatus"));
                 gtk_entry_set_text(GTK_ENTRY(w), buf);
                 snprintf(buf, sizeof(buf), "%u", diagstate.p3d.carrierfreq);
-                w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "carrierfreq"));
+                w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "carrierfreq"));
                 gtk_entry_set_text(GTK_ENTRY(w), buf);
         }
         if (diagstate.p3d.newpacket) {
@@ -495,7 +481,7 @@ static inline void update_display_p3d(void)
                                 cp += sprintf(cp, "%c", diagstate.p3d.packet[i]);
                 }
                 cp += sprintf(cp, "\n\n");
-                view  = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "packettext"));
+                view  = GTK_TEXT_VIEW(g_object_get_data(G_OBJECT(receivewindow), "packettext"));
 		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 		gtk_text_buffer_insert_at_cursor(model, buf, cp-buf);
 		i = gtk_text_buffer_get_char_count(model);
@@ -510,7 +496,7 @@ static inline void update_display_p3d(void)
 		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
                 /* decode cooked packet if CRC ok or passall selected */
                 if (!diagstate.p3d.crc ||
-                    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtk_object_get_data(GTK_OBJECT(p3dwindow), "buttonpassall")))) {
+                    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_object_get_data(G_OBJECT(p3dwindow), "buttonpassall")))) {
                         
                 }
         }
@@ -525,32 +511,32 @@ static void update_display(void)
 	unsigned char ch;
 
         if (diagstate.upddcd) {
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(receivewindow), "leddcd")), diagstate.dcd);
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(scopewindow), "leddcd")), diagstate.dcd);
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(specwindow), "leddcd")), diagstate.dcd);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(receivewindow), "leddcd")), diagstate.dcd);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(scopewindow), "leddcd")), diagstate.dcd);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(specwindow), "leddcd")), diagstate.dcd);
 		diagstate.upddcd = 0;
 	}
 	if (diagstate.updptt) {
                 b = diagstate.ptt ? TRUE : FALSE;
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(receivewindow), "ptt"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(receivewindow), "ptt"));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), b);
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(scopewindow), "ptt"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(scopewindow), "ptt"));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), b);
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(specwindow), "ptt"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(specwindow), "ptt"));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), b);
 		diagstate.updptt = 0;
 	}
         if (diagstate.updpttthr) {
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(receivewindow), "ledptt")), diagstate.pttthr);
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(scopewindow), "ledptt")), diagstate.pttthr);
-                setled(GTK_PIXMAP(gtk_object_get_data(GTK_OBJECT(specwindow), "ledptt")), diagstate.pttthr);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(receivewindow), "ledptt")), diagstate.pttthr);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(scopewindow), "ledptt")), diagstate.pttthr);
+                setled(GTK_IMAGE(g_object_get_data(G_OBJECT(specwindow), "ledptt")), diagstate.pttthr);
                 diagstate.updpttthr = 0;
         }
 	if (diagstate.rxrd != diagstate.rxwr) {
 		GtkTextView   *view;
 		GtkTextBuffer *model;
 
-		view = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(receivewindow), "bitstext"));
+		view = GTK_TEXT_VIEW(g_object_get_data(G_OBJECT(receivewindow), "bitstext"));
 		model = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 		while (diagstate.rxrd != diagstate.rxwr) {
 			ch = diagstate.rxbuf[diagstate.rxrd];
@@ -586,13 +572,13 @@ static void update_display(void)
 		c1 = diagstate.count1;
 		diagstate.updcount = 0;
 		sprintf(buf, "%d", c0);
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(receivewindow), "count0"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(receivewindow), "count0"));
 		gtk_entry_set_text(GTK_ENTRY(w), buf);
 		sprintf(buf, "%d", c1);
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(receivewindow), "count1"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(receivewindow), "count1"));
 		gtk_entry_set_text(GTK_ENTRY(w), buf);
 		sprintf(buf, "%d", c0+c1);
-		w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(receivewindow), "counttot"));
+		w = GTK_WIDGET(g_object_get_data(G_OBJECT(receivewindow), "counttot"));
 		gtk_entry_set_text(GTK_ENTRY(w), buf);
 	}
 	update_display_p3d();
@@ -611,11 +597,11 @@ static gint periodictasks(gpointer user_data)
                 return TRUE; /* repeat */
         diagstate.audioio->read(diagstate.audioio, samp, SPECTRUM_NUMSAMPLES, diagstate.audioio->curtime(diagstate.audioio)-SPECTRUM_NUMSAMPLES);
 	if (diagstate.flags & DIAGFLG_SCOPE) {
-                Scope *scope = SCOPE(gtk_object_get_data(GTK_OBJECT(scopewindow), "scope"));
+                Scope *scope = SCOPE(g_object_get_data(G_OBJECT(scopewindow), "scope"));
                 scope_setdata(scope, &samp[SPECTRUM_NUMSAMPLES-SCOPE_NUMSAMPLES]);
         }
 	if (diagstate.flags & DIAGFLG_SPECTRUM) {
-                Spectrum *spec = SPECTRUM(gtk_object_get_data(GTK_OBJECT(specwindow), "spec"));
+                Spectrum *spec = SPECTRUM(g_object_get_data(G_OBJECT(specwindow), "spec"));
                 spectrum_setdata(spec, samp);
 	}
 	return TRUE; /* repeat */
@@ -629,7 +615,7 @@ void diag_stop(void)
                 diagstate.flags = 0;
                 return;
         }
-        gtk_timeout_remove(diagstate.timeoutid);
+        g_source_remove(diagstate.timeoutid);
 #ifdef TXTERMNOCANCEL
         diagstate.txterminate = 1;
         pthread_cond_broadcast(&diagstate.txcond);
@@ -773,7 +759,7 @@ static int diag_start(void)
         if (pttinit(&diagstate.pttio, parptr))
                 g_printerr("cannot start PTT output\n");
         /* periodic start */
-        diagstate.timeoutid = gtk_timeout_add(100, periodictasks, NULL);
+        diagstate.timeoutid = g_timeout_add(100, periodictasks, NULL);
         diagstate.flags |= DIAGFLG_MODEM;
         if (pthread_create(&diagstate.rxthread, NULL, receiver, NULL))
                 logerr(MLOG_FATAL, "pthread_create");
@@ -846,9 +832,9 @@ gboolean on_spec_motion_event(GtkWidget *widget, GdkEventMotion *event, gpointer
         char buf[16];
 
         snprintf(buf, sizeof(buf), "%d Hz", (int)(event->x * diagstate.samplerate * (1.0 / SPECTRUM_NUMSAMPLES)));
-        entry = GTK_ENTRY(gtk_object_get_data(GTK_OBJECT(specwindow), "specfreqpointer"));
+        entry = GTK_ENTRY(g_object_get_data(G_OBJECT(specwindow), "specfreqpointer"));
         gtk_entry_set_text(entry, buf);
-        spec = SPECTRUM(gtk_object_get_data(GTK_OBJECT(specwindow), "spec"));
+        spec = SPECTRUM(g_object_get_data(G_OBJECT(specwindow), "spec"));
         spectrum_setmarker(spec, event->x);
 	return FALSE;
 }

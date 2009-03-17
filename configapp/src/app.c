@@ -128,7 +128,8 @@ static char *gtktostr(const gchar *in)
 
 static GtkWidget *create_notebookhead(GList *combo_items)
 {
-	GtkWidget *vbox, *hbox, *label, *combo, *combo_entry, *hsep;
+	GtkWidget *vbox, *hbox, *label, *combo, *hsep;
+	GList *l;
 
 	vbox = gtk_vbox_new(FALSE, 0);
 	gtk_widget_show(vbox);
@@ -141,18 +142,17 @@ static GtkWidget *create_notebookhead(GList *combo_items)
 	gtk_misc_set_padding(GTK_MISC(label), 7, 7);
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
-	combo = gtk_combo_new();
+	combo = gtk_combo_box_new_text();
 	gtk_widget_show(combo);
+	for (l = combo_items; l; l = l->next) {
+		gtk_combo_box_append_text(GTK_COMBO_BOX(combo),
+					  (const gchar *)l->data);
+	}
 	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, TRUE, 0);
-	gtk_combo_set_value_in_list(GTK_COMBO(combo), TRUE, FALSE);
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), combo_items);
-	combo_entry = GTK_COMBO(combo)->entry;
-	gtk_widget_show(combo_entry);
-	gtk_entry_set_editable(GTK_ENTRY(combo_entry), FALSE);
 	hsep = gtk_hseparator_new();
 	gtk_widget_show(hsep);
 	gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, TRUE, 3);
-	gtk_object_set_data(GTK_OBJECT(vbox), "combo", combo);
+	g_object_set_data(G_OBJECT(vbox), "combo", combo);
 	return vbox;
 }
 
@@ -160,16 +160,18 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 {
 	const struct modemparams *par2 = par;
 	unsigned int parcnt = 0, i, j;
-	GtkWidget *table, *w1, *w2;
+	GtkWidget *table, *w1;
 	GtkObject *o1;
+#ifndef HAVE_GTK_WIDGET_SET_TOOLTIP_TEXT
 	GtkTooltips *tooltips;
-	GList *list;
+#endif
         char buf[128];
 	const char *value, * const *cp;
 	double nval;
+	int active;
 #ifdef WIN32
         gchar *valueg;
-        gchar *combov[8];
+        gchar *combov;
 #endif
         
 	if (!par)
@@ -180,7 +182,9 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 	}
 	table = gtk_table_new(parcnt, 2, FALSE);
 	gtk_widget_show(table);
+#ifndef HAVE_GTK_WIDGET_SET_TOOLTIP_TEXT
 	tooltips = gtk_tooltips_new();
+#endif
 	for (par2 = par, i = 0; i < parcnt; i++, par2++) {
 		w1 = gtk_label_new(par2->label);
 		gtk_widget_show(w1);
@@ -205,33 +209,34 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 			break;
 
 		case MODEMPAR_COMBO:
-			w1 = gtk_combo_new();
+			w1 = gtk_combo_box_entry_new_text();
+			active = -1;
 #ifdef WIN32
-			list = NULL;
+			valueg = strtogtk(value);
 			for (cp = par2->u.c.combostr, j = 0; *cp && j < 8; j++, cp++) {
-                                combov[j] = strtogtk(*cp);
-				list = g_list_append(list, combov[j] ?: "(null)");
-                        }
-			gtk_combo_set_popdown_strings(GTK_COMBO(w1), list);
-			g_list_free(list);
-                        for (; j > 0; j--)
-                                g_free(combov[j-1]);
-			w2 = GTK_COMBO(w1)->entry;
-			gtk_widget_show(w2);
-                        valueg = strtogtk(value);
-			gtk_entry_set_text(GTK_ENTRY(w2), valueg ?: "(null)");
-                        g_free(valueg);
+				combov = strtogtk(*cp);
+				gtk_combo_box_append_text(GTK_COMBO_BOX(w1), combov);
+				if (strcmp(combov, valueg) == 0)
+					active = j;
+				g_free(combov);
+			}
+			if (active == -1) {
+				gtk_combo_box_append_text(GTK_COMBO_BOX(w1), valueg);
+				active = j;
+			}
+			g_free (valueg);
 #else
-			list = NULL;
-			for (cp = par2->u.c.combostr, j = 0; *cp && j < 8; j++, cp++)
-				list = g_list_append(list, (void *)(*cp));
-			gtk_combo_set_popdown_strings(GTK_COMBO(w1), list);
-			g_list_free(list);
-			w2 = GTK_COMBO(w1)->entry;
-			gtk_widget_show(w2);
-			gtk_entry_set_text(GTK_ENTRY(w2), value);
+			for (cp = par2->u.c.combostr, j = 0; *cp && j < 8; j++, cp++) {
+				gtk_combo_box_append_text(GTK_COMBO_BOX(w1), *cp);
+				if (strcmp(*cp, value) == 0)
+					active = j;
+			}
+			if (active == -1) {
+				gtk_combo_box_append_text(GTK_COMBO_BOX(w1), value);
+				active = j;
+			}
 #endif
-			gtk_combo_set_value_in_list(GTK_COMBO(w1), FALSE, FALSE);
+			gtk_combo_box_set_active (GTK_COMBO_BOX(w1), active);
 			break;
 
 		case MODEMPAR_NUMERIC:
@@ -254,11 +259,15 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 			continue;
 		}
 		gtk_widget_show(w1);
-		gtk_object_set_data(GTK_OBJECT(table), par2->name, w1);
+		g_object_set_data(G_OBJECT(table), par2->name, w1);
 		gtk_table_attach(GTK_TABLE(table), w1, 1, 2, i, i+1, 
 				 (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions) 0, 5, 5);
 		if (par2->tooltip)
+#ifdef HAVE_GTK_WIDGET_SET_TOOLTIP_TEXT
+			gtk_widget_set_tooltip_text (w1, par2->tooltip);
+#else
 			gtk_tooltips_set_tip(tooltips, w1, par2->tooltip, NULL);
+#endif
 	}
 	return table;
 }
@@ -266,8 +275,8 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 static void update_paramwidget(GtkWidget *table, const struct modemparams *par, const char *cfgname, const char *chname, const char *typname)
 {
 	const struct modemparams *par2 = par;
-	GtkWidget *w1, *w2;
-	char buf[256];
+	GtkWidget *w1;
+	char buf[256], *txt2;
 #ifdef WIN32
         char *txt;
 #endif
@@ -275,7 +284,7 @@ static void update_paramwidget(GtkWidget *table, const struct modemparams *par, 
 	if (!par)
 		return;
 	for (par2 = par; par2->name; par2++) {
-		w1 = gtk_object_get_data(GTK_OBJECT(table), par2->name);
+		w1 = g_object_get_data(G_OBJECT(table), par2->name);
 		if (!w1)
 			continue;
 		switch (par2->type) {
@@ -290,18 +299,19 @@ static void update_paramwidget(GtkWidget *table, const struct modemparams *par, 
 			break;
 
 		case MODEMPAR_COMBO:
-			w2 = GTK_COMBO(w1)->entry;
+			txt2 = gtk_combo_box_get_active_text (GTK_COMBO_BOX(w1));
 #ifdef WIN32
-                        txt = gtktostr(gtk_entry_get_text(GTK_ENTRY(w2)));
+                        txt = gtktostr(txt2);
 			xml_setprop(cfgname, chname, typname, par2->name, txt ?: "(null)");
                         g_free(txt);
 #else
-			xml_setprop(cfgname, chname, typname, par2->name, gtk_entry_get_text(GTK_ENTRY(w2)));
+			xml_setprop(cfgname, chname, typname, par2->name, txt2);
 #endif
+			g_free(txt2);
 			break;
 
 		case MODEMPAR_NUMERIC:
-			sprintf(buf, "%g", gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(w1)));
+			sprintf(buf, "%g", gtk_spin_button_get_value(GTK_SPIN_BUTTON(w1)));
 			xml_setprop(cfgname, chname, typname, par2->name, buf);
 			break;
 
@@ -320,52 +330,58 @@ static void on_iotypecombochg_changed(GtkEditable *editable, gpointer user_data)
 
 static void cfg_select(const char *cfgname, const char *chname)
 {
-	GtkWidget *notebook, *w1, *w2, *combo, *combo_entry;
+	GtkWidget *notebook, *w1, *w2, *combo;
 	struct modemparams *ioparams = ioparams_soundcard;
 	GList *ilist;
 	char buf[128];
 	unsigned int i;
+	int active;
 
 	g_print("config_select: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	/* compute audio IO types */
 	ilist = NULL;
-	if (xml_getprop(cfgname, NULL, "audio", ioparam_type[0].name, buf, sizeof(buf)) <= 0)
+	if (xml_getprop(cfgname, NULL, "audio", ioparam_type[0].name, buf, sizeof(buf)) <= 0) {
                 buf[0] = 0;
-	if (!strcmp(buf, ioparam_type[0].u.c.combostr[1]))
+		active = -1;
+	}
+	if (!strcmp(buf, ioparam_type[0].u.c.combostr[1])) {
 		ioparams = ioparams_filein;
-	else if (!strcmp(buf, ioparam_type[0].u.c.combostr[2]))
+		active = 1;
+	} else if (!strcmp(buf, ioparam_type[0].u.c.combostr[2])) {
 		ioparams = ioparams_sim;
+		active = 2;
 #ifdef HAVE_ALSA
-	else if (!strcmp(buf, ioparam_type[0].u.c.combostr[3]))
+	} else if (!strcmp(buf, ioparam_type[0].u.c.combostr[3])) {
 		ioparams = ioparams_alsasoundcard;
+		active = 3;
 #endif /* HAVE_ALSA */
-        else {
+        } else {
 		ioparams = ioparams_soundcard;
 		strncpy(buf, ioparam_type[0].u.c.combostr[0], sizeof(buf));
+		active = 0;
 	}
 	for (i = 0; i < 8; i++)
 		if (ioparam_type[0].u.c.combostr[i])
 			ilist = g_list_append(ilist, (void *)ioparam_type[0].u.c.combostr[i]);
 	w1 = create_notebookhead(ilist);
-	gtk_object_set_data(GTK_OBJECT(w1), "cfgname", (void *)cfgname);
-	gtk_object_set_data(GTK_OBJECT(w1), "chname", (void *)chname);
+	g_object_set_data(G_OBJECT(w1), "cfgname", (void *)cfgname);
+	g_object_set_data(G_OBJECT(w1), "chname", (void *)chname);
 	g_list_free(ilist);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	gtk_entry_set_text(GTK_ENTRY(combo_entry), buf);
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "combo"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
 	/* create rest of notebook */
 	w2 = create_paramwidget(ioparams, cfgname, NULL, "audio");
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 10);
-	gtk_object_set_data(GTK_OBJECT(w1), "audio", w2);
-	gtk_object_set_data(GTK_OBJECT(w1), "audioparams", ioparams);
+	g_object_set_data(G_OBJECT(w1), "audio", w2);
+	g_object_set_data(G_OBJECT(w1), "audioparams", ioparams);
 	w2 = gtk_hseparator_new();
 	gtk_widget_show(w2);
 	gtk_box_pack_start(GTK_BOX(w1), w2, FALSE, TRUE, 0);
 	w2 = create_paramwidget(pttparams, cfgname, NULL, "ptt");
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 10);
-	gtk_object_set_data(GTK_OBJECT(w1), "ptt", w2);
+	g_object_set_data(G_OBJECT(w1), "ptt", w2);
 	w2 = gtk_hseparator_new();
 	gtk_widget_show(w2);
 	gtk_box_pack_start(GTK_BOX(w1), w2, FALSE, TRUE, 0);
@@ -373,17 +389,17 @@ static void cfg_select(const char *cfgname, const char *chname)
 	w2 = gtk_label_new(_("IO"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), w1, w2);
 	/* connect change signal */
-	gtk_signal_connect(GTK_OBJECT(combo_entry), "changed",
-			   GTK_SIGNAL_FUNC(on_iotypecombochg_changed), NULL);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(on_iotypecombochg_changed), NULL);
 
 	/* second page contains channel access parameters */
 	w1 = gtk_vbox_new(FALSE, 0);
 	gtk_widget_show(w1);
-	gtk_object_set_data(GTK_OBJECT(w1), "cfgname", (void *)cfgname);
-	gtk_object_set_data(GTK_OBJECT(w1), "chname", (void *)chname);
+	g_object_set_data(G_OBJECT(w1), "cfgname", (void *)cfgname);
+	g_object_set_data(G_OBJECT(w1), "chname", (void *)chname);
 	w2 = create_paramwidget(chaccparams_x, cfgname, NULL, "chaccess");
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 10);
-	gtk_object_set_data(GTK_OBJECT(w1), "chacc", w2);
+	g_object_set_data(G_OBJECT(w1), "chacc", w2);
 
 	w2 = gtk_label_new(_("Channel Access"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), w1, w2);
@@ -391,27 +407,29 @@ static void cfg_select(const char *cfgname, const char *chname)
 
 static void cfg_deselect(const char *cfgname, const char *chname)
 {
-	GtkWidget *notebook, *w1, *combo, *combo_entry;
+	GtkWidget *notebook, *w1, *combo;
 	struct modemparams *ioparams;
+	gchar *text;
 
 	g_print("config_deselect: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	w1 = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 1);
 	if (w1) {
-		update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "chacc")), chaccparams_x, cfgname, NULL, "chaccess");
+		update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "chacc")), chaccparams_x, cfgname, NULL, "chaccess");
 		gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), 1);
 	}
 	w1 = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 0);
 	if (!w1)
 		return;
 	/* update type */
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_setprop(cfgname, NULL, "audio", ioparam_type[0].name, gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-	ioparams = (struct modemparams *)gtk_object_get_data(GTK_OBJECT(w1), "audioparams");
-	update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "audio")), ioparams, cfgname, NULL, "audio");
-	update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "ptt")), pttparams, cfgname, NULL, "ptt");
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "combo"));
+	text = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
+	xml_setprop(cfgname, NULL, "audio", ioparam_type[0].name, text);
+	g_free(text);
+	ioparams = (struct modemparams *)g_object_get_data(G_OBJECT(w1), "audioparams");
+	update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "audio")), ioparams, cfgname, NULL, "audio");
+	update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "ptt")), pttparams, cfgname, NULL, "ptt");
 	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), 0);
 }
 
@@ -425,11 +443,11 @@ static gint do_iotypecombochg_change(gpointer user_data)
 
 	iotypecombochg = 0;
 	/* recreate notebook widgets */
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	/* find config strings */
 	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 0);
-	cfgname = gtk_object_get_data(GTK_OBJECT(w), "cfgname");
-	chname = gtk_object_get_data(GTK_OBJECT(w), "chname");
+	cfgname = g_object_get_data(G_OBJECT(w), "cfgname");
+	chname = g_object_get_data(G_OBJECT(w), "chname");
 
 	g_print("on_notebookcombo_changed: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 
@@ -437,7 +455,7 @@ static gint do_iotypecombochg_change(gpointer user_data)
 	cfg_deselect(cfgname, chname);
 	g_print("Recreating menus\n");
 	cfg_select(cfgname, chname);
-	gtk_notebook_set_page(GTK_NOTEBOOK(notebook), nbcurpage);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), nbcurpage);
 	g_print("Returning\n");
 	return FALSE;
 }
@@ -445,7 +463,8 @@ static gint do_iotypecombochg_change(gpointer user_data)
 static void on_iotypecombochg_changed(GtkEditable *editable, gpointer user_data)
 {
 	if (!iotypecombochg)
-		iotypecombochg = gtk_idle_add_priority(G_PRIORITY_HIGH, do_iotypecombochg_change, NULL);
+		iotypecombochg = g_idle_add_full(G_PRIORITY_HIGH, do_iotypecombochg_change, 
+						 NULL, NULL);
 }
 
 
@@ -473,7 +492,7 @@ static void on_notebookcombo_changed(GtkEditable *editable, gpointer user_data);
 
 static void make_notebook_menus(const char *cfgname, const char *chname)
 {
-	GtkWidget *notebook, *w1, *w2, *combo, *combo_entry;
+	GtkWidget *notebook, *w1, *w2, *combo;
 	GList *ilist;
 	struct modulator *modch = &modchain_x, *modch1 = &modchain_x;
 	struct demodulator *demodch = &demodchain_x, *demodch1 = &demodchain_x;
@@ -481,123 +500,131 @@ static void make_notebook_menus(const char *cfgname, const char *chname)
 	struct packetio *pktch = &packetchain, *pktch1 = &packetchain;
 #endif /* WIN32 */
 	char mode[128];
+	int i, active;
 
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	/* Modulator Tab */
 	ilist = NULL;
 	if (xml_getprop(cfgname, chname, "mod", "mode", mode, sizeof(mode)) <= 0)
                 mode[0] = 0;
-	for (; modch; modch = modch->next) {
+	for (i = 0, active = 0; modch; i++, modch = modch->next) {
 		ilist = g_list_append(ilist, (void *)modch->name);
-		if (!strcmp(mode, modch->name))
+		if (!strcmp(mode, modch->name)) {
 			modch1 = modch;
+			active = i;
+		}
 	}
 	w1 = create_notebookhead(ilist);
 	g_list_free(ilist);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	gtk_entry_set_text(GTK_ENTRY(combo_entry), modch1->name);
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "combo"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
 	w2 = create_paramwidget(modch1->params, cfgname, chname, "mod");
-	gtk_object_set_data(GTK_OBJECT(w1), "cfgname", (void *)cfgname);
-	gtk_object_set_data(GTK_OBJECT(w1), "chname", (void *)chname);
-	gtk_object_set_data(GTK_OBJECT(w1), "par", (void *)modch1->params);
-	gtk_object_set_data(GTK_OBJECT(w1), "table", w2);
+	g_object_set_data(G_OBJECT(w1), "cfgname", (void *)cfgname);
+	g_object_set_data(G_OBJECT(w1), "chname", (void *)chname);
+	g_object_set_data(G_OBJECT(w1), "par", (void *)modch1->params);
+	g_object_set_data(G_OBJECT(w1), "table", w2);
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 1);
 	w2 = gtk_label_new(_("Modulator"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), w1, w2);
-	gtk_signal_connect(GTK_OBJECT(combo_entry), "changed",
-			   GTK_SIGNAL_FUNC(on_notebookcombo_changed), NULL);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(on_notebookcombo_changed), NULL);
 	/* Demodulator Tab */
 	ilist = NULL;
 	if (xml_getprop(cfgname, chname, "demod", "mode", mode, sizeof(mode)) <= 0)
                 mode[0] = 0;
-	for (; demodch; demodch = demodch->next) {
+	for (i = 0, active = 0; demodch; i++, demodch = demodch->next) {
 		ilist = g_list_append(ilist, (void *)demodch->name);
-		if (!strcmp(mode, demodch->name))
+		if (!strcmp(mode, demodch->name)) {
 			demodch1 = demodch;
+			active = i;
+		}
 	}
 	w1 = create_notebookhead(ilist);
 	g_list_free(ilist);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	gtk_entry_set_text(GTK_ENTRY(combo_entry), demodch1->name);
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "combo"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
 	w2 = create_paramwidget(demodch1->params, cfgname, chname, "demod");
-	gtk_object_set_data(GTK_OBJECT(w1), "cfgname", (void *)cfgname);
-	gtk_object_set_data(GTK_OBJECT(w1), "chname", (void *)chname);
-	gtk_object_set_data(GTK_OBJECT(w1), "par", (void *)demodch1->params);
-	gtk_object_set_data(GTK_OBJECT(w1), "table", w2);
+	g_object_set_data(G_OBJECT(w1), "cfgname", (void *)cfgname);
+	g_object_set_data(G_OBJECT(w1), "chname", (void *)chname);
+	g_object_set_data(G_OBJECT(w1), "par", (void *)demodch1->params);
+	g_object_set_data(G_OBJECT(w1), "table", w2);
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 1);
 	w2 = gtk_label_new(_("Demodulator"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), w1, w2);
-	gtk_signal_connect(GTK_OBJECT(combo_entry), "changed",
-			   GTK_SIGNAL_FUNC(on_notebookcombo_changed), NULL);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(on_notebookcombo_changed), NULL);
 #ifndef WIN32
 	/* Packet IO Tab */
 	ilist = NULL;
 	if (xml_getprop(cfgname, chname, "pkt", "mode", mode, sizeof(mode)) <= 0)
                 mode[0] = 0;
-	for (; pktch; pktch = pktch->next) {
+	for (i = 0, active = 0; pktch; i++, pktch = pktch->next) {
 		ilist = g_list_append(ilist, (void *)pktch->name);
-		if (!strcmp(mode, pktch->name))
+		if (!strcmp(mode, pktch->name)) {
 			pktch1 = pktch;
+			active = i;
+		}
 	}
 	w1 = create_notebookhead(ilist);
 	g_list_free(ilist);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w1), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	gtk_entry_set_text(GTK_ENTRY(combo_entry), pktch1->name);
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w1), "combo"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
 	w2 = create_paramwidget(pktch1->params, cfgname, chname, "pkt");
-	gtk_object_set_data(GTK_OBJECT(w1), "cfgname", (void *)cfgname);
-	gtk_object_set_data(GTK_OBJECT(w1), "chname", (void *)chname);
-	gtk_object_set_data(GTK_OBJECT(w1), "par", (void *)pktch1->params);
-	gtk_object_set_data(GTK_OBJECT(w1), "table", w2);
+	g_object_set_data(G_OBJECT(w1), "cfgname", (void *)cfgname);
+	g_object_set_data(G_OBJECT(w1), "chname", (void *)chname);
+	g_object_set_data(G_OBJECT(w1), "par", (void *)pktch1->params);
+	g_object_set_data(G_OBJECT(w1), "table", w2);
 	gtk_box_pack_start(GTK_BOX(w1), w2, TRUE, TRUE, 1);
 	w2 = gtk_label_new(_("Packet IO"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), w1, w2);
-	gtk_signal_connect(GTK_OBJECT(combo_entry), "changed",
-			   GTK_SIGNAL_FUNC(on_notebookcombo_changed), NULL);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(on_notebookcombo_changed), NULL);
 #endif /* WIN32 */
 }
 
 static void destroy_notebook_menus(void)
 {
-	GtkWidget *w, *notebook, *combo, *combo_entry;
+	GtkWidget *w, *notebook, *combo;
 	const char *cfgname, *chname;
 	struct modemparams *par;
+	gchar *text;
 	
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	/* find config strings */
 	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 0);
-	cfgname = gtk_object_get_data(GTK_OBJECT(w), "cfgname");
-	chname = gtk_object_get_data(GTK_OBJECT(w), "chname");
+	cfgname = g_object_get_data(G_OBJECT(w), "cfgname");
+	chname = g_object_get_data(G_OBJECT(w), "chname");
 	if (!cfgname || !chname) {
 		g_printerr("destroy_notebook_menus: cfgname or chname NULL!\n");
 		return;
 	}
 	/* update modulator */
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_setprop(cfgname, chname, "mod", "mode", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-g_print("Modulator mode: %s\n", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-	par = gtk_object_get_data(GTK_OBJECT(w), "par");
-	update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "table")), par, cfgname, chname, "mod");
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w), "combo"));
+        text = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
+	xml_setprop(cfgname, chname, "mod", "mode", text);
+g_print("Modulator mode: %s\n", text);
+        g_free(text);
+	par = g_object_get_data(G_OBJECT(w), "par");
+	update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w), "table")), par, cfgname, chname, "mod");
 	/* update demodulator */
 	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 1);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_setprop(cfgname, chname, "demod", "mode", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-g_print("Demodulator mode: %s\n", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-	par = gtk_object_get_data(GTK_OBJECT(w), "par");
-	update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "table")), par, cfgname, chname, "demod");
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w), "combo"));
+        text = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
+	xml_setprop(cfgname, chname, "demod", "mode", text);
+g_print("Demodulator mode: %s\n", text);
+	g_free(text);
+	par = g_object_get_data(G_OBJECT(w), "par");
+	update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w), "table")), par, cfgname, chname, "demod");
 	/* update KISS stuff */
 #ifndef WIN32
 	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 2);
-	combo = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "combo"));
-	combo_entry = GTK_COMBO(combo)->entry;
-	xml_setprop(cfgname, chname, "pkt", "mode", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-g_print("Packet IO mode: %s\n", gtk_entry_get_text(GTK_ENTRY(combo_entry)));
-	par = gtk_object_get_data(GTK_OBJECT(w), "par");
-	update_paramwidget(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(w), "table")), par, cfgname, chname, "pkt");
+	combo = GTK_WIDGET(g_object_get_data(G_OBJECT(w), "combo"));
+	text = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
+	xml_setprop(cfgname, chname, "pkt", "mode", text);
+g_print("Packet IO mode: %s\n", text);
+        g_free(text);
+	par = g_object_get_data(G_OBJECT(w), "par");
+	update_paramwidget(GTK_WIDGET(g_object_get_data(G_OBJECT(w), "table")), par, cfgname, chname, "pkt");
 #endif /* WIN32 */
 	/* delete pages */
 #ifndef WIN32
@@ -617,18 +644,18 @@ static gint do_notebookcombo_change(gpointer user_data)
 
 	notebookcombochg = 0;
 	/* recreate notebook widgets */
-	notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook"));
+	notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "confignotebook"));
 	/* find config strings */
 	w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 0);
-	cfgname = gtk_object_get_data(GTK_OBJECT(w), "cfgname");
-	chname = gtk_object_get_data(GTK_OBJECT(w), "chname");
+	cfgname = g_object_get_data(G_OBJECT(w), "cfgname");
+	chname = g_object_get_data(G_OBJECT(w), "chname");
 
 	g_print("on_notebookcombo_changed: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 	nbcurpage = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 	destroy_notebook_menus();
 	g_print("Recreating menus\n");
 	make_notebook_menus(cfgname, chname);
-	gtk_notebook_set_page(GTK_NOTEBOOK(notebook), nbcurpage);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), nbcurpage);
 	g_print("Returning\n");
 	return FALSE;
 }
@@ -638,7 +665,8 @@ static void on_notebookcombo_changed(GtkEditable *editable, gpointer user_data)
 	/*GtkWidget *vbox = GTK_WIDGET(user_data);*/
 
 	if (!notebookcombochg)
-		notebookcombochg = gtk_idle_add_priority(G_PRIORITY_HIGH, do_notebookcombo_change, NULL);
+		notebookcombochg = g_idle_add_full(G_PRIORITY_HIGH, do_notebookcombo_change, 
+						   NULL, NULL);
 }
 
 static int
@@ -683,10 +711,10 @@ void on_configtree_selection_changed(GtkTreeSelection *selection, gpointer user_
 		} else {
 			if (old_chname) {
 				if (notebookcombochg)
-					gtk_idle_remove(notebookcombochg);
+					g_source_remove(notebookcombochg);
 				notebookcombochg = 0;
 				destroy_notebook_menus();
-				gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+				gtk_widget_hide(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "diagnostics")));
 				diag_stop();
 
 			} else {
@@ -696,7 +724,7 @@ void on_configtree_selection_changed(GtkTreeSelection *selection, gpointer user_
 	}
 	if (chname) {
 		make_notebook_menus(cfgname, chname);
-		gtk_widget_show(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+		gtk_widget_show(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "diagnostics")));
 	} else if (cfgname) {
 		cfg_select(cfgname, chname);
 	}
@@ -706,17 +734,17 @@ void on_configtree_selection_changed(GtkTreeSelection *selection, gpointer user_
 	g_free(old_chname);
 
 	if (cfgname && chname) {
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+		gtk_widget_show(g_object_get_data(G_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_show(g_object_get_data(G_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_show(g_object_get_data(G_OBJECT(mainwindow), "deletechannel"));
 	} else if (cfgname) {
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_show(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+		gtk_widget_show(g_object_get_data(G_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_show(g_object_get_data(G_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_hide(g_object_get_data(G_OBJECT(mainwindow), "deletechannel"));
 	} else {
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration"));
-		gtk_widget_hide(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel"));
+		gtk_widget_hide(g_object_get_data(G_OBJECT(mainwindow), "newchannel"));
+		gtk_widget_hide(g_object_get_data(G_OBJECT(mainwindow), "deleteconfiguration"));
+		gtk_widget_hide(g_object_get_data(G_OBJECT(mainwindow), "deletechannel"));
 	}
 	g_print("selection: cfg: %s  chan: %s\n", cfgname ?: "-", chname ?: "-");
 }
@@ -732,7 +760,7 @@ create_configmodel(void)
 	GtkTreeViewColumn *column;
 	
 	model = gtk_tree_store_new(NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
-	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	view = g_object_get_data(G_OBJECT(mainwindow), "configtree");
 	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(model));
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 	g_signal_connect_after((gpointer) selection, "changed",
@@ -762,7 +790,7 @@ static void dounselect(void)
 	GtkWidget *view;
 	GtkTreeSelection *selection;
 
-	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	view = g_object_get_data(G_OBJECT(mainwindow), "configtree");
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 	gtk_tree_selection_unselect_all(selection);
 }
@@ -799,8 +827,9 @@ void on_about_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	GtkWidget *dlg = create_aboutwindow();
 
-	gtk_signal_connect(GTK_OBJECT(gtk_object_get_data(GTK_OBJECT(dlg), "aboutok")), 
-			   "clicked", GTK_SIGNAL_FUNC(on_aboutok_clicked), dlg);
+	g_signal_connect(G_OBJECT(g_object_get_data(G_OBJECT(dlg), "aboutok")), 
+			 "clicked", G_CALLBACK(on_aboutok_clicked), dlg);
+	gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(mainwindow));
 	gtk_widget_show(dlg);
 }
 
@@ -869,7 +898,7 @@ void new_channel(const gchar *cfgname, const gchar *name)
 			   CFGNAME_COL, cfgname, 
 			   CHNAME_COL, name, -1);
 	path = gtk_tree_model_get_path(configmodel, &iter);
-	view = gtk_object_get_data(GTK_OBJECT(mainwindow), "configtree");
+	view = g_object_get_data(G_OBJECT(mainwindow), "configtree");
 	gtk_tree_view_expand_row(view, path, FALSE);
 	gtk_tree_path_free(path);
 }
@@ -914,9 +943,10 @@ void error_dialog(const gchar *text)
 {
 	GtkWidget *dlg = create_errordialog();
 
-	gtk_signal_connect(GTK_OBJECT(gtk_object_get_data(GTK_OBJECT(dlg), "errorok")), 
-			   "clicked", GTK_SIGNAL_FUNC(on_errorok_clicked), dlg);
-	gtk_label_set_text(GTK_LABEL(gtk_object_get_data(GTK_OBJECT(dlg), "errorlabel")), text);
+	g_signal_connect(G_OBJECT(g_object_get_data(G_OBJECT(dlg), "errorok")), 
+			 "clicked", G_CALLBACK(on_errorok_clicked), dlg);
+	gtk_label_set_text(GTK_LABEL(g_object_get_data(G_OBJECT(dlg), "errorlabel")), text);
+	gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(mainwindow));
 	gtk_widget_show(dlg);
 }
 
@@ -924,7 +954,7 @@ void error_dialog(const gchar *text)
 
 static void on_newconfigok_clicked(GtkButton *button, gpointer user_data)
 {
-	const gchar *text = gtk_entry_get_text(GTK_ENTRY(gtk_object_get_data(GTK_OBJECT(user_data), "newconfigentry")));
+	const gchar *text = gtk_entry_get_text(GTK_ENTRY(g_object_get_data(G_OBJECT(user_data), "newconfigentry")));
 	int ret;
 	char buf[128];
 	
@@ -951,10 +981,11 @@ void on_newconfiguration_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	GtkWidget *dlg = create_newconfigwindow();
 
-	gtk_signal_connect(GTK_OBJECT(gtk_object_get_data(GTK_OBJECT(dlg), "newconfigok")), 
-			   "clicked", GTK_SIGNAL_FUNC(on_newconfigok_clicked), dlg);
-	gtk_signal_connect(GTK_OBJECT(gtk_object_get_data(GTK_OBJECT(dlg), "newconfigcancel")), 
-			   "clicked", GTK_SIGNAL_FUNC(on_newconfigcancel_clicked), dlg);
+	g_signal_connect(G_OBJECT(g_object_get_data(G_OBJECT(dlg), "newconfigok")), 
+			 "clicked", G_CALLBACK(on_newconfigok_clicked), dlg);
+	g_signal_connect(G_OBJECT(g_object_get_data(G_OBJECT(dlg), "newconfigcancel")), 
+			 "clicked", G_CALLBACK(on_newconfigcancel_clicked), dlg);
+	gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(mainwindow));
 	gtk_widget_show(dlg);
 }
 

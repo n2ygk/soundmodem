@@ -568,12 +568,12 @@ int main (int argc, char *argv[])
 	add_pixmap_directory(PACKAGE_SOURCE_DIR "/pixmaps");
 
 	mainwindow = create_mainwindow();
-	gtk_notebook_remove_page(GTK_NOTEBOOK(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook")), 0);
-	gtk_notebook_remove_page(GTK_NOTEBOOK(gtk_object_get_data(GTK_OBJECT(mainwindow), "confignotebook")), 0);
-	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "newchannel")));
-	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "deleteconfiguration")));
-	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "deletechannel")));
-	gtk_widget_hide(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(mainwindow), "diagnostics")));
+	gtk_notebook_remove_page(GTK_NOTEBOOK(g_object_get_data(G_OBJECT(mainwindow), "confignotebook")), 0);
+	gtk_notebook_remove_page(GTK_NOTEBOOK(g_object_get_data(G_OBJECT(mainwindow), "confignotebook")), 0);
+	gtk_widget_hide(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "newchannel")));
+	gtk_widget_hide(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "deleteconfiguration")));
+	gtk_widget_hide(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "deletechannel")));
+	gtk_widget_hide(GTK_WIDGET(g_object_get_data(G_OBJECT(mainwindow), "diagnostics")));
 	specwindow = create_specwindow();
 	scopewindow = create_scopewindow();
 	receivewindow = create_receivewindow();
@@ -587,15 +587,15 @@ int main (int argc, char *argv[])
                 if (!font_desc) {
                         g_printerr("Cannot load monospace\n");
                 } else {
-                        w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetraw"));
+                        w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "packetraw"));
                         st = gtk_style_copy(w->style);
-                        gtk_style_unref(w->style);
+                        g_object_unref(w->style);
                         st->font_desc = font_desc;
-                        gtk_style_ref(st);
+                        g_object_ref(st);
                         w->style = st;
-                        w = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(p3dwindow), "packetcooked"));
-                        gtk_style_unref(w->style);
-                        gtk_style_ref(st);
+                        w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "packetcooked"));
+                        g_object_unref(w->style);
+                        g_object_ref(st);
                         w->style = st;
                 }
 	}
@@ -659,7 +659,7 @@ int main (int argc, char *argv[])
 	gtk_main();
 #ifdef WIN32
 #else /* WIN32 */
-	if (!xmlSaveFile(cfgfile, doc)) 
+	if (!xmlSaveFormatFile(cfgfile, doc, 1)) 
 	    g_printerr("SoundModem Config: error saving configuration file %s\n", cfgfile);
         xmlFreeDoc(doc);
 #endif /* WIN32 */

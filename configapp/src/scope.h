@@ -28,9 +28,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define SCOPE(obj)          GTK_CHECK_CAST(obj, scope_get_type(), Scope)
-#define SCOPE_CLASS(klass)  GTK_CHECK_CLASS_CAST(klass, scope_get_type(), ScopeClass)
-#define IS_SCOPE(obj)       GTK_CHECK_TYPE(obj, scope_get_type())
+#define SCOPE(obj)          G_TYPE_CHECK_INSTANCE_CAST(obj, scope_get_type(), Scope)
+#define SCOPE_CLASS(klass)  G_TYPE_CHECK_CLASS_CAST(klass, scope_get_type(), ScopeClass)
+#define IS_SCOPE(obj)       G_TYPE_CHECK_INSTANCE_TYPE(obj, scope_get_type())
 
 typedef struct _Scope        Scope;
 typedef struct _ScopeClass   ScopeClass;

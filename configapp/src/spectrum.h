@@ -28,9 +28,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define SPECTRUM(obj)          GTK_CHECK_CAST(obj, spectrum_get_type(), Spectrum)
-#define SPECTRUM_CLASS(klass)  GTK_CHECK_CLASS_CAST(klass, spectrum_get_type(), SpectrumClass)
-#define IS_SPECTRUM(obj)       GTK_CHECK_TYPE(obj, spectrum_get_type())
+#define SPECTRUM(obj)          G_TYPE_CHECK_INSTANCE_CAST(obj, spectrum_get_type(), Spectrum)
+#define SPECTRUM_CLASS(klass)  G_TYPE_CHECK_CLASS_CAST(klass, spectrum_get_type(), SpectrumClass)
+#define IS_SPECTRUM(obj)       G_TYPE_CHECK_INSTANCE_TYPE(obj, spectrum_get_type())
 
 typedef struct _Spectrum        Spectrum;
 typedef struct _SpectrumClass   SpectrumClass;

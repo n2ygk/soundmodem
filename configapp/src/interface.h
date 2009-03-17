@@ -3,7 +3,6 @@
  */
 
 GtkWidget* create_mainwindow (void);
-GtkWidget* create_fileselection1 (void);
 GtkWidget* create_aboutwindow (void);
 GtkWidget* create_newconfigwindow (void);
 GtkWidget* create_errordialog (void);
