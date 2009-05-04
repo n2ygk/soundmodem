@@ -49,11 +49,21 @@ struct pttio {
 
 #else
 
+#ifdef HAVE_LIBHAMLIB
+#include <hamlib/rig.h>
+#endif
+
 struct pttio {
-	int fd;
-	enum { serport, parport } mode;
+	enum { noport, serport, parport, hamlibport } mode;
 	unsigned int ptt;
 	unsigned int dcd;
+	
+	union {
+		int fd;
+#ifdef HAVE_LIBHAMLIB
+		RIG *rig_ptr;
+#endif
+	} u;
 };
 
 #endif

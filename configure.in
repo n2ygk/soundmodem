@@ -1,7 +1,7 @@
 AC_INIT(soundmodem.spec)
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE(soundmodem, 0.13)
+AM_INIT_AUTOMAKE(soundmodem, 0.14)
 AM_CONFIG_HEADER(config.h)
 
 AC_PREREQ(2.53)
@@ -184,6 +184,8 @@ else
   AC_CHECK_FUNCS(openpty,LIBTHREAD="$LIBTHREAD $LIBS",[AC_LIBOBJ([openpty])])
   LIBS=$xlibs
 fi
+
+AC_CHECK_LIB(hamlib,rigerror)
 
 xcflags="$CFLAGS"
 CFLAGS="$CFLAGS -I$srcdir/directx/include -I$srcdir/directx/include/directx6"
