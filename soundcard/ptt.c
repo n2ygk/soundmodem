@@ -99,12 +99,12 @@ int pttinit(struct pttio *state, const char *params[])
 			goto the_end;
 		}
 		state->mode = hamlibport;
-		state->rig_ptr = rig_init(rig_modl);
-		if(state->rig_ptr == NULL) {
+		state->u.rig_ptr = rig_init(rig_modl);
+		if(state->u.rig_ptr == NULL) {
 			logprintf(MLOG_ERROR, "Hamlib: rig_init model=%dn", rig_modl);
 			goto the_end;
 		}
-		strncpy(state->rig_ptr->state.rigport.pathname, path, FILPATHLEN);
+		strncpy(state->u.rig_ptr->state.rigport.pathname, path, FILPATHLEN);
 
 		logprintf(MLOG_INFO, "Hamlib: pttinit parsing %s\n", ptr_key ? ptr_key : "NULL" );
 
@@ -118,8 +118,8 @@ int pttinit(struct pttio *state, const char *params[])
 			if (ptr_key_next) {
 				*ptr_key_next++ = '\0';
 			}
-			my_rig_error = rig_set_conf(state->rig_ptr,
-						    rig_token_lookup(state->rig_ptr, ptr_key), ptr_val);
+			my_rig_error = rig_set_conf(state->u.rig_ptr,
+						    rig_token_lookup(state->u.rig_ptr, ptr_key), ptr_val);
 			if (my_rig_error != RIG_OK) {
 				logprintf(MLOG_ERROR,
 					  "Hamlib: rig_set_conf: %s=%s : %s\n",
@@ -130,7 +130,7 @@ int pttinit(struct pttio *state, const char *params[])
 			}
 			ptr_key = ptr_key_next;
 		}
-		my_rig_error = rig_open(state->rig_ptr);
+		my_rig_error = rig_open(state->u.rig_ptr);
 		if (RIG_OK != my_rig_error) {
 			logprintf(MLOG_ERROR, "Hamlib: rig_open: %s\n", rigerror(my_rig_error));
 			goto the_end;
@@ -184,7 +184,7 @@ void pttsetptt(struct pttio *state, int pttx)
 		    my_ptt = RIG_PTT_ON;
 		else
 		    my_ptt = RIG_PTT_OFF;
-		my_rig_error = rig_set_ptt(state->rig_ptr, RIG_VFO_CURR, my_ptt);
+		my_rig_error = rig_set_ptt(state->u.rig_ptr, RIG_VFO_CURR, my_ptt);
 		if(RIG_OK != my_rig_error) {
 			logprintf(MLOG_ERROR, "Hamlib: rig_set_ptt %s\n", rigerror(my_rig_error) );
 		}
@@ -284,11 +284,11 @@ void pttrelease(struct pttio *state)
 	{
 		logprintf(MLOG_INFO, "Hamlib: pttrelease\n");
 		int my_rig_error;
-		my_rig_error = rig_close(state->rig_ptr);
+		my_rig_error = rig_close(state->u.rig_ptr);
 		if(RIG_OK != my_rig_error) {
 			logprintf(MLOG_ERROR, "Hamlib: rig_close: %s\n", rigerror(my_rig_error) );
 		}
-		my_rig_error = rig_cleanup(state->rig_ptr);
+		my_rig_error = rig_cleanup(state->u.rig_ptr);
 		if(RIG_OK != my_rig_error) {
 			logprintf(MLOG_ERROR, "Hamlib: rig_cleanup: %s\n", rigerror(my_rig_error) );
 		}
