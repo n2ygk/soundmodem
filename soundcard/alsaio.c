@@ -394,13 +394,13 @@ static void iowrite(struct audioio *aio, const int16_t *samples, unsigned int nr
 		return;
 	err = snd_pcm_writei(audioio->playback_handle, p, nr);
 	if (err == -EPIPE) {
-		if (snd_pcm_prepare(audioio->capture_handle) < 0) {
+		if (snd_pcm_prepare(audioio->playback_handle) < 0) {
 			logprintf(MLOG_ERROR, "Error preparing tx.\n");
 		}
 		err = snd_pcm_writei(audioio->playback_handle, p, nr);
 	}
 	if (err < 0) {
-		logprintf(MLOG_ERROR, "audio: snd_pcm_writei: %s", snd_strerror(err));
+		logprintf(MLOG_ERROR, "audio: snd_pcm_writei: %s\n", snd_strerror(err));
 		return;
 	}
 	if (err < nr) {
