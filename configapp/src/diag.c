@@ -487,11 +487,13 @@ static inline void update_display_p3d(void)
 		i = gtk_text_buffer_get_char_count(model);
 		if (i > 16384) {
 			GtkTextIter start, end;
+			gchar *text;
 
-			i -= 16384;
-			gtk_text_buffer_get_iter_at_offset(model, &start, 0);
-			gtk_text_buffer_get_iter_at_offset(model, &end, i);
-			gtk_text_buffer_delete(model, &start, &end);
+			gtk_text_buffer_get_iter_at_offset(model, &start, 16384);
+			gtk_text_buffer_get_iter_at_offset(model, &end, -1);
+			text = gtk_text_buffer_get_text(model, &start, &end, TRUE);
+			gtk_text_buffer_set_text(model, text, -1);
+			g_free(text);
 		}
 		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
                 /* decode cooked packet if CRC ok or passall selected */
@@ -556,13 +558,15 @@ static void update_display(void)
 			gtk_text_buffer_insert_at_cursor(model, buf, 8);
 		}
 		c0 = gtk_text_buffer_get_char_count(model);
-		if (c0 > 16384) {
+		if (c0 > 2048) {
 			GtkTextIter start, end;
+			gchar *text;
 
-			c0 -= 16384;
-			gtk_text_buffer_get_iter_at_offset(model, &start, 0);
-			gtk_text_buffer_get_iter_at_offset(model, &end, c0);
-			gtk_text_buffer_delete(model, &start, &end);
+			gtk_text_buffer_get_iter_at_offset(model, &start, 2048);
+			gtk_text_buffer_get_iter_at_offset(model, &end, -1);
+			text = gtk_text_buffer_get_text(model, &start, &end, TRUE);
+			gtk_text_buffer_set_text(model, text, -1);
+			g_free(text);
 		}
 		gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(model));
 		diagstate.updcount = 1;
