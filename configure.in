@@ -1,7 +1,7 @@
 AC_INIT(soundmodem.spec)
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE(soundmodem, 0.14)
+AM_INIT_AUTOMAKE(soundmodem, 0.15)
 AM_CONFIG_HEADER(config.h)
 
 AC_PREREQ(2.53)
@@ -157,15 +157,15 @@ else
   PKG_CHECK_MODULES(AUDIOFILE,audiofile)
 fi
 
-dnl Check for recently deprecated GTK symbols
+dnl Check for recently introduced GTK symbols
 xlibs="$LIBS"
 LIBS="$GTK_LIBS $LIBS"
-AC_CHECK_FUNCS(gtk_widget_set_tooltip_text)
+AC_CHECK_FUNCS(gtk_widget_set_tooltip_text gtk_widget_is_drawable gtk_widget_get_realized gtk_widget_set_realized gtk_widget_set_can_default gtk_widget_set_can_focus gtk_dialog_get_action_area gtk_dialog_get_content_area gtk_widget_get_allocation gtk_widget_set_allocation gtk_widget_get_state gtk_widget_get_window gtk_widget_set_window gtk_widget_set_has_window gtk_widget_style_attach)
 LIBS="$xlibs"
 
 dnl Enable to try building with XXX_DISABLE_DEPRECATED. Never ship with
 dnl them enabled!
-dnl GTK_CFLAGS="$GTK_CFLAGS -DPANGO_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED"
+dnl GTK_CFLAGS="$GTK_CFLAGS -DPANGO_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED  -DGSEAL_ENABLE"
 dnl Only use -Wall if we have gcc
 if test "x$GCC" = "xyes"; then
   if test -z "`echo "$CFLAGS" | grep "\-Wall" 2> /dev/null`" ; then

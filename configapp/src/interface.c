@@ -20,6 +20,7 @@
 #include "scope.h"
 #include "interface.h"
 #include "support.h"
+#include "snm-compat-gtk2.h"
 
 #define GLADE_HOOKUP_OBJECT(component,widget,name) \
   g_object_set_data_full (G_OBJECT (component), name, \
@@ -175,7 +176,7 @@ create_mainwindow (void)
   scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow1);
   gtk_box_pack_start (GTK_BOX (configbox), scrolledwindow1, TRUE, TRUE, 0);
-  GTK_WIDGET_UNSET_FLAGS (scrolledwindow1, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (scrolledwindow1, FALSE);
 
   viewport1 = gtk_viewport_new (NULL, NULL);
   gtk_widget_show (viewport1);
@@ -184,7 +185,7 @@ create_mainwindow (void)
   configtree = gtk_tree_view_new ();
   gtk_widget_show (configtree);
   gtk_container_add (GTK_CONTAINER (viewport1), configtree);
-  GTK_WIDGET_UNSET_FLAGS (configtree, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (configtree, FALSE);
 
   vbox3 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox3);
@@ -312,7 +313,7 @@ create_aboutwindow (void)
   gtk_window_set_title (GTK_WINDOW (aboutwindow), _("About SoundModem Configurator"));
   gtk_window_set_type_hint (GTK_WINDOW (aboutwindow), GDK_WINDOW_TYPE_HINT_DIALOG);
 
-  dialog_vbox1 = GTK_DIALOG (aboutwindow)->vbox;
+  dialog_vbox1 = gtk_dialog_get_content_area (GTK_DIALOG (aboutwindow));
   gtk_widget_show (dialog_vbox1);
 
   frame1 = gtk_frame_new (NULL);
@@ -339,7 +340,7 @@ create_aboutwindow (void)
   gtk_widget_show (label1);
   gtk_frame_set_label_widget (GTK_FRAME (frame1), label1);
 
-  dialog_action_area1 = GTK_DIALOG (aboutwindow)->action_area;
+  dialog_action_area1 = gtk_dialog_get_action_area (GTK_DIALOG (aboutwindow));
   gtk_widget_show (dialog_action_area1);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area1), GTK_BUTTONBOX_END);
 
@@ -351,7 +352,7 @@ create_aboutwindow (void)
   aboutok = gtk_button_new_with_mnemonic (_("Ok"));
   gtk_widget_show (aboutok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), aboutok);
-  GTK_WIDGET_SET_FLAGS (aboutok, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default (aboutok, TRUE);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (aboutwindow, aboutwindow, "aboutwindow");
@@ -388,7 +389,7 @@ create_newconfigwindow (void)
   gtk_window_set_title (GTK_WINDOW (newconfigwindow), _("New Configuration"));
   gtk_window_set_type_hint (GTK_WINDOW (newconfigwindow), GDK_WINDOW_TYPE_HINT_DIALOG);
 
-  dialog_vbox2 = GTK_DIALOG (newconfigwindow)->vbox;
+  dialog_vbox2 = gtk_dialog_get_content_area (GTK_DIALOG (newconfigwindow));
   gtk_widget_show (dialog_vbox2);
 
   hbox2 = gtk_hbox_new (FALSE, 0);
@@ -406,7 +407,7 @@ create_newconfigwindow (void)
   gtk_box_pack_start (GTK_BOX (hbox2), newconfigentry, TRUE, TRUE, 6);
   gtk_entry_set_invisible_char (GTK_ENTRY (newconfigentry), 9679);
 
-  dialog_action_area2 = GTK_DIALOG (newconfigwindow)->action_area;
+  dialog_action_area2 = gtk_dialog_get_action_area (GTK_DIALOG (newconfigwindow));
   gtk_widget_show (dialog_action_area2);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
 
@@ -418,7 +419,7 @@ create_newconfigwindow (void)
   newconfigcancel = gtk_button_new_with_mnemonic (_("Cancel"));
   gtk_widget_show (newconfigcancel);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), newconfigcancel);
-  GTK_WIDGET_SET_FLAGS (newconfigcancel, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default (newconfigcancel, TRUE);
   gtk_widget_add_accelerator (newconfigcancel, "clicked", accel_group,
                               GDK_Escape, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
@@ -426,7 +427,7 @@ create_newconfigwindow (void)
   newconfigok = gtk_button_new_with_mnemonic (_("OK"));
   gtk_widget_show (newconfigok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), newconfigok);
-  GTK_WIDGET_SET_FLAGS (newconfigok, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default (newconfigok, TRUE);
   gtk_widget_add_accelerator (newconfigok, "clicked", accel_group,
                               GDK_Return, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
@@ -465,7 +466,7 @@ create_errordialog (void)
   gtk_window_set_modal (GTK_WINDOW (errordialog), TRUE);
   gtk_window_set_type_hint (GTK_WINDOW (errordialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
-  dialog_vbox3 = GTK_DIALOG (errordialog)->vbox;
+  dialog_vbox3 = gtk_dialog_get_content_area (GTK_DIALOG (errordialog));
   gtk_widget_show (dialog_vbox3);
 
   errorlabel = gtk_label_new (_("Error"));
@@ -475,7 +476,7 @@ create_errordialog (void)
   gtk_label_set_line_wrap (GTK_LABEL (errorlabel), TRUE);
   gtk_misc_set_padding (GTK_MISC (errorlabel), 6, 6);
 
-  dialog_action_area3 = GTK_DIALOG (errordialog)->action_area;
+  dialog_action_area3 = gtk_dialog_get_action_area (GTK_DIALOG (errordialog));
   gtk_widget_show (dialog_action_area3);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
 
@@ -487,7 +488,7 @@ create_errordialog (void)
   errorok = gtk_button_new_with_mnemonic (_("OK"));
   gtk_widget_show (errorok);
   gtk_container_add (GTK_CONTAINER (hbuttonbox3), errorok);
-  GTK_WIDGET_SET_FLAGS (errorok, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default (errorok, TRUE);
   gtk_widget_add_accelerator (errorok, "clicked", accel_group,
                               GDK_Return, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
@@ -543,7 +544,7 @@ create_specwindow (void)
   specfreqpointer = gtk_entry_new ();
   gtk_widget_show (specfreqpointer);
   gtk_box_pack_start (GTK_BOX (hbox1), specfreqpointer, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (specfreqpointer, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (specfreqpointer, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (specfreqpointer), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (specfreqpointer), 9679);
 
@@ -555,7 +556,7 @@ create_specwindow (void)
   ptt = gtk_toggle_button_new_with_mnemonic (_("PTT"));
   gtk_widget_show (ptt);
   gtk_box_pack_start (GTK_BOX (hbox1), ptt, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (ptt, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (ptt, FALSE);
 
   label20 = gtk_label_new (_("PTT"));
   gtk_widget_show (label20);
@@ -566,8 +567,8 @@ create_specwindow (void)
   ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox1), ledptt, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (ledptt, FALSE);
+  gtk_widget_set_can_default (ledptt, FALSE);
 
   label19 = gtk_label_new (_("DCD"));
   gtk_widget_show (label19);
@@ -578,8 +579,8 @@ create_specwindow (void)
   leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox1), leddcd, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (leddcd, FALSE);
+  gtk_widget_set_can_default (leddcd, FALSE);
 
   frame4 = gtk_frame_new (NULL);
   gtk_widget_show (frame4);
@@ -589,8 +590,8 @@ create_specwindow (void)
   gtk_widget_show (spec);
   gtk_container_add (GTK_CONTAINER (frame4), spec);
   gtk_widget_set_size_request (spec, 512, 384);
-  GTK_WIDGET_SET_FLAGS (spec, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (spec, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (spec, TRUE);
+  gtk_widget_set_can_default (spec, FALSE);
   gtk_widget_set_events (spec, GDK_POINTER_MOTION_MASK);
 
   label26 = gtk_label_new (_("Spectrum"));
@@ -677,8 +678,8 @@ create_scopewindow (void)
   ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox2), ledptt, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (ledptt, FALSE);
+  gtk_widget_set_can_default (ledptt, FALSE);
 
   label22 = gtk_label_new (_("DCD"));
   gtk_widget_show (label22);
@@ -689,8 +690,8 @@ create_scopewindow (void)
   leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox2), leddcd, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (leddcd, FALSE);
+  gtk_widget_set_can_default (leddcd, FALSE);
 
   frame5 = gtk_frame_new (NULL);
   gtk_widget_show (frame5);
@@ -700,8 +701,8 @@ create_scopewindow (void)
   gtk_widget_show (scope);
   gtk_container_add (GTK_CONTAINER (frame5), scope);
   gtk_widget_set_size_request (scope, 512, 384);
-  GTK_WIDGET_SET_FLAGS (scope, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (scope, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (scope, TRUE);
+  gtk_widget_set_can_default (scope, FALSE);
 
   label27 = gtk_label_new (_("Scope"));
   gtk_widget_show (label27);
@@ -789,7 +790,7 @@ create_receivewindow (void)
   gtk_widget_show (count0);
   gtk_box_pack_start (GTK_BOX (hbox3), count0, FALSE, TRUE, 4);
   gtk_widget_set_size_request (count0, 60, -1);
-  GTK_WIDGET_UNSET_FLAGS (count0, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (count0, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (count0), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (count0), 9679);
 
@@ -802,7 +803,7 @@ create_receivewindow (void)
   gtk_widget_show (count1);
   gtk_box_pack_start (GTK_BOX (hbox3), count1, FALSE, TRUE, 0);
   gtk_widget_set_size_request (count1, 60, -1);
-  GTK_WIDGET_UNSET_FLAGS (count1, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (count1, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (count1), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (count1), 9679);
 
@@ -815,7 +816,7 @@ create_receivewindow (void)
   gtk_widget_show (counttot);
   gtk_box_pack_start (GTK_BOX (hbox3), counttot, FALSE, TRUE, 0);
   gtk_widget_set_size_request (counttot, 60, -1);
-  GTK_WIDGET_UNSET_FLAGS (counttot, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (counttot, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (counttot), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (counttot), 9679);
 
@@ -837,8 +838,8 @@ create_receivewindow (void)
   ledptt = create_led_pixmap ("ledptt", "", "", 0, 0);
   gtk_widget_show (ledptt);
   gtk_box_pack_start (GTK_BOX (hbox3), ledptt, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (ledptt, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (ledptt, FALSE);
+  gtk_widget_set_can_default (ledptt, FALSE);
 
   label24 = gtk_label_new (_("DCD"));
   gtk_widget_show (label24);
@@ -849,13 +850,13 @@ create_receivewindow (void)
   leddcd = create_led_pixmap ("leddcd", "", "", 0, 0);
   gtk_widget_show (leddcd);
   gtk_box_pack_start (GTK_BOX (hbox3), leddcd, FALSE, TRUE, 4);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_FOCUS);
-  GTK_WIDGET_UNSET_FLAGS (leddcd, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_focus (leddcd, FALSE);
+  gtk_widget_set_can_default (leddcd, FALSE);
 
   vpaned1 = gtk_vpaned_new ();
   gtk_widget_show (vpaned1);
   gtk_box_pack_start (GTK_BOX (vbox6), vpaned1, TRUE, TRUE, 0);
-  GTK_WIDGET_UNSET_FLAGS (vpaned1, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (vpaned1, FALSE);
 
   frame6 = gtk_frame_new (NULL);
   gtk_widget_show (frame6);
@@ -864,14 +865,14 @@ create_receivewindow (void)
   scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow2);
   gtk_container_add (GTK_CONTAINER (frame6), scrolledwindow2);
-  GTK_WIDGET_UNSET_FLAGS (scrolledwindow2, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (scrolledwindow2, FALSE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
   packettext = gtk_text_view_new ();
   gtk_widget_show (packettext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packettext);
-  GTK_WIDGET_UNSET_FLAGS (packettext, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (packettext, FALSE);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packettext), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packettext), GTK_WRAP_WORD);
 
@@ -886,14 +887,14 @@ create_receivewindow (void)
   scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow3);
   gtk_container_add (GTK_CONTAINER (frame7), scrolledwindow3);
-  GTK_WIDGET_UNSET_FLAGS (scrolledwindow3, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (scrolledwindow3, FALSE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
   bitstext = gtk_text_view_new ();
   gtk_widget_show (bitstext);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), bitstext);
-  GTK_WIDGET_UNSET_FLAGS (bitstext, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (bitstext, FALSE);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (bitstext), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (bitstext), GTK_WRAP_CHAR);
 
@@ -984,7 +985,7 @@ create_p3dwindow (void)
   gtk_widget_show (rxstatus);
   gtk_box_pack_start (GTK_BOX (hbox3), rxstatus, FALSE, TRUE, 4);
   gtk_widget_set_size_request (rxstatus, 120, -1);
-  GTK_WIDGET_UNSET_FLAGS (rxstatus, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (rxstatus, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (rxstatus), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (rxstatus), 9679);
 
@@ -997,7 +998,7 @@ create_p3dwindow (void)
   gtk_widget_show (carrierfreq);
   gtk_box_pack_start (GTK_BOX (hbox3), carrierfreq, FALSE, TRUE, 0);
   gtk_widget_set_size_request (carrierfreq, 60, -1);
-  GTK_WIDGET_UNSET_FLAGS (carrierfreq, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (carrierfreq, FALSE);
   gtk_editable_set_editable (GTK_EDITABLE (carrierfreq), FALSE);
   gtk_entry_set_invisible_char (GTK_ENTRY (carrierfreq), 9679);
 
@@ -1013,7 +1014,7 @@ create_p3dwindow (void)
   vpaned1 = gtk_vpaned_new ();
   gtk_widget_show (vpaned1);
   gtk_box_pack_start (GTK_BOX (vbox6), vpaned1, TRUE, TRUE, 0);
-  GTK_WIDGET_UNSET_FLAGS (vpaned1, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (vpaned1, FALSE);
 
   frame6 = gtk_frame_new (NULL);
   gtk_widget_show (frame6);
@@ -1022,14 +1023,14 @@ create_p3dwindow (void)
   scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow2);
   gtk_container_add (GTK_CONTAINER (frame6), scrolledwindow2);
-  GTK_WIDGET_UNSET_FLAGS (scrolledwindow2, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (scrolledwindow2, FALSE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_SHADOW_IN);
 
   packetcooked = gtk_text_view_new ();
   gtk_widget_show (packetcooked);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), packetcooked);
-  GTK_WIDGET_UNSET_FLAGS (packetcooked, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (packetcooked, FALSE);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packetcooked), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetcooked), GTK_WRAP_CHAR);
 
@@ -1044,14 +1045,14 @@ create_p3dwindow (void)
   scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow3);
   gtk_container_add (GTK_CONTAINER (frame7), scrolledwindow3);
-  GTK_WIDGET_UNSET_FLAGS (scrolledwindow3, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (scrolledwindow3, FALSE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_SHADOW_IN);
 
   packetraw = gtk_text_view_new ();
   gtk_widget_show (packetraw);
   gtk_container_add (GTK_CONTAINER (scrolledwindow3), packetraw);
-  GTK_WIDGET_UNSET_FLAGS (packetraw, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (packetraw, FALSE);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (packetraw), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (packetraw), GTK_WRAP_CHAR);
 

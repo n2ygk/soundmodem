@@ -30,7 +30,8 @@ soundmodemconfig_SOURCES = \
 	interface.c interface.h \
 	callbacks.h \
 	spectrum.c spectrum.h \
-	scope.c scope.h
+	scope.c scope.h \
+	snm-compat-gtk2.h
 
 soundmodemconfig_LDADD = ../../soundcard/liblog.a ../../soundcard/libaudioio.a ../../soundcard/libpttio.a \
 			$(MODEMLIBS) ../../matlib/libmat.a ../../libmisc/libmisc.a ../../soundcard/libcommon.a \

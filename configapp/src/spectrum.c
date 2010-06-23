@@ -23,6 +23,7 @@
 #endif
 
 #include "spectrum.h"
+#include "snm-compat-gtk2.h"
 #include <gtk/gtkgc.h>
 #include <gtk/gtkmain.h>
 #include <math.h>
@@ -204,18 +205,23 @@ static void spectrum_realize(GtkWidget *widget)
 	GdkWindowAttr attributes;
 	gint attributes_mask;
 	GdkGCValues gc_values;
+	GtkAllocation allocation;
+	GdkWindow *window;
+	GtkStyle *style;
 
 	g_return_if_fail(widget != NULL);
 	g_return_if_fail(IS_SPECTRUM(widget));
 
 	spec = SPECTRUM(widget);
-	GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
+	gtk_widget_set_realized(widget, TRUE);
+	gtk_widget_get_allocation(widget, &allocation);
 
 	attributes.window_type = GDK_WINDOW_CHILD;
-	attributes.x = widget->allocation.x;
-	attributes.y = widget->allocation.y;
-	attributes.width = widget->allocation.width;
-	attributes.height = widget->allocation.height;
+	
+	attributes.x = allocation.x;
+	attributes.y = allocation.y;
+	attributes.width = allocation.width;
+	attributes.height = allocation.height;
 	attributes.wclass = GDK_INPUT_OUTPUT;
 	attributes.visual = gtk_widget_get_visual(widget);
 	attributes.colormap = gtk_widget_get_colormap(widget);
@@ -223,39 +229,42 @@ static void spectrum_realize(GtkWidget *widget)
 
 	attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
 
-	widget->window = gdk_window_new(gtk_widget_get_parent_window(widget), &attributes, attributes_mask);
-	gdk_window_set_user_data(widget->window, spec);
+	gtk_widget_set_has_window(widget, TRUE);
+	window = gdk_window_new(gtk_widget_get_parent_window(widget), &attributes, attributes_mask);
+	gtk_widget_set_window(widget, window);
+	gdk_window_set_user_data(window, spec);
 
-	widget->style = gtk_style_attach(widget->style, widget->window);
-	gtk_style_set_background(widget->style, widget->window, GTK_STATE_NORMAL);
+	gtk_widget_style_attach(widget);
+	style = gtk_widget_get_style(widget);
+	gtk_style_set_background(style, window, GTK_STATE_NORMAL);
 
 	/* gc's if necessary */
-	if (!gdk_colormap_alloc_color(widget->style->colormap, &spec->tracecol,
+	if (!gdk_colormap_alloc_color(style->colormap, &spec->tracecol,
 				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  spec->tracecol.red, spec->tracecol.green, spec->tracecol.blue);
 	gc_values.foreground = spec->tracecol;
-	spec->trace_gc = gtk_gc_get(widget->style->depth, 
-				    widget->style->colormap,
+	spec->trace_gc = gtk_gc_get(style->depth, 
+				    style->colormap,
 				    &gc_values, GDK_GC_FOREGROUND);
-	if (!gdk_colormap_alloc_color(widget->style->colormap, &spec->gridcol,
+	if (!gdk_colormap_alloc_color(style->colormap, &spec->gridcol,
 				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  spec->gridcol.red, spec->gridcol.green, spec->gridcol.blue);
 	gc_values.foreground = spec->gridcol;
-	spec->grid_gc = gtk_gc_get(widget->style->depth,
-				   widget->style->colormap,
+	spec->grid_gc = gtk_gc_get(style->depth,
+				   style->colormap,
 				   &gc_values, GDK_GC_FOREGROUND);
-	if (!gdk_colormap_alloc_color(widget->style->colormap, 
+	if (!gdk_colormap_alloc_color(style->colormap, 
 				      &spec->pointercol, FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  spec->pointercol.red, spec->pointercol.green, spec->pointercol.blue);
 	gc_values.foreground = spec->pointercol;
-	spec->pointer_gc = gtk_gc_get(widget->style->depth,
-				      widget->style->colormap,
+	spec->pointer_gc = gtk_gc_get(style->depth,
+				      style->colormap,
 				      &gc_values, GDK_GC_FOREGROUND);
 	/* create backing store */
-	spec->pixmap = gdk_pixmap_new(widget->window, SPECTRUM_WIDTH, SPECTRUM_HEIGHT, -1);
+	spec->pixmap = gdk_pixmap_new(window, SPECTRUM_WIDTH, SPECTRUM_HEIGHT, -1);
 
 	spectrum_send_configure(SPECTRUM(widget));
 }
@@ -286,16 +295,19 @@ static void spectrum_unrealize(GtkWidget *widget)
 
 static void spectrum_size_allocate(GtkWidget *widget, GtkAllocation *allocation)
 {
+	GtkAllocation alloc;
+
 	g_return_if_fail(widget != NULL);
 	g_return_if_fail(IS_SPECTRUM(widget));
 	g_return_if_fail(allocation != NULL);
-	
-	widget->allocation = *allocation;
-	widget->allocation.width = SPECTRUM_WIDTH;
-	widget->allocation.height = SPECTRUM_HEIGHT;
 
-	if (GTK_WIDGET_REALIZED(widget)) {
-		gdk_window_move_resize (widget->window,
+	alloc = *allocation;
+	alloc.width = SPECTRUM_WIDTH;
+	alloc.height = SPECTRUM_HEIGHT;
+	gtk_widget_set_allocation(widget, &alloc);
+
+	if (gtk_widget_get_realized(widget)) {
+		gdk_window_move_resize (gtk_widget_get_window(widget),
 					allocation->x, allocation->y,
 					allocation->width, allocation->height);
 		spectrum_send_configure(SPECTRUM(widget));
@@ -306,16 +318,18 @@ static void spectrum_send_configure(Spectrum *spec)
 {
 	GtkWidget *widget;
 	GdkEventConfigure event;
+	GtkAllocation allocation;
 
 	widget = GTK_WIDGET(spec);
+	gtk_widget_get_allocation(widget, &allocation);
 
 	event.type = GDK_CONFIGURE;
-	event.window = widget->window;
+	event.window = gtk_widget_get_window(widget);
 	event.send_event = TRUE;
-	event.x = widget->allocation.x;
-	event.y = widget->allocation.y;
-	event.width = widget->allocation.width;
-	event.height = widget->allocation.height;
+	event.x = allocation.x;
+	event.y = allocation.y;
+	event.width = allocation.width;
+	event.height = allocation.height;
   
 	gtk_widget_event(widget, (GdkEvent*)&event);
 }
@@ -347,7 +361,7 @@ static gint spectrum_expose(GtkWidget *widget, GdkEventExpose *event)
 	g_return_val_if_fail(widget != NULL, FALSE);
 	g_return_val_if_fail(IS_SPECTRUM(widget), FALSE);
 	g_return_val_if_fail (event != NULL, FALSE);
-	if (GTK_WIDGET_DRAWABLE(widget)) {
+	if (gtk_widget_is_drawable(widget)) {
 		spec = SPECTRUM(widget);
 		if (!spec->idlefunc)
 			spec->idlefunc = g_idle_add_full(PRIO, idle_callback, spec, NULL);
@@ -361,10 +375,14 @@ static void draw(Spectrum *spec)
 	GdkPoint pt[SPECTRUM_WIDTH+1];
 	GdkSegment seg[100], *segp;
 	GtkWidget *widget;
+	GtkAllocation allocation;
+	GtkStyle *style;
 
 	widget = GTK_WIDGET(spec);
-	g_return_if_fail(GTK_WIDGET_DRAWABLE(widget));
+	g_return_if_fail(gtk_widget_is_drawable(widget));
 	g_return_if_fail(spec->pixmap);
+	gtk_widget_get_allocation(widget, &allocation);
+	style = gtk_widget_get_style(widget);
 	/* calculate grid segments */
 	for (segp = seg, segcnt = i = 0; i < SPECTRUM_WIDTH; i += SPECTRUM_WIDTH/8) {
 		segp->x1 = segp->x2 = i;
@@ -386,10 +404,10 @@ static void draw(Spectrum *spec)
 		pt[i].y = spec->y[i];
 	}
 	/* clear window */
-	gdk_draw_rectangle(spec->pixmap, widget->style->base_gc[widget->state],
+	gdk_draw_rectangle(spec->pixmap, style->base_gc[gtk_widget_get_state(widget)],
 			   TRUE, 0, 0, 
-			   widget->allocation.width, 
-			   widget->allocation.height);
+			   allocation.width, 
+			   allocation.height);
 	/* draw grid */
 	gdk_draw_segments(spec->pixmap, spec->grid_gc, seg, segcnt);
 	/* draw markers */
@@ -397,12 +415,12 @@ static void draw(Spectrum *spec)
 		      spec->pointer,
 		      0, 
 		      spec->pointer, 
-		      widget->allocation.height-1);
+		      allocation.height-1);
 	/* draw trace */
 	gdk_draw_lines(spec->pixmap, spec->trace_gc, pt, SPECTRUM_WIDTH);
 	/* draw to screen */
-	gdk_draw_drawable(widget->window, widget->style->base_gc[widget->state], spec->pixmap, 
-			  0, 0, 0, 0, widget->allocation.width, widget->allocation.height);
+	gdk_draw_drawable(gtk_widget_get_window(widget), style->base_gc[gtk_widget_get_state(widget)], spec->pixmap, 
+			  0, 0, 0, 0, allocation.width, allocation.height);
 }
 
 
@@ -411,7 +429,7 @@ static gint idle_callback(gpointer data)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(IS_SPECTRUM(data), FALSE);
 	SPECTRUM(data)->idlefunc = 0;
-	if (!GTK_WIDGET_DRAWABLE(GTK_WIDGET(data)))
+	if (!gtk_widget_is_drawable(GTK_WIDGET(data)))
 		return FALSE;
 	draw(SPECTRUM(data));
 	return FALSE;  /* don't call this callback again */
@@ -439,7 +457,7 @@ void spectrum_setdata(Spectrum *spec, short *samples)
 			f = SPECTRUM_HEIGHT-1;
 		spec->y[i] = f;
 	}
-	if (GTK_WIDGET_DRAWABLE(GTK_WIDGET(spec))) {
+	if (gtk_widget_is_drawable(GTK_WIDGET(spec))) {
 		if (!spec->idlefunc)
 			spec->idlefunc = g_idle_add_full(PRIO, idle_callback, spec, NULL);
 	}
@@ -451,7 +469,7 @@ void spectrum_setmarker(Spectrum *spec, int pointer)
 	g_return_if_fail(IS_SPECTRUM(spec));
 	if (pointer >= 0 && pointer < SPECTRUM_WIDTH)
 		spec->pointer = pointer;
-	if (GTK_WIDGET_DRAWABLE(GTK_WIDGET(spec))) {
+	if (gtk_widget_is_drawable(GTK_WIDGET(spec))) {
 		if (!spec->idlefunc)
 			spec->idlefunc = g_idle_add_full(PRIO, idle_callback, spec, NULL);
 	}

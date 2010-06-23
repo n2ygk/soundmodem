@@ -23,6 +23,7 @@
 #endif
 
 #include "scope.h"
+#include "snm-compat-gtk2.h"
 #include <gtk/gtkgc.h>
 #include <gtk/gtkmain.h>
 #include <math.h>
@@ -111,18 +112,22 @@ static void scope_realize(GtkWidget *widget)
 	GdkWindowAttr attributes;
 	gint attributes_mask;
 	GdkGCValues gc_values;
+	GtkAllocation allocation;
+	GdkWindow *window;
+	GtkStyle *style;
 
 	g_return_if_fail(widget != NULL);
 	g_return_if_fail(IS_SCOPE(widget));
 
 	scope = SCOPE(widget);
-	GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
+	gtk_widget_set_realized(widget, TRUE);
+	gtk_widget_get_allocation(widget, &allocation);
 
 	attributes.window_type = GDK_WINDOW_CHILD;
-	attributes.x = widget->allocation.x;
-	attributes.y = widget->allocation.y;
-	attributes.width = widget->allocation.width;
-	attributes.height = widget->allocation.height;
+	attributes.x = allocation.x;
+	attributes.y = allocation.y;
+	attributes.width = allocation.width;
+	attributes.height = allocation.height;
 	attributes.wclass = GDK_INPUT_OUTPUT;
 	attributes.visual = gtk_widget_get_visual(widget);
 	attributes.colormap = gtk_widget_get_colormap(widget);
@@ -130,31 +135,34 @@ static void scope_realize(GtkWidget *widget)
 
 	attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
 
-	widget->window = gdk_window_new(gtk_widget_get_parent_window(widget), &attributes, attributes_mask);
-	gdk_window_set_user_data(widget->window, scope);
+	gtk_widget_set_has_window(widget, TRUE);
+	window = gdk_window_new(gtk_widget_get_parent_window(widget), &attributes, attributes_mask);
+	gtk_widget_set_window(widget, window);
+	gdk_window_set_user_data(window, scope);
 
-	widget->style = gtk_style_attach(widget->style, widget->window);
-	gtk_style_set_background(widget->style, widget->window, GTK_STATE_NORMAL);
+	gtk_widget_style_attach(widget);
+	style = gtk_widget_get_style(widget);
+	gtk_style_set_background(style, window, GTK_STATE_NORMAL);
 
 	/* gc's if necessary */
-	if (!gdk_colormap_alloc_color(widget->style->colormap, &scope->tracecol,
+	if (!gdk_colormap_alloc_color(style->colormap, &scope->tracecol,
 				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  scope->tracecol.red, scope->tracecol.green, scope->tracecol.blue);
 	gc_values.foreground = scope->tracecol;
-	scope->trace_gc = gtk_gc_get(widget->style->depth, 
-				    widget->style->colormap,
+	scope->trace_gc = gtk_gc_get(style->depth, 
+				    style->colormap,
 				    &gc_values, GDK_GC_FOREGROUND);
-	if (!gdk_colormap_alloc_color(widget->style->colormap, &scope->gridcol,
+	if (!gdk_colormap_alloc_color(style->colormap, &scope->gridcol,
 				      FALSE, TRUE))
 		g_warning("unable to allocate color: ( %d %d %d )",
 			  scope->gridcol.red, scope->gridcol.green, scope->gridcol.blue);
 	gc_values.foreground = scope->gridcol;
-	scope->grid_gc = gtk_gc_get(widget->style->depth,
-				   widget->style->colormap,
+	scope->grid_gc = gtk_gc_get(style->depth,
+				   style->colormap,
 				   &gc_values, GDK_GC_FOREGROUND);
 	/* create backing store */
-	scope->pixmap = gdk_pixmap_new(widget->window, SCOPE_WIDTH, SCOPE_HEIGHT, -1);
+	scope->pixmap = gdk_pixmap_new(window, SCOPE_WIDTH, SCOPE_HEIGHT, -1);
 
 	scope_send_configure(SCOPE(widget));
 }
@@ -183,16 +191,19 @@ static void scope_unrealize(GtkWidget *widget)
 
 static void scope_size_allocate(GtkWidget *widget, GtkAllocation *allocation)
 {
+	GtkAllocation alloc;
+
 	g_return_if_fail(widget != NULL);
 	g_return_if_fail(IS_SCOPE(widget));
 	g_return_if_fail(allocation != NULL);
 	
-	widget->allocation = *allocation;
-	widget->allocation.width = SCOPE_WIDTH;
-	widget->allocation.height = SCOPE_HEIGHT;
+	alloc = *allocation;
+	alloc.width = SCOPE_WIDTH;
+	alloc.height = SCOPE_HEIGHT;
+	gtk_widget_set_allocation(widget, &alloc);
 
-	if (GTK_WIDGET_REALIZED(widget)) {
-		gdk_window_move_resize (widget->window,
+	if (gtk_widget_get_realized(widget)) {
+		gdk_window_move_resize (gtk_widget_get_window(widget),
 					allocation->x, allocation->y,
 					allocation->width, allocation->height);
 		scope_send_configure(SCOPE(widget));
@@ -203,16 +214,18 @@ static void scope_send_configure(Scope *scope)
 {
 	GtkWidget *widget;
 	GdkEventConfigure event;
+	GtkAllocation allocation;
 
 	widget = GTK_WIDGET(scope);
+	gtk_widget_get_allocation(widget, &allocation);
 
 	event.type = GDK_CONFIGURE;
-	event.window = widget->window;
+	event.window = gtk_widget_get_window(widget);
 	event.send_event = TRUE;
-	event.x = widget->allocation.x;
-	event.y = widget->allocation.y;
-	event.width = widget->allocation.width;
-	event.height = widget->allocation.height;
+	event.x = allocation.x;
+	event.y = allocation.y;
+	event.width = allocation.width;
+	event.height = allocation.height;
   
 	gtk_widget_event(widget, (GdkEvent*)&event);
 }
@@ -241,7 +254,7 @@ static gint scope_expose(GtkWidget *widget, GdkEventExpose *event)
 	g_return_val_if_fail(widget != NULL, FALSE);
 	g_return_val_if_fail(IS_SCOPE(widget), FALSE);
 	g_return_val_if_fail (event != NULL, FALSE);
-	if (GTK_WIDGET_DRAWABLE(widget)) {
+	if (gtk_widget_is_drawable(widget)) {
 		scope = SCOPE(widget);
 		if (!scope->idlefunc)
 			scope->idlefunc = g_idle_add_full(PRIO, idle_callback, scope, NULL);
@@ -255,10 +268,14 @@ static void draw(Scope *scope)
 	GdkPoint pt[SCOPE_WIDTH+1];
 	GdkSegment seg[100], *segp;
 	GtkWidget *widget;
+	GtkAllocation allocation;
+	GtkStyle *style;
 
 	widget = GTK_WIDGET(scope);
-	g_return_if_fail(GTK_WIDGET_DRAWABLE(widget));
+	g_return_if_fail(gtk_widget_is_drawable(widget));
 	g_return_if_fail(scope->pixmap);
+	gtk_widget_get_allocation(widget, &allocation);
+	style = gtk_widget_get_style(widget);
 	/* calculate grid segments */
 	for (segp = seg, segcnt = i = 0; i < SCOPE_WIDTH; i += SCOPE_WIDTH/8) {
 		segp->x1 = segp->x2 = i;
@@ -278,17 +295,17 @@ static void draw(Scope *scope)
 		pt[i].y = ((32767-(int)scope->y[i])*SCOPE_HEIGHT) >> 16;
 	}
 	/* clear window */
-	gdk_draw_rectangle(scope->pixmap, widget->style->base_gc[widget->state],
+	gdk_draw_rectangle(scope->pixmap, style->base_gc[gtk_widget_get_state(widget)],
 			   TRUE, 0, 0, 
-			   widget->allocation.width, 
-			   widget->allocation.height);
+			   allocation.width, 
+			   allocation.height);
 	/* draw grid */
 	gdk_draw_segments(scope->pixmap, scope->grid_gc, seg, segcnt);
 	/* draw trace */
 	gdk_draw_lines(scope->pixmap, scope->trace_gc, pt, SCOPE_WIDTH);
 	/* draw to screen */
-	gdk_draw_drawable(widget->window, widget->style->base_gc[widget->state], scope->pixmap, 
-			  0, 0, 0, 0, widget->allocation.width, widget->allocation.height);
+	gdk_draw_drawable(gtk_widget_get_window(widget), style->base_gc[gtk_widget_get_state(widget)], scope->pixmap, 
+			  0, 0, 0, 0, allocation.width, allocation.height);
 }
 
 
@@ -297,7 +314,7 @@ static gint idle_callback(gpointer data)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(IS_SCOPE(data), FALSE);
 	SCOPE(data)->idlefunc = 0;
-	if (!GTK_WIDGET_DRAWABLE(GTK_WIDGET(data)))
+	if (!gtk_widget_is_drawable(GTK_WIDGET(data)))
 		return FALSE;
 	draw(SCOPE(data));
 	return FALSE;  /* don't call this callback again */
@@ -308,7 +325,7 @@ void scope_setdata(Scope *scope, short *samples)
 	g_return_if_fail(scope != NULL);
 	g_return_if_fail(IS_SCOPE(scope));
         memcpy(scope->y, samples, sizeof(scope->y));
-	if (GTK_WIDGET_DRAWABLE(GTK_WIDGET(scope))) {
+	if (gtk_widget_is_drawable(GTK_WIDGET(scope))) {
 		if (!scope->idlefunc)
 			scope->idlefunc = g_idle_add_full(PRIO, idle_callback, scope, NULL);
 	}

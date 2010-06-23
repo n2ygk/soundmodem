@@ -246,7 +246,7 @@ static GtkWidget *create_paramwidget(const struct modemparams *par, const char *
 			if (nval > par2->u.n.max)
 				nval = par2->u.n.max;
 			o1 = gtk_adjustment_new(nval, par2->u.n.min, par2->u.n.max, par2->u.n.step, 
-						par2->u.n.pagestep, par2->u.n.pagestep);
+						par2->u.n.pagestep, 0);
 			w1 = gtk_spin_button_new(GTK_ADJUSTMENT(o1), par2->u.n.step, 0);
 			break;
 

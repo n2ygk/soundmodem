@@ -805,8 +805,8 @@ void on_diagp3dmodem_activate(GtkMenuItem *menuitem, gpointer user_data)
 void on_diagpassall_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	GtkCheckMenuItem *citem = GTK_CHECK_MENU_ITEM(menuitem);
-	printf("passall: %u\n", citem->active);
-	diagstate.hrx.passall = citem->active;
+	printf("passall: %u\n", gtk_check_menu_item_get_active(citem));
+	diagstate.hrx.passall = gtk_check_menu_item_get_active(citem);
 }
 
 /* ---------------------------------------------------------------------- */

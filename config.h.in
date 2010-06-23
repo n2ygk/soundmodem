@@ -49,8 +49,50 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
+/* Define to 1 if you have the `gtk_dialog_get_action_area' function. */
+#undef HAVE_GTK_DIALOG_GET_ACTION_AREA
+
+/* Define to 1 if you have the `gtk_dialog_get_content_area' function. */
+#undef HAVE_GTK_DIALOG_GET_CONTENT_AREA
+
+/* Define to 1 if you have the `gtk_widget_get_allocation' function. */
+#undef HAVE_GTK_WIDGET_GET_ALLOCATION
+
+/* Define to 1 if you have the `gtk_widget_get_realized' function. */
+#undef HAVE_GTK_WIDGET_GET_REALIZED
+
+/* Define to 1 if you have the `gtk_widget_get_state' function. */
+#undef HAVE_GTK_WIDGET_GET_STATE
+
+/* Define to 1 if you have the `gtk_widget_get_window' function. */
+#undef HAVE_GTK_WIDGET_GET_WINDOW
+
+/* Define to 1 if you have the `gtk_widget_is_drawable' function. */
+#undef HAVE_GTK_WIDGET_IS_DRAWABLE
+
+/* Define to 1 if you have the `gtk_widget_set_allocation' function. */
+#undef HAVE_GTK_WIDGET_SET_ALLOCATION
+
+/* Define to 1 if you have the `gtk_widget_set_can_default' function. */
+#undef HAVE_GTK_WIDGET_SET_CAN_DEFAULT
+
+/* Define to 1 if you have the `gtk_widget_set_can_focus' function. */
+#undef HAVE_GTK_WIDGET_SET_CAN_FOCUS
+
+/* Define to 1 if you have the `gtk_widget_set_has_window' function. */
+#undef HAVE_GTK_WIDGET_SET_HAS_WINDOW
+
+/* Define to 1 if you have the `gtk_widget_set_realized' function. */
+#undef HAVE_GTK_WIDGET_SET_REALIZED
+
 /* Define to 1 if you have the `gtk_widget_set_tooltip_text' function. */
 #undef HAVE_GTK_WIDGET_SET_TOOLTIP_TEXT
+
+/* Define to 1 if you have the `gtk_widget_set_window' function. */
+#undef HAVE_GTK_WIDGET_SET_WINDOW
+
+/* Define to 1 if you have the `gtk_widget_style_attach' function. */
+#undef HAVE_GTK_WIDGET_STYLE_ATTACH
 
 /* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
@@ -213,6 +255,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

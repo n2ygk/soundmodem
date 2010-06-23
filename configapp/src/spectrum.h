@@ -22,7 +22,7 @@
 #define __SPECTRUM_H__
 
 #include <gdk/gdk.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 #ifdef __cplusplus
 extern "C" {

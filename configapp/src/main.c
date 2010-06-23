@@ -588,15 +588,11 @@ int main (int argc, char *argv[])
                         g_printerr("Cannot load monospace\n");
                 } else {
                         w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "packetraw"));
-                        st = gtk_style_copy(w->style);
-                        g_object_unref(w->style);
+                        st = gtk_style_copy(gtk_widget_get_style(w));
                         st->font_desc = font_desc;
-                        g_object_ref(st);
-                        w->style = st;
+                        gtk_widget_set_style(w, st);
                         w = GTK_WIDGET(g_object_get_data(G_OBJECT(p3dwindow), "packetcooked"));
-                        g_object_unref(w->style);
-                        g_object_ref(st);
-                        w->style = st;
+                        gtk_widget_set_style(w, st);
                 }
 	}
 
