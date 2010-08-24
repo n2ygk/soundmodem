@@ -3,7 +3,7 @@
 /*
  *      main.c  --  Soundmodem main.
  *
- *      Copyright (C) 1999-2001, 2003
+ *      Copyright (C) 1999-2001, 2003, 2010
  *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -151,6 +151,8 @@ static void parsechannel(xmlDocPtr doc, xmlNodePtr node, struct state *state, un
 	unsigned int sr, ismkiss = 0;
 
 	for (; node; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE) 
+			continue; 
 		if (!node->name)
 			logprintf(MLOG_FATAL, "Node has no name\n");
 		if (!strcmp(node->name, "pkt")) {
@@ -233,6 +235,8 @@ static int parsecfg(xmlDocPtr doc, xmlNodePtr node, struct state *state, unsigne
 	unsigned int samplerate = 5000, mode;
 
 	for (; node; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE) 
+			continue; 
 		if (!node->name)
 			logprintf(MLOG_FATAL, "Node has no name\n");
 		if (!strcmp(node->name, "audio")) {
