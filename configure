@@ -2909,7 +2909,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=soundmodem
- VERSION=0.15
+ VERSION=0.16
 
 
 cat >>confdefs.h <<_ACEOF

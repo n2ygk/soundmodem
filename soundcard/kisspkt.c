@@ -634,6 +634,7 @@ static void waitfortx(struct state *state)
 	unsigned int nr;
 
 	while (!terminate) {
+		int tmo = -1;
 		nr = 0;
 		for (chan = state->channels; chan; chan = chan->next) {
 			if (!chan->mod || !state->audioio->write)
@@ -643,15 +644,19 @@ static void waitfortx(struct state *state)
 			kiss_input(chan);
 			if (chan->pkt.htx.rd != chan->pkt.htx.wr)
 				return;
+			if (1 && chan->pkt.kiss.ioerr) {
+				tmo = 10;
+				continue;
+			}
 			if (nr >= NRPFD)
 				logprintf(MLOG_FATAL, "pkttransmitloop: too many transmitters\n");
 			pfd[nr].events = chan->pkt.kiss.ioerr ? POLLERR : POLLIN;
 			pfd[nr].fd = chan->pkt.kiss.fd;
 			nr++;
 		}
-		if (!nr)
+		if (!nr && tmo == -1)
 			return;
-		if (poll(pfd, nr, -1) < 0)
+		if (poll(pfd, nr, tmo) < 0)
 			logerr(MLOG_FATAL, "KISS: poll\n");
 	}
 }
