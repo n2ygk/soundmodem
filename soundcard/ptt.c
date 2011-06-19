@@ -42,6 +42,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <stdio.h> 
+
+
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
@@ -58,15 +61,19 @@
 # include <strings.h>
 #endif
 
-/* ---------------------------------------------------------------------- */
+/* Support for CM108 GPIO control of PTT by Andrew Errington ZL3AME May 2011 */
 
+/* ---------------------------------------------------------------------- */
 struct modemparams pttparams[] = {
-	{ "file", "PTT Driver", "Path name of the serial or parallel port driver for outputting PTT", "none", MODEMPAR_COMBO, 
-	  { c: { { "none", "/dev/ttyS0", "/dev/ttyS1", "/dev/parport0", "/dev/parport1" } } } },
+	{ "file", "PTT Driver", "Path name of the serial, parallel or USB HID port for outputting PTT", "none", MODEMPAR_COMBO, 
+	  { c: { { "none", "/dev/ttyS0", "/dev/ttyS1", "/dev/parport0", "/dev/parport1","/dev/hidraw0","/dev/hidraw1" } } } },
+	{ "gpio", "GPIO", "GPIO bit number on CM108 or compatible USB sound card","0",MODEMPAR_COMBO,
+	{ c: {{ "0","1","2","3","4","5","6","7"}}}},
 #ifdef HAVE_LIBHAMLIB
 	{ "hamlib_model", "Hamlib model", "Model number", "", MODEMPAR_STRING }, 
 	{ "hamlib_params", "Rig configuration params", "Rig configuration params", "", MODEMPAR_STRING },
 #endif
+
 	{ NULL }
 };
 
@@ -75,18 +82,22 @@ struct modemparams pttparams[] = {
 int pttinit(struct pttio *state, const char *params[])
 {
 	const char *path = params[0];
+	const char *gpio_pin = params[1];
 	int fd;
 	unsigned char x;
 	unsigned int y = 0;
+
+	state->gpio = strtoul(gpio_pin, NULL, 0); 
+	logprintf(MLOG_INFO, "pttinit gpio bit number %d\n", state->gpio  );
 
 	state->mode = noport;
 	if (!path || !path[0] || !strcasecmp(path, "none"))
 		return 0;
 #ifdef HAVE_LIBHAMLIB
-	const char *hamlib_model = params[1];
+	const char *hamlib_model = params[2];
 	if (hamlib_model && hamlib_model[0]) {
 		int my_rig_error = ~RIG_OK;
-		char *hamlib_params = params[2] ? strdup(params[2]) : NULL;
+		char *hamlib_params = params[3] ? strdup(params[3]) : NULL;
 		int rig_modl ;
 		char *ptr_key = hamlib_params;
 
@@ -144,6 +155,7 @@ int pttinit(struct pttio *state, const char *params[])
 	}
 #endif
 
+	logprintf(MLOG_INFO, "Opening PTT device \"%s\"\n", path);
 	if ((fd = open(path, O_RDWR, 0)) < 0) {
 		logprintf(MLOG_ERROR, "Cannot open PTT device \"%s\"\n", path);
 		return -1;
@@ -154,8 +166,13 @@ int pttinit(struct pttio *state, const char *params[])
 	} else if (!ioctl(fd, PPCLAIM, 0) && !ioctl(fd, PPRDATA, &x)) {
 		state->u.fd = fd;
 		state->mode = parport;
+	} else if (-1) {
+		/* fixme: we are forcing this state for now.  We should check the validity of the CM108 device. */
+		logprintf(MLOG_INFO, "Forcing CM108 device without checking\n");
+		state->u.fd = fd;
+		state->mode = cm108;
 	} else {
-		logprintf(MLOG_ERROR, "Device \"%s\" neither parport nor serport\n", path);
+		logprintf(MLOG_ERROR, "Device \"%s\" neither parport nor serport nor CM108\n", path);
 		close(fd);
 		return -1;
 	}
@@ -167,6 +184,36 @@ int pttinit(struct pttio *state, const char *params[])
 void pttsetptt(struct pttio *state, int pttx)
 {
 	unsigned char reg;
+
+	logprintf(MLOG_INFO, "pttsetptt gpio=%d\n", state->gpio);
+
+	// Build two packets for CM108 HID.  One turns a GPIO bit on.  The other turns it off.
+	// Packet is 4 bytes, preceded by a 'report number' byte
+	// 0x00 report number
+	// Write data packet (from CM108 documentation)
+	// byte 0: 00xx xxxx     Write GPIO
+	// byte 1: xxxx dcba     GPIO3-0 output values (1=high)
+	// byte 2: xxxx dcba     GPIO3-0 data-direction register (1=output)
+	// byte 3: xxxx xxxx     SPDIF
+
+	char out_1_rep[] = { 
+		0x00, // report number
+		// HID output report
+		0x00,
+		1 << (state->gpio), // set GPIO to 1
+		1 << (state->gpio), // Data direction register (1=output)
+		0x00
+	};
+	char out_0_rep[] = {
+		0x00, // report number
+		// HID output report
+		0x00,
+		0x00, // set all GPIO to 0
+		1 << (state->gpio), // Data direction register (1=output)
+		0x00
+	};
+
+	ssize_t nw;
 
 	if (!state)
 		return;
@@ -220,6 +267,25 @@ void pttsetptt(struct pttio *state, int pttx)
 		return;
 	}
 
+	case cm108:
+	{
+		if (state->u.fd == -1)
+			return;
+		/* Can't do anything with DCD */
+		logprintf(MLOG_INFO, "sm_CM108: pttsetptt state=%d\n", state->ptt);
+		if (state->ptt) {
+			nw = write(state->u.fd, out_1_rep, sizeof(out_1_rep));
+		}
+		else {
+			nw = write(state->u.fd, out_0_rep, sizeof(out_0_rep));
+		}
+		if ( nw < 0 ) {
+			logprintf(MLOG_ERROR, "sm_CM108: write error\n");
+		}
+		return;
+	}
+
+
 	default:
 		return;
 	}
@@ -267,6 +333,12 @@ void pttsetdcd(struct pttio *state, int dcd)
 		return;
 	}
 
+	case cm108:
+	{
+		/* For CM108 it does not make sense to set DCD */
+		return;
+	}
+
 	default:
 		return;
 	}
@@ -300,6 +372,12 @@ void pttrelease(struct pttio *state)
 	case parport:
 		close(state->u.fd);
 		break;
+
+	case cm108:
+		close(state->u.fd);
+		logprintf(MLOG_INFO, "sm_CM108: pttrelease\n");
+		break;
+
 
 	default:
 		break;

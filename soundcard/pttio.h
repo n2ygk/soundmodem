@@ -54,9 +54,10 @@ struct pttio {
 #endif
 
 struct pttio {
-	enum { noport, serport, parport, hamlibport } mode;
+	enum { noport, serport, parport, hamlibport, cm108 } mode;
 	unsigned int ptt;
 	unsigned int dcd;
+	unsigned int gpio;
 	
 	union {
 		int fd;
