@@ -180,8 +180,24 @@ int pttinit(struct pttio *state, const char *params[])
 		state->u.fd = fd;
 		state->mode = parport;
 #ifdef HAVE_LINUX_HIDRAW_H
-	} else if (!ioctl(fd, HIDIOCGRAWINFO, &hiddevinfo) && hiddevinfo.vendor == 0x0d8c
-		   && hiddevinfo.product >= 0x0008 && hiddevinfo.product <= 0x000f) {
+	} else if
+		(!ioctl(fd, HIDIOCGRAWINFO, &hiddevinfo)
+		&&	
+		  (
+		    (hiddevinfo.vendor == 0x0d8c	// CM108/109/119
+			&& hiddevinfo.product >= 0x0008
+			&& hiddevinfo.product <= 0x000f
+		    )
+		    ||
+		    (hiddevinfo.vendor == 0x0c76 &&	// SSS1621/23
+			(hiddevinfo.product == 0x1605 ||
+			hiddevinfo.product == 0x1607 ||
+			hiddevinfo.product == 0x160b)
+		    )
+		  )
+		)
+
+	{
 		state->u.fd = fd;
 		state->mode = cm108;
 		state->gpio = strtoul(gpio_pin, NULL, 0); 
