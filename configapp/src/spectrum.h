@@ -67,7 +67,7 @@ struct _SpectrumClass
 };
 
 
-guint spectrum_get_type(void);
+GType spectrum_get_type(void);
 GtkWidget* spectrum_new(const char *name, void *dummy0, void *dummy1, unsigned int dummy2, unsigned int dummy3);
 void spectrum_setdata(Spectrum *spec, short *samples);
 void spectrum_setmarker(Spectrum *spec, int pointer);

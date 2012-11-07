@@ -137,11 +137,11 @@ static GtkWidgetClass *parent_class = NULL;
 static SpectrumClass *spectrum_class = NULL;
 
 
-guint spectrum_get_type(void)
+GType spectrum_get_type(void)
 {
-	static guint spectrum_type = 0;
+	static GType spectrum_type = 0;
 
-	if (!spectrum_type)
+	if (spectrum_type==0)
 	{
 		static const GTypeInfo spectrum_info =
 		{

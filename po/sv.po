@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: soundmodem 0.9-2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-04 17:31+0200\n"
+"POT-Creation-Date: 2012-11-07 11:48+0100\n"
 "PO-Revision-Date: 2006-02-02 23:11+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -39,179 +40,179 @@ msgstr "Demodulator"
 msgid "Packet IO"
 msgstr "Paket In/Ut"
 
-#: configapp/src/interface.c:72 configapp/src/interface.c:338
+#: configapp/src/interface.c:73 configapp/src/interface.c:339
 msgid "SoundModem Configurator"
 msgstr "Konfiguratör för SoundModem"
 
-#: configapp/src/interface.c:87
+#: configapp/src/interface.c:88
 msgid "File"
 msgstr "Arkiv"
 
-#: configapp/src/interface.c:94
+#: configapp/src/interface.c:95
 msgid "New"
 msgstr "Ny"
 
-#: configapp/src/interface.c:101 configapp/src/interface.c:116
+#: configapp/src/interface.c:102 configapp/src/interface.c:117
 msgid "Configuration"
 msgstr "Konfiguration"
 
-#: configapp/src/interface.c:105 configapp/src/interface.c:120
+#: configapp/src/interface.c:106 configapp/src/interface.c:121
 msgid "Channel"
 msgstr "Kanal"
 
-#: configapp/src/interface.c:109
+#: configapp/src/interface.c:110
 msgid "Delete"
 msgstr "Ta bort"
 
-#: configapp/src/interface.c:129
+#: configapp/src/interface.c:130
 msgid "Quit"
 msgstr "Avsluta"
 
-#: configapp/src/interface.c:133
+#: configapp/src/interface.c:134
 msgid "Diagnostics"
 msgstr "Diagnostik"
 
-#: configapp/src/interface.c:140 configapp/src/interface.c:647
-#: configapp/src/interface.c:706
+#: configapp/src/interface.c:141 configapp/src/interface.c:648
+#: configapp/src/interface.c:707
 msgid "Scope"
 msgstr "Scope"
 
-#: configapp/src/interface.c:144 configapp/src/interface.c:596
+#: configapp/src/interface.c:145 configapp/src/interface.c:597
 msgid "Spectrum"
 msgstr "Spektrum"
 
-#: configapp/src/interface.c:148
+#: configapp/src/interface.c:149
 msgid "Modem"
 msgstr "Modem"
 
-#: configapp/src/interface.c:152
+#: configapp/src/interface.c:153
 msgid "AO-40 P3D Modem"
 msgstr "AO-40 P3D Modem"
 
-#: configapp/src/interface.c:156
+#: configapp/src/interface.c:157
 msgid "PASSALL (do not check CRC)"
 msgstr "PASSALL (kontrollera inte CRC)"
 
-#: configapp/src/interface.c:160
+#: configapp/src/interface.c:161
 msgid "Help"
 msgstr "Hjälp"
 
-#: configapp/src/interface.c:167
+#: configapp/src/interface.c:168
 msgid "About"
 msgstr "Om"
 
-#: configapp/src/interface.c:312
+#: configapp/src/interface.c:313
 msgid "About SoundModem Configurator"
 msgstr "Om Konfiguratör för SoundModem"
 
-#: configapp/src/interface.c:328
+#: configapp/src/interface.c:329
 msgid "Copyright 2000"
 msgstr "Copyright 2000"
 
-#: configapp/src/interface.c:333
+#: configapp/src/interface.c:334
 msgid "Thomas Sailer"
 msgstr "Thomas Sailer"
 
-#: configapp/src/interface.c:351
+#: configapp/src/interface.c:352
 msgid "Ok"
 msgstr "Ok"
 
-#: configapp/src/interface.c:388
+#: configapp/src/interface.c:389
 msgid "New Configuration"
 msgstr "Ny konfiguration"
 
-#: configapp/src/interface.c:398
+#: configapp/src/interface.c:399
 msgid "Configuration Name"
 msgstr "Konfigurationsnamn"
 
-#: configapp/src/interface.c:418
+#: configapp/src/interface.c:419
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: configapp/src/interface.c:426 configapp/src/interface.c:487
+#: configapp/src/interface.c:427 configapp/src/interface.c:488
 msgid "OK"
 msgstr "OK"
 
-#: configapp/src/interface.c:464 configapp/src/interface.c:471
+#: configapp/src/interface.c:465 configapp/src/interface.c:472
 msgid "Error"
 msgstr "Fel"
 
-#: configapp/src/interface.c:527
+#: configapp/src/interface.c:528
 msgid "Spectrum Display"
 msgstr "Visa spektrum"
 
-#: configapp/src/interface.c:538
+#: configapp/src/interface.c:539
 msgid "Pointer"
 msgstr "Pekare"
 
-#: configapp/src/interface.c:555 configapp/src/interface.c:560
-#: configapp/src/interface.c:667 configapp/src/interface.c:671
-#: configapp/src/interface.c:827 configapp/src/interface.c:831
+#: configapp/src/interface.c:556 configapp/src/interface.c:561
+#: configapp/src/interface.c:668 configapp/src/interface.c:672
+#: configapp/src/interface.c:828 configapp/src/interface.c:832
 msgid "PTT"
 msgstr "PTT"
 
-#: configapp/src/interface.c:572 configapp/src/interface.c:683
-#: configapp/src/interface.c:843
+#: configapp/src/interface.c:573 configapp/src/interface.c:684
+#: configapp/src/interface.c:844
 msgid "DCD"
 msgstr "DCD"
 
-#: configapp/src/interface.c:658
+#: configapp/src/interface.c:659
 msgid "Freeze when not DCD"
 msgstr "Frys när inte DCD"
 
-#: configapp/src/interface.c:768
+#: configapp/src/interface.c:769
 msgid "Receive Packets/Bits"
 msgstr "Mottagna paket/bitar"
 
-#: configapp/src/interface.c:779
+#: configapp/src/interface.c:780
 msgid "Clear Count"
 msgstr "Nollställ räknare"
 
-#: configapp/src/interface.c:783
+#: configapp/src/interface.c:784
 msgid "Zeros"
 msgstr "Nollor"
 
-#: configapp/src/interface.c:796
+#: configapp/src/interface.c:797
 msgid "Ones"
 msgstr "Ettor"
 
-#: configapp/src/interface.c:809
+#: configapp/src/interface.c:810
 msgid "Total"
 msgstr "Totalt"
 
-#: configapp/src/interface.c:878
+#: configapp/src/interface.c:879
 msgid "Received Packets"
 msgstr "Mottagna paket"
 
-#: configapp/src/interface.c:900
+#: configapp/src/interface.c:901
 msgid "Received Bits"
 msgstr "Mottagna bitar"
 
-#: configapp/src/interface.c:967
+#: configapp/src/interface.c:968
 msgid "AO-40 Phase 3D Receive Window"
 msgstr "Mottagningsfönster AO-40 Phase 3D"
 
-#: configapp/src/interface.c:978
+#: configapp/src/interface.c:979
 msgid "Receiver Status"
 msgstr "Mottagningsstatus"
 
-#: configapp/src/interface.c:991
+#: configapp/src/interface.c:992
 msgid "Carrier Frequency"
 msgstr "Bärarfrekvens"
 
-#: configapp/src/interface.c:1004
+#: configapp/src/interface.c:1005
 msgid "Hz"
 msgstr "Hz"
 
-#: configapp/src/interface.c:1009
+#: configapp/src/interface.c:1010
 msgid "Decode All Packets (Faulty CRC)"
 msgstr "Avkoda alla paket (felaktig CRC)"
 
-#: configapp/src/interface.c:1036
+#: configapp/src/interface.c:1037
 msgid "Received Decoded Packets"
 msgstr "Mottagna avkodade paket"
 
-#: configapp/src/interface.c:1058
+#: configapp/src/interface.c:1059
 msgid "Received Raw Packets"
 msgstr "Mottagna råpaket"
 

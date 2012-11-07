@@ -54,6 +54,9 @@
 
 #ifdef HAVE_LINUX_PPDEV_H
 #include <linux/ppdev.h>
+#elif defined(__FreeBSD__)
+#include <dev/ppbus/ppi.h>
+#include <dev/ppbus/ppbconf.h>
 #else
 #include "ppdev.h"
 #endif
@@ -71,7 +74,11 @@
 /* ---------------------------------------------------------------------- */
 struct modemparams pttparams[] = {
 	{ "file", "PTT Driver", "Path name of the serial, parallel or USB HID port for outputting PTT", "none", MODEMPAR_COMBO, 
+#ifdef __FreeBSD__
+	  { c: { { "none", "/dev/ttyu0", "/dev/ttyu1", "/dev/ppi0", "/dev/ppi1","/dev/hidraw0","/dev/hidraw1" } } } },
+#else
 	  { c: { { "none", "/dev/ttyS0", "/dev/ttyS1", "/dev/parport0", "/dev/parport1","/dev/hidraw0","/dev/hidraw1" } } } },
+#endif
 #ifdef HAVE_LINUX_HIDRAW_H
 	{ "gpio", "GPIO", "GPIO bit number on CM108 or compatible USB sound card", "0", MODEMPAR_COMBO,
 	{ c: {{ "0","1","2","3","4","5","6","7"}}}},
@@ -176,7 +183,11 @@ int pttinit(struct pttio *state, const char *params[])
 	if (!ioctl(fd, TIOCMBIC, &y)) {
 		state->u.fd = fd;
 		state->mode = serport;
+#ifdef __FreeBSD__
+	} else if (!ioctl(fd, PPISDATA, &x)) {
+#else
 	} else if (!ioctl(fd, PPCLAIM, 0) && !ioctl(fd, PPRDATA, &x)) {
+#endif
 		state->u.fd = fd;
 		state->mode = parport;
 #ifdef HAVE_LINUX_HIDRAW_H
@@ -265,7 +276,11 @@ void pttsetptt(struct pttio *state, int pttx)
 		if (state->u.fd == -1)
 			return;
 		reg = state->ptt | (state->dcd << 1);
+#ifdef __FreeBSD__
+		ioctl(state->u.fd, PPISDATA, &reg);
+#else
 		ioctl(state->u.fd, PPWDATA, &reg);
+#endif
 		return;
 	}
 
@@ -347,7 +362,11 @@ void pttsetdcd(struct pttio *state, int dcd)
 		if (state->u.fd == -1)
 			return;
 		reg = state->ptt | (state->dcd << 1);
+#ifdef __FreeBSD__
+		ioctl(state->u.fd, PPISDATA, &reg);
+#else
 		ioctl(state->u.fd, PPWDATA, &reg);
+#endif
 		return;
 	}
 

@@ -62,7 +62,7 @@ struct _ScopeClass
 };
 
 
-guint scope_get_type(void);
+GType scope_get_type(void);
 GtkWidget* scope_new(const char *name, void *dummy0, void *dummy1, unsigned int dummy2, unsigned int dummy3);
 void scope_setdata(Scope *scope, short *samples);
 

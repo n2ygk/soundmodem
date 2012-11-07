@@ -48,9 +48,9 @@ static GtkWidgetClass *parent_class = NULL;
 static ScopeClass *scope_class = NULL;
 
 
-guint scope_get_type(void)
+GType scope_get_type(void)
 {
-	static guint scope_type = 0;
+	static GType scope_type = 0;
 
 	if (!scope_type)
 	{
