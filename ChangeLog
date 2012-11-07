@@ -1,3 +1,7 @@
+2012-11-07  Thomas Sailer  <t.sailer@alumni.ethz.ch>
+
+	* Applied patchset from Diane Bruce VA3DB (FreeBSD fixes)
+
 2011-06-18  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* Makefile.am (ACLOCAL_AMFLAGS): New variable.
@@ -9,7 +13,7 @@
 	(ACLOCAL_AMFLAGS): New variable.
 	(EXTRA_DIST): Add m4/ChangeLog.
 
-2000-07-29  Thomas Sailer  <sailer@playstation.ampr.org>
+2000-07-29  Thomas Sailer  <t.sailer@alumni.ethz.ch>
 
 	* Initial release
 
