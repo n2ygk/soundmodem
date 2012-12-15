@@ -473,7 +473,7 @@ static inline void update_display_p3d(void)
                                         cp += sprintf(cp, "%c", diagstate.p3d.packet[i+j]);
                         }
                 }
-                cp += sprintf(cp, "\n%04x: %02x %02x%44s", 512, diagstate.p3d.packet[512], diagstate.p3d.packet[514], " ");
+                cp += sprintf(cp, "\n%04x: %02x %02x%44s", 512, diagstate.p3d.packet[512], diagstate.p3d.packet[513], " ");
                 for (i = 512; i < 514; i++) {
                         if (diagstate.p3d.packet[i] < ' ' || diagstate.p3d.packet[i] >= 0x80)
                                 cp += sprintf(cp, ".");
