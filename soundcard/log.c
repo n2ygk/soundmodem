@@ -84,7 +84,7 @@ void logvprintf(unsigned int level, const char *fmt, va_list args)
 		if (tosyslog) {
 			char tmp[512];
 			vsnprintf(tmp, sizeof(tmp), fmt, args);
-			syslog((level >= 256) ? LOG_DEBUG : (level >= 4) ? LOG_INFO : vltosev[level], tmp);
+			syslog((level >= 256) ? LOG_DEBUG : (level >= 4) ? LOG_INFO : vltosev[level], "%s", tmp);
 		} else
 #endif
 		{
