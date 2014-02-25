@@ -1,6 +1,6 @@
 EXTRA_DIST = soundmodem.c soundmodem.rc driver.c drv32.h driver.obj flexdriv.def flexdrv.h resource.h
 
-INCLUDES = -I$(top_srcdir)/intl -I$(top_srcdir) -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
+AM_CPPFLAGS = -I$(top_srcdir)/intl -I$(top_srcdir) -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
 	-I$(top_srcdir)/soundcard -I$(top_srcdir)/directx/include -I$(top_srcdir)/directx/include/directx6 \
 	@PTHREAD_CFLAGS@
 

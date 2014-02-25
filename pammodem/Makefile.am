@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/soundcard -I$(top_srcdir)/libmisc -I$(top_srcdir)/matlib
+AM_CPPFLAGS = -I$(top_srcdir)/soundcard -I$(top_srcdir)/libmisc -I$(top_srcdir)/matlib
 
 noinst_LIBRARIES = libpam.a
 #dnl sbin_PROGRAMS

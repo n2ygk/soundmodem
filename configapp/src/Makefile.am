@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = @GTK_CFLAGS@ @XML_CFLAGS@ -I$(top_srcdir)/intl -I$(top_srcdir) -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
+AM_CPPFLAGS = @GTK_CFLAGS@ @XML_CFLAGS@ -I$(top_srcdir)/intl -I$(top_srcdir) -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
 	-I$(top_srcdir)/soundcard -I$(top_srcdir)/directx/include -I$(top_srcdir)/directx/include/directx6 \
 	-I$(top_srcdir)/configapp
 

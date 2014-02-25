@@ -87,14 +87,87 @@ struct modemparams pttparams[] = {
 	{ "hamlib_model", "Hamlib model", "Model number", "", MODEMPAR_STRING }, 
 	{ "hamlib_params", "Rig configuration params", "Rig configuration params", "", MODEMPAR_STRING },
 #endif
-
 	{ NULL }
 };
 
 /* ---------------------------------------------------------------------- */
 
+static int pttinit_sysfsgpio(struct pttio *state, const char *path)
+{
+	char *gpioptr = strrchr(path, '/');
+	unsigned int pin = 0;
+	char *pathendptr(0);
+	int fd;
+	if (!gpioptr)
+		return -1;
+	++gpioptr;
+	if (strncmp(gpioptr, "gpio", 4))
+		return -1;
+	pin = strtoul(gpioptr + 4, &pathendptr, 10);
+	if (pathendptr == gpioptr + 4 || *pathendptr)
+		return -1;
+	/* export */
+	{
+		unsigned int blen(gpioptr + 7 - path);
+		char buf[blen];
+		char buf2[16];
+		int b2len;
+		strncpy(buf, path, gpioptr - path);
+		strcpy(buf + (gpioptr - path), "export");
+		fd = open(buf, O_WRONLY);
+		if (fd < 0)
+			return -1;
+		b2len = snprintf(buf2, sizeof(buf2), "%u", pin);
+		if (write(fd, buf2, b2len) != b2len) {
+			close(fd);
+			return -1;
+		}
+		close(fd);
+	}
+	{
+		unsigned int blen(pathendptr + 11 - path);
+		char buf[blen];
+		strncpy(buf, path, pathendptr - path);
+		strcpy(buf + (pathendptr - path), "/direction");
+		fd = open(buf, O_WRONLY);
+		if (fd >= 0) {
+			write(fd, "low", 3);
+			close(fd);
+		}
+	}
+	{
+		unsigned int blen(pathendptr + 7 - path);
+		char buf[blen];
+		strncpy(buf, path, pathendptr - path);
+		strcpy(buf + (pathendptr - path), "/value");
+		fd = open(buf, O_WRONLY);
+		if (fd < 0)
+			return -1;
+		if (write(fd, "0", 1) != 1) {
+			close(fd);
+			return -1;
+		}
+	}
+	state->mode = sysfsgpio;
+	state->gpio = pin;
+	state->u.fd = fd;
+	return 0;
+}
+
+/* ---------------------------------------------------------------------- */
+
 int pttinit(struct pttio *state, const char *params[])
 {
+#ifdef HAVE_LINUX_HIDRAW_H
+#define CM108GPIOPARAMS 1
+#else
+#define CM108GPIOPARAMS 0
+#endif
+#ifdef HAVE_LIBHAMLIB
+#define HAMLIBPARAMS 2
+#else
+#define HAMLIBPARAMS 0
+#endif
 	const char *path = params[0];
 	int fd;
 	unsigned char x;
@@ -102,17 +175,13 @@ int pttinit(struct pttio *state, const char *params[])
 #ifdef HAVE_LINUX_HIDRAW_H
 	struct hidraw_devinfo hiddevinfo;
 	const char *gpio_pin = params[1];
-#define PAR_HAMLIBMODEL  2
-#define PAR_HAMLIBPARAMS 3
-#else
-#define PAR_HAMLIBMODEL  1
-#define PAR_HAMLIBPARAMS 2
 #endif
-
 	state->mode = noport;
 	state->gpio = 0;
 	if (!path || !path[0] || !strcasecmp(path, "none"))
 		return 0;
+#define PAR_HAMLIBMODEL  (1+CM108GPIOPARAMS)
+#define PAR_HAMLIBPARAMS (2+CM108GPIOPARAMS)
 #ifdef HAVE_LIBHAMLIB
 	const char *hamlib_model = params[PAR_HAMLIBMODEL];
 	if (hamlib_model && hamlib_model[0]) {
@@ -174,7 +243,12 @@ int pttinit(struct pttio *state, const char *params[])
         	return my_rig_error == RIG_OK ? 0 : -1 ;
 	}
 #endif
-
+	/* check for sysfs gpio path */
+	if (!pttinit_sysfsgpio(state, path)) {
+		pttsetptt(state, 0);
+		pttsetdcd(state, 0);
+		return 0;
+	}
 	logprintf(MLOG_INFO, "Opening PTT device \"%s\"\n", path);
 	if ((fd = open(path, O_RDWR, 0)) < 0) {
 		logprintf(MLOG_ERROR, "Cannot open PTT device \"%s\"\n", path);
@@ -215,7 +289,7 @@ int pttinit(struct pttio *state, const char *params[])
 		logprintf(MLOG_INFO, "pttinit gpio bit number %d\n", state->gpio);
 #endif
 	} else {
-		logprintf(MLOG_ERROR, "Device \"%s\" neither parport nor serport nor CM108\n", path);
+		logprintf(MLOG_ERROR, "Device \"%s\" neither parport nor serport nor CM108 nor a sysfs gpio path\n", path);
 		close(fd);
 		return -1;
 	}
@@ -318,6 +392,10 @@ void pttsetptt(struct pttio *state, int pttx)
 		return;
 	}
 #endif
+
+	case sysfsgpio:
+		write(state->u.fd, state->ptt ? "1" : "0", 1);
+		return;
 
 	default:
 		return;

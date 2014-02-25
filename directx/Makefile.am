@@ -1,5 +1,5 @@
 
-INCLUDES = -DCONFIGDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" \
+AM_CPPFLAGS = -DCONFIGDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" \
 	-I$(top_srcdir)/directx/include -I$(top_srcdir)/directx/include/directx6
 
 if DIRECTX

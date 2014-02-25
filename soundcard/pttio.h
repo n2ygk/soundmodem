@@ -3,7 +3,7 @@
 /*
  *      pttio.h  --  Internal PTT input/output data structures and routines.
  *
- *      Copyright (C) 2000
+ *      Copyright (C) 2000, 2014
  *        Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ struct pttio {
 #endif
 
 struct pttio {
-	enum { noport, serport, parport, hamlibport, cm108 } mode;
+	enum { noport, serport, parport, hamlibport, cm108, sysfsgpio } mode;
 	unsigned int ptt;
 	unsigned int dcd;
 	unsigned int gpio;

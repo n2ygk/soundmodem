@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/soundcard
+AM_CPPFLAGS = -I$(top_srcdir)/soundcard
 
 noinst_LIBRARIES = libafsk.a
 libafsk_a_SOURCES = modem.c costab.c

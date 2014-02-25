@@ -1,4 +1,4 @@
-INCLUDES = @XML_CFLAGS@ -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
+AM_CPPFLAGS = @XML_CFLAGS@ -I$(top_srcdir)/matlib -I$(top_srcdir)/libmisc \
         -I$(top_srcdir)/directx/include \
         -I$(top_srcdir)/directx/include/directx6 \
 	@AUDIOFILE_CFLAGS@

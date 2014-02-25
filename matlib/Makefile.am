@@ -1,4 +1,4 @@
-#dnl INCLUDES = -I$(top_srcdir)
+#dnl AM_CPPFLAGS = -I$(top_srcdir)
 
 noinst_LIBRARIES = libmat.a
 

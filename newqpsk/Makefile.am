@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/soundcard
+AM_CPPFLAGS = -I$(top_srcdir)/soundcard
 
 noinst_LIBRARIES = libnewqpsk.a
 
