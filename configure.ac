@@ -1,10 +1,8 @@
-AC_INIT(soundmodem.spec)
-AC_CANONICAL_SYSTEM
-
 AC_INIT([soundmodem], [0.19])
 AC_CONFIG_SRCDIR([soundcard/main.c])
-AM_CONFIG_HEADER(config.h)
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
+AM_CONFIG_HEADER(config.h)
 
 AC_PREREQ(2.53)
 

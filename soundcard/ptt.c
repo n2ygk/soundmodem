@@ -3,7 +3,7 @@
 /*
  *      ptt.c  --  PTT signalling.
  *
- *      Copyright (C) 1999-2000, 2002
+ *      Copyright (C) 1999-2000, 2002, 2014
  *        Thomas Sailer (t.sailer@alumni.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -96,7 +96,7 @@ static int pttinit_sysfsgpio(struct pttio *state, const char *path)
 {
 	char *gpioptr = strrchr(path, '/');
 	unsigned int pin = 0;
-	char *pathendptr(0);
+	char *pathendptr = 0;
 	int fd;
 	if (!gpioptr)
 		return -1;
@@ -108,7 +108,7 @@ static int pttinit_sysfsgpio(struct pttio *state, const char *path)
 		return -1;
 	/* export */
 	{
-		unsigned int blen(gpioptr + 7 - path);
+		unsigned int blen = gpioptr + 7 - path;
 		char buf[blen];
 		char buf2[16];
 		int b2len;
@@ -125,7 +125,7 @@ static int pttinit_sysfsgpio(struct pttio *state, const char *path)
 		close(fd);
 	}
 	{
-		unsigned int blen(pathendptr + 11 - path);
+		unsigned int blen = pathendptr + 11 - path;
 		char buf[blen];
 		strncpy(buf, path, pathendptr - path);
 		strcpy(buf + (pathendptr - path), "/direction");
@@ -136,7 +136,7 @@ static int pttinit_sysfsgpio(struct pttio *state, const char *path)
 		}
 	}
 	{
-		unsigned int blen(pathendptr + 7 - path);
+		unsigned int blen = pathendptr + 7 - path;
 		char buf[blen];
 		strncpy(buf, path, pathendptr - path);
 		strcpy(buf + (pathendptr - path), "/value");
