@@ -186,7 +186,7 @@ int pttinit(struct pttio *state, const char *params[])
 	const char *hamlib_model = params[PAR_HAMLIBMODEL];
 	if (hamlib_model && hamlib_model[0]) {
 		int my_rig_error = ~RIG_OK;
-		char *hamlib_params = params[PAR_HAMLIBPARAMS] ? strdup(params[3]) : NULL;
+		char *hamlib_params = params[PAR_HAMLIBPARAMS] ? strdup(params[PAR_HAMLIBPARAMS]) : NULL;
 		int rig_modl ;
 		char *ptr_key = hamlib_params;
 
@@ -201,7 +201,7 @@ int pttinit(struct pttio *state, const char *params[])
 		state->mode = hamlibport;
 		state->u.rig_ptr = rig_init(rig_modl);
 		if(state->u.rig_ptr == NULL) {
-			logprintf(MLOG_ERROR, "Hamlib: rig_init model=%dn", rig_modl);
+			logprintf(MLOG_ERROR, "Hamlib: rig_init model=%d\n", rig_modl);
 			goto the_end;
 		}
 		strncpy(state->u.rig_ptr->state.rigport.pathname, path, FILPATHLEN);
