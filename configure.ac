@@ -1,4 +1,4 @@
-AC_INIT([soundmodem], [0.19])
+AC_INIT([soundmodem], [0.20])
 AC_CONFIG_SRCDIR([soundcard/main.c])
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
