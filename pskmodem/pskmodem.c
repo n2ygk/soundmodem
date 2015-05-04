@@ -3,7 +3,7 @@
 /*
  *      pskmodem.c  --  PSK modem.
  *
- *      Copyright (C) 1999-2000
+ *      Copyright (C) 1999-2015
  *        Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -262,7 +262,7 @@ static void rxrotate(cplxshort_t *ptr, unsigned int nr, unsigned int carphase, u
 	}
 }
 
-extern inline int calcsync(int *toten, int *corren, cplxshort_t *samples)
+only_inline int calcsync(int *toten, int *corren, cplxshort_t *samples)
 {
 	const cplxshort_t *tr = traincorrrotated;
 	unsigned int i;

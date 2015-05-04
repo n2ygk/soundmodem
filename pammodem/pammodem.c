@@ -3,7 +3,7 @@
 /*
  *      pammodem.c  --  PAM modem.
  *
- *      Copyright (C) 1999-2000
+ *      Copyright (C) 1999-2015
  *        Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
@@ -207,7 +207,7 @@ static void rxrewindsamples(struct rxstate *rx, unsigned int nr, unsigned int ts
 	rx->rxphase -= ph;
 }
 
-extern inline int calcsync(int *toten, int *corren, int16_t *samples)
+only_inline int calcsync(int *toten, int *corren, int16_t *samples)
 {
 	const int *tr = trainsyms;
 	unsigned int i;
