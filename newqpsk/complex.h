@@ -10,10 +10,16 @@ typedef struct {
 #endif
 } complex;
 
+#if __GNUC__ < 5
+#define only_inline extern inline
+#else
+#define only_inline inline
+#endif
+
 /*
  * Complex multiplication.
  */
-extern __inline__ complex cmul(complex x, complex y)
+only_inline complex cmul(complex x, complex y)
 {
 	complex z;
 
@@ -27,7 +33,7 @@ extern __inline__ complex cmul(complex x, complex y)
  * Complex ... yeah, what??? Returns a complex number that has the
  * properties: |z| = |x| * |y|  and  arg(z) = arg(y) - arg(x)
  */
-extern __inline__ complex ccor(complex x, complex y)
+only_inline complex ccor(complex x, complex y)
 {
 	complex z;
 
@@ -40,7 +46,7 @@ extern __inline__ complex ccor(complex x, complex y)
 /*
  * Real part of the complex ???
  */
-extern __inline__ float ccorI(complex x, complex y)
+only_inline float ccorI(complex x, complex y)
 {
 	return x.re * y.re + x.im * y.im;
 }
@@ -48,7 +54,7 @@ extern __inline__ float ccorI(complex x, complex y)
 /*
  * Imaginary part of the complex ???
  */
-extern __inline__ float ccorQ(complex x, complex y)
+only_inline float ccorQ(complex x, complex y)
 {
 	return x.re * y.im - x.im * y.re;
 }
@@ -56,7 +62,7 @@ extern __inline__ float ccorQ(complex x, complex y)
 /*
  * Modulo (absolute value) of a complex number.
  */
-extern __inline__ float cmod(complex x)
+only_inline float cmod(complex x)
 {
 	return sqrt(x.re * x.re + x.im * x.im);
 }
@@ -64,7 +70,7 @@ extern __inline__ float cmod(complex x)
 /*
  * Square of the absolute value (power).
  */
-extern __inline__ float cpwr(complex x)
+only_inline float cpwr(complex x)
 {
 	return (x.re * x.re + x.im * x.im);
 }
@@ -72,7 +78,7 @@ extern __inline__ float cpwr(complex x)
 /*
  * Argument of a complex number.
  */
-extern __inline__ float carg(complex x)
+only_inline float carg(complex x)
 {
 	return atan2(x.im, x.re);
 }

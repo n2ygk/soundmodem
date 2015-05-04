@@ -1,7 +1,14 @@
 #ifndef _FILTER_I386_H
 #define _FILTER_I386_H
+
+#if __GNUC__ < 5
+#define only_inline extern inline
+#else
+#define only_inline inline
+#endif
+
 #define __HAVE_ARCH_MAC
-extern inline float mac(const float *a, const float *b, unsigned int size)
+only_inline float mac(const float *a, const float *b, unsigned int size)
 {
 	float f;
 	asm volatile (

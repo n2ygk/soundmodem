@@ -5,12 +5,18 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#if __GNUC__ < 5
+#define only_inline extern inline
+#else
+#define only_inline inline
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 /*
  * Hamming weight (number of bits that are ones).
  */
-extern inline unsigned int hweight32(unsigned int w) 
+only_inline unsigned int hweight32(unsigned int w) 
 {
 	w = (w & 0x55555555) + ((w >>  1) & 0x55555555);
 	w = (w & 0x33333333) + ((w >>  2) & 0x33333333);
@@ -20,7 +26,7 @@ extern inline unsigned int hweight32(unsigned int w)
 	return w;
 }
 
-extern inline unsigned int hweight16(unsigned short w)
+only_inline unsigned int hweight16(unsigned short w)
 {
 	w = (w & 0x5555) + ((w >> 1) & 0x5555);
 	w = (w & 0x3333) + ((w >> 2) & 0x3333);
@@ -29,7 +35,7 @@ extern inline unsigned int hweight16(unsigned short w)
 	return w;
 }
 
-extern inline unsigned int hweight8(unsigned char w)
+only_inline unsigned int hweight8(unsigned char w)
 {
 	w = (w & 0x55) + ((w >> 1) & 0x55);
 	w = (w & 0x33) + ((w >> 2) & 0x33);
@@ -42,7 +48,7 @@ extern inline unsigned int hweight8(unsigned char w)
 /*
  * Reverse order of bits.
  */
-extern inline unsigned int rbits32(unsigned int w)
+only_inline unsigned int rbits32(unsigned int w)
 {
 	w = ((w >>  1) & 0x55555555) | ((w <<  1) & 0xaaaaaaaa);
 	w = ((w >>  2) & 0x33333333) | ((w <<  2) & 0xcccccccc);
@@ -52,7 +58,7 @@ extern inline unsigned int rbits32(unsigned int w)
 	return w;
 }
 
-extern inline unsigned short rbits16(unsigned short w)
+only_inline unsigned short rbits16(unsigned short w)
 {
 	w = ((w >> 1) & 0x5555) | ((w << 1) & 0xaaaa);
 	w = ((w >> 2) & 0x3333) | ((w << 2) & 0xcccc);
@@ -61,7 +67,7 @@ extern inline unsigned short rbits16(unsigned short w)
 	return w;
 }
 
-extern inline unsigned char rbits8(unsigned char w)
+only_inline unsigned char rbits8(unsigned char w)
 {
 	w = ((w >> 1) & 0x55) | ((w << 1) & 0xaa);
 	w = ((w >> 2) & 0x33) | ((w << 2) & 0xcc);
@@ -71,7 +77,7 @@ extern inline unsigned char rbits8(unsigned char w)
 
 /* ---------------------------------------------------------------------- */
 
-extern inline float avg(float average, float input, int scale)
+only_inline float avg(float average, float input, int scale)
 {
 	int i;
 
@@ -82,12 +88,12 @@ extern inline float avg(float average, float input, int scale)
 	return (average + input);
 }
 
-extern inline float avg2(float average, float input, float weight)
+only_inline float avg2(float average, float input, float weight)
 {
 	return input * weight + average * (1.0 - weight);
 }
 
-extern inline float phaseavg(float *data, int len)
+only_inline float phaseavg(float *data, int len)
 {
 	float sum = 0.0;
 	float min = M_PI;

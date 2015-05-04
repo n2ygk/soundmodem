@@ -3,7 +3,7 @@
 /*
  *      modem.h  --  Defines for the modem.
  *
- *      Copyright (C) 1999-2000  Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *      Copyright (C) 1999-2015  Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -79,6 +79,12 @@ typedef unsigned long long /* deduced */ u_int64_t __attribute__((__mode__(__DI_
 
 /* ---------------------------------------------------------------------- */
 
+#if __GNUC__ < 5
+#define only_inline extern inline
+#else
+#define only_inline inline
+#endif
+
 struct modemchannel;
 
 extern void audiowrite(struct modemchannel *chan, const int16_t *samples, unsigned int nr);
@@ -103,7 +109,7 @@ extern void logvprintf(unsigned int level, const char *fmt, va_list args);
 extern void logprintf(unsigned int level, const char *fmt, ...);
 extern void logerr(unsigned int level, const char *st);
 extern unsigned int log_verblevel;
-extern inline int logcheck(unsigned int vl)
+only_inline int logcheck(unsigned int vl)
 {
 	return vl <= log_verblevel;
 }

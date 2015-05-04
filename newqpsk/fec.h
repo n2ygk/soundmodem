@@ -3,6 +3,12 @@
 
 /* --------------------------------------------------------------------- */
 
+#if __GNUC__ < 5
+#define only_inline extern inline
+#else
+#define only_inline inline
+#endif
+
 struct fecstate {
 	int feclevel;
 	int bitbatchlen;
@@ -13,7 +19,7 @@ struct fecstate {
 
 /* --------------------------------------------------------------------- */
 
-extern inline void init_fec(struct fecstate *f)
+only_inline void init_fec(struct fecstate *f)
 {
 	switch (f->feclevel) {
 	case 0:
@@ -33,7 +39,7 @@ extern inline void init_fec(struct fecstate *f)
 
 /* --------------------------------------------------------------------- */
 
-extern inline void init_inlv(struct fecstate *f)
+only_inline void init_inlv(struct fecstate *f)
 {
         int i;
 
