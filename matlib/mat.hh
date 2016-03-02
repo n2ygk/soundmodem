@@ -91,7 +91,7 @@ template<typename T> void mmul(T *c, const T *a, const T *b, unsigned int d1, un
                 memcpy(c, r, d1 * d3 * sizeof(c[0]));
 }
 
-template<typename T> void mdet(const T *c, unsigned int d)
+template<typename T> T mdet(const T *c, unsigned int d)
 {
         T *c2;
         unsigned int i, j, k, l;
