@@ -330,7 +330,7 @@ void pttsetptt(struct pttio *state, int pttx)
 	{
 		if (state->u.fd == -1)
 			return;
-#if 0
+#if 1
 		unsigned int y = TIOCM_RTS;
 		ioctl(state->u.fd, state->ptt ? TIOCMBIS : TIOCMBIC, &y);
 #else
@@ -420,7 +420,7 @@ void pttsetdcd(struct pttio *state, int dcd)
 	{
 		if (state->u.fd == -1)
 			return;
-#if 0
+#if 1
 		unsigned int y = TIOCM_DTR;
 		ioctl(state->u.fd, state->dcd ? TIOCMBIS : TIOCMBIC, &y);
 #else
