@@ -52,7 +52,7 @@ AC_CHECK_LIB(posix4,sched_setscheduler)
 AC_CHECK_LIB(uuid,GUID_NULL)
 AC_CHECK_FUNCS(getopt_long,,[AC_LIBOBJ([getopt]) AC_LIBOBJ([getopt1])])
 AC_CHECK_HEADERS(sys/audioio.h stropts.h sys/conf.h sys/soundcard.h sys/ioctl.h time.h inttypes.h net/if_arp.h)
-AC_CHECK_HEADERS(pty.h getopt.h syslog.h sched.h linux/sockios.h sys/ioccom.h linux/ppdev.h)
+AC_CHECK_HEADERS(pty.h getopt.h syslog.h sched.h linux/sockios.h sys/ioccom.h linux/ppdev.h linux/hidraw.h)
 AC_CHECK_HEADERS(sys/socket.h linux/if.h,,,
 [[
 #if HAVE_SYS_SOCKET_H
