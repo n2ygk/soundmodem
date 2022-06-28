@@ -271,7 +271,7 @@ int pttinit(struct pttio *state, const char *params[])
 		  (
 		    (hiddevinfo.vendor == 0x0d8c	// CM108/109/119
 			&& hiddevinfo.product >= 0x0008
-			&& hiddevinfo.product <= 0x000f
+			&& hiddevinfo.product <= 0x0012
 		    )
 		    ||
 		    (hiddevinfo.vendor == 0x0c76 &&	// SSS1621/23
